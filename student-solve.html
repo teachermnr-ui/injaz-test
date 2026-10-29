@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<!-- إصدار: 2026-10-29.1 · الاختبار -->
+<html lang="ar" dir="rtl">
+<head>
+<script src="fb-config.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>حل الورقة</title>
+<meta name="theme-color" content="#3f6659">
+<link rel="stylesheet" href="theme.css?v=2026-10-05.1">
+<script src="mn-dialog.js?v=2026-10-06.1"></script>
+<script src="theme.js?v=2026-10-05.1"></script>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --teal:#0f766e; --teal-d:#0b5a54; --teal-l:#e6f2f0;
+    --ink:#15242b; --muted:#5b6f76; --line:#d8e2e0; --paper:#f6f8f7; --white:#fff;
+    --ok:#1f9d55; --bad:#d64545;
+    --teal-light: var(--teal-l);
+    --coral: var(--bad);
+    --coral-light: #fbe3e3;
+    --card: var(--white);
+    --ink-soft: var(--muted);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Tajawal',sans-serif;background:var(--paper);color:var(--ink);direction:rtl;}
+  .app-header{background:linear-gradient(180deg,var(--teal),var(--teal-d));color:var(--fg-ffffff,#fff);padding:14px 18px;position:sticky;top:0;}
+  .app-header h1{font-size:17px;margin:0;}
+  .container{max-width:640px;margin:0 auto;padding:16px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:14px;}
+  .btn{border:none;border-radius:10px;padding:12px 20px;font-family:'Tajawal',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
+  .btn-primary{background:var(--coral);color:var(--fg-ffffff,#fff);}
+  .btn-secondary{background:var(--teal-light);color:var(--teal);}
+  input[type=text],select,textarea{width:100%;border:1.5px solid var(--line);border-radius:8px;padding:8px 10px;font-family:'Tajawal',sans-serif;font-size:14px;background:var(--bg-ffffff,#fff);color:var(--ink);}
+  .ex-block { background:var(--bg-ffffff,#fff); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:14px; }
+  .ex-num { background:var(--coral); color:var(--fg-ffffff,#fff); width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; margin-left:8px; }
+  .opt-btn { border:1.5px solid var(--line); border-radius:9px; padding:8px 16px; font-size:14px; cursor:pointer; background:var(--bg-ffffff,#fff); margin-left:6px; margin-bottom:6px; display:inline-block; }
+  .opt-btn.selected { background:var(--teal-light); border-color:var(--teal); font-weight:700; }
+  .opt-btn.correct { background:var(--bg-eaf6f1,#EAF6F1); border-color:var(--ok); }
+  .opt-btn.wrong { background:var(--coral-light); border-color:var(--bad); }
+  .tf-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--line); gap:10px; }
+  .tf-row:last-child { border-bottom:none; }
+  .tf-btn { width:36px; height:32px; border-radius:8px; border:1.5px solid var(--line); background:var(--bg-ffffff,#fff); font-weight:700; cursor:pointer; }
+  .tf-btn.active-true { background:var(--ok); color:var(--fg-ffffff,#fff); border-color:var(--ok); }
+  .tf-btn.active-false { background:var(--bad); color:var(--fg-ffffff,#fff); border-color:var(--bad); }
+  .item-line { margin-bottom:10px; }
+  select.answer-select { width:100%; }
+  .field-check { font-size:12px; margin-top:4px; }
+  .field-check.correct { color:var(--ok); }
+  .field-check.wrong { color:var(--bad); }
+</style>
+<script src="nav-back.js?v=2026-10-28.1" defer></script>
+</head>
+<body>
+  <header class="app-header">
+    <h1 id="worksheetTitleHeader">حل الورقة</h1>
+  </header>
+
+  <main class="container">
+    <div id="notLoggedIn" class="card" style="display:none;">
+      <p>لازم تسجّل دخولك الأول.</p>
+      <a href="index.html" class="btn btn-primary" style="display:inline-block;text-decoration:none;">تسجيل الدخول</a>
+    </div>
+
+    <div id="alreadyDone" class="card" style="display:none;">
+      <p>هذه الورقة مُسلّمة بالفعل. النتيجة: <span id="doneScore"></span></p>
+    </div>
+
+    <div id="exercisesWrap"></div>
+
+    <div id="submitBar" style="display:none;">
+      <button class="btn btn-primary" id="submitBtn" style="width:100%;">تسليم الورقة</button>
+      <p id="submitStatus" style="font-size:13px;color:var(--ink-soft);margin-top:10px;text-align:center;"></p>
+    </div>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import {
+      getFirestore, doc, getDoc, collection, query, where, getDocs, addDoc, updateDoc, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
+
+    /* إعدادات مشروع Firebase الموحّد — نفس مفاتيح باقي الصفحات */
+    const firebaseConfig = window.FB_CONFIG;
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    // قواعد Firestore تمنع أي قراءة قبل المصادقة — ننتظر جاهزية الجلسة
+    const authReady = new Promise((resolve)=>{
+      const un = onAuthStateChanged(auth, (u)=>{ un(); resolve(u); });
+    });
+
+    let STU = null;
+    try { STU = JSON.parse(localStorage.getItem('stu_session') || 'null'); } catch (e) { STU = null; }
+    const studentId = STU && STU.seat ? String(STU.seat) : null; // رقم الهوية — نفس مفتاح الطالب في روستر omr
+
+    const params = new URLSearchParams(window.location.search);
+    const worksheetId = params.get("worksheetId");
+
+    let worksheetData = null;
+    let existingSubmissionId = null;
+    let AUTH_UID = null;   // ص-١: التسليم يُربط بحساب الطالب نفسه (studentUid) وبصاحب النشاط (teacherUid)
+    const studentAnswers = {}; // exerciseId -> value(s)
+
+    (async () => {
+      const au = await authReady;
+      AUTH_UID = au ? au.uid : null;
+      if (!studentId || !worksheetId || !au) {
+        document.getElementById("notLoggedIn").style.display = "block";
+        return;
+      }
+      init();
+    })();
+
+    async function init() {
+      // ص-١: النشاط غير المنشور (مغلق أو مؤرشف) لا يُقرأ — نعامله كغير متاح بدل التعليق
+      let wDoc = null;
+      try { wDoc = await getDoc(doc(db, "worksheets", worksheetId)); } catch (e) { wDoc = null; }
+      if (!wDoc || !wDoc.exists()) {
+        document.getElementById("exercisesWrap").innerHTML = `<div class="card"><p>هذا النشاط غير متاح حاليًا.</p></div>`;
+        return;
+      }
+      worksheetData = wDoc.data();
+      /* (2026-10-14.6) نشاط من فصل سابق (أو بعد نهاية العام) لا يخص الطالب الآن: يُعامل كغير متاح */
+      try {
+        const rp = (await httpsCallable(getFunctions(app), "currentPeriod")(worksheetData.schoolId ? { schoolId: String(worksheetData.schoolId) } : {})).data || {};
+        if (rp.closed || (rp.period && (worksheetData.period || "first") !== rp.period)) {
+          document.getElementById("exercisesWrap").innerHTML = `<div class="card"><p>هذا النشاط غير متاح حاليًا.</p></div>`;
+          return;
+        }
+      } catch (e) {
+        const dd = e && e.details;
+        if (dd && dd.yearClosed) { document.getElementById("exercisesWrap").innerHTML = `<div class="card"><p>انتهى العام الدراسي، ولا توجد أنشطة متاحة حاليًا.</p></div>`; return; }
+      }
+      document.getElementById("worksheetTitleHeader").textContent = worksheetData.title;
+
+      // تسليمي لهذا النشاط: الجديد بحساب الطالب، والقديم (قبل ص-١) برقم الهوية إن سمحت به القواعد
+      let sSnap = await getDocs(query(collection(db, "submissions"),
+        where("worksheetId", "==", worksheetId), where("studentUid", "==", AUTH_UID)));
+      if (sSnap.empty) {
+        try {
+          sSnap = await getDocs(query(collection(db, "submissions"),
+            where("worksheetId", "==", worksheetId), where("studentId", "==", studentId)));
+        } catch (e) { /* لا تسليم سابق مقروء */ }
+      }
+
+      let alreadySubmitted = false;
+      if (!sSnap.empty) {
+        const sub = sSnap.docs[0].data();
+        existingSubmissionId = sSnap.docs[0].id;
+        if (sub.status === "submitted" || sub.status === "corrected") {
+          alreadySubmitted = true;
+          document.getElementById("alreadyDone").style.display = "block";
+          document.getElementById("doneScore").textContent =
+            sub.totalScore !== null && sub.totalScore !== undefined ? sub.totalScore : "قيد المراجعة";
+        }
+      }
+
+      if (worksheetData.stopped && !alreadySubmitted) {
+        document.getElementById("exercisesWrap").innerHTML = `<div class="card"><p style="font-weight:700;color:var(--bad);">⛔ انتهى استقبال الإجابات لهذه الورقة. كلّم معلمك لو محتاج تسلّم.</p></div>`;
+        return;
+      }
+
+      renderExercises();
+      if (!document.getElementById("alreadyDone").style.display || document.getElementById("alreadyDone").style.display === "none") {
+        document.getElementById("submitBar").style.display = "block";
+      }
+    }
+
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function renderExercises() {
+      const wrap = document.getElementById("exercisesWrap");
+      wrap.innerHTML = "";
+
+      (worksheetData.exercises || []).forEach((ex, idx) => {
+        const block = document.createElement("div");
+        block.className = "ex-block";
+        const num = `<span class="ex-num">${idx + 1}</span>`;
+
+        if (ex.type === "fill-blank") {
+          block.innerHTML = `<p style="margin-top:0;">${num}أكمل الفراغات</p>` +
+            (ex.data.items || []).map((it, i) => `
+              <div class="item-line">
+                <label style="font-size:13px;">${escapeHtml(it.prompt)}</label>
+                <input type="text" data-fb="${ex.exerciseId}:${i}">
+              </div>`).join("");
+
+        } else if (ex.type === "true-false") {
+          block.innerHTML = `<p style="margin-top:0;">${num}صح أو خطأ</p>` +
+            (ex.data.items || []).map((it, i) => `
+              <div class="tf-row">
+                <span style="font-size:14px;">${escapeHtml(it.statement)}</span>
+                <div>
+                  <button class="tf-btn" data-tf="${ex.exerciseId}:${i}" data-val="true">✓</button>
+                  <button class="tf-btn" data-tf="${ex.exerciseId}:${i}" data-val="false">✗</button>
+                </div>
+              </div>`).join("");
+
+        } else if (ex.type === "mcq") {
+          block.innerHTML = `<p style="margin-top:0;">${num}اختر الإجابة الصحيحة</p>` +
+            (ex.data.items || []).map((it, i) => `
+              <div class="item-line">
+                <p style="font-size:14px;font-weight:500;margin-bottom:6px;">${escapeHtml(it.prompt)}</p>
+                <div>
+                  ${it.options.map((opt, oi) => `
+                    <span class="opt-btn" data-mcq="${ex.exerciseId}:${i}" data-oi="${oi}">${escapeHtml(opt)}</span>`).join("")}
+                </div>
+              </div>`).join("");
+
+        } else if (ex.type === "matching") {
+          const pairs = ex.data.pairs || [];
+          block.innerHTML = `<p style="margin-top:0;">${num}صل بين العمودين</p>
+            <p style="font-size:11px;color:var(--ink-soft);">اضغط عنصر من (أ) ثم عنصر من (ب) لربطهما. اضغط عنصر مربوط لتغيير اختياره.</p>
+            <div id="pairwrap-${ex.exerciseId}"></div>`;
+          wrap.appendChild(block);
+          setupPairColumns(
+            document.getElementById(`pairwrap-${ex.exerciseId}`),
+            ex.exerciseId,
+            pairs.map((p) => p.left),
+            pairs.map((p) => p.right)
+          );
+          return;
+
+        } else if (ex.type === "ordering") {
+          const items = ex.data.items || [];
+          block.innerHTML = `<p style="margin-top:0;">${num}رتّب العناصر بالترتيب الصحيح</p>
+            <p style="font-size:11px;color:var(--ink-soft);">اضغط رقم الترتيب ثم العنصر المناسب له.</p>
+            <div id="pairwrap-${ex.exerciseId}"></div>`;
+          wrap.appendChild(block);
+          setupPairColumns(
+            document.getElementById(`pairwrap-${ex.exerciseId}`),
+            ex.exerciseId,
+            items.map((_, i) => `الترتيب ${i + 1}`),
+            items
+          );
+          return;
+
+        } else if (ex.type === "fill-table") {
+          const t = ex.data;
+          block.innerHTML = `<p style="margin-top:0;">${num}أكمل الجدول</p>
+            <div id="tblsolve-${ex.exerciseId}"></div>`;
+          wrap.appendChild(block);
+          renderFillTable(document.getElementById(`tblsolve-${ex.exerciseId}`), ex.exerciseId, t);
+          return;
+
+        } else {
+          block.innerHTML = `<p style="margin-top:0;">${num}سؤال مفتوح</p>
+            <p style="font-size:14px;">${escapeHtml(ex.data.prompt || "")}</p>
+            <textarea rows="4" data-open="${ex.exerciseId}"></textarea>`;
+        }
+
+        wrap.appendChild(block);
+      });
+
+      bindAnswerEvents();
+    }
+
+    // ---------- أعمدة متقابلة قابلة للتعديل (تُستخدم في المزاوجة والترتيب) ----------
+    // rightItems: عمود (أ) الثابت باليمين — الترتيب فيه لا يتغيّر
+    // poolItems: عمود (ب) المخلوط بالشمال — نفس عدد rightItems
+    // بيحفظ في studentAnswers[`${exerciseId}:${i}`] = النص المرتبط من عمود (ب)
+    function setupPairColumns(container, exerciseId, rightItems, poolItems) {
+      const shuffledPool = shuffle(poolItems);
+      const colors = ["#E6F1FB", "#EAF3DE", "#FAEEDA", "#FBEAF0", "#EEEDFE"];
+      const colorText = ["#0C447C", "#27500A", "#633806", "#72243E", "#3C3489"];
+
+      const grid = document.createElement("div");
+      grid.style.cssText = "display:grid;grid-template-columns:1.6fr 1fr;border:1px solid var(--line);border-radius:10px;overflow:hidden;";
+      container.appendChild(grid);
+
+      const rightPair = {}; // rightIndex -> poolIndex
+      const poolPair = {};  // poolIndex -> rightIndex
+      let pending = null;
+
+      const rightCells = [];
+      const poolCells = [];
+
+      rightItems.forEach((text, i) => {
+        const cell = document.createElement("div");
+        cell.textContent = text;
+        cell.style.cssText = "padding:10px;font-size:13px;border-top:1px solid var(--line);cursor:pointer;";
+        cell.addEventListener("click", () => handleTap("right", i));
+        grid.appendChild(cell);
+        rightCells.push(cell);
+
+        const poolCell = document.createElement("div");
+        poolCell.textContent = shuffledPool[i];
+        poolCell.style.cssText = "padding:10px;font-size:13px;border-top:1px solid var(--line);border-right:1px solid var(--line);cursor:pointer;text-align:center;";
+        poolCell.addEventListener("click", () => handleTap("pool", i));
+        grid.appendChild(poolCell);
+        poolCells.push(poolCell);
+      });
+
+      function handleTap(side, idx) {
+        if (pending && pending.side === side && pending.idx === idx) {
+          pending = null;
+          render();
+          return;
+        }
+        if (pending && pending.side !== side) {
+          const rIdx = side === "right" ? idx : pending.idx;
+          const pIdx = side === "pool" ? idx : pending.idx;
+          if (rightPair[rIdx] !== undefined) delete poolPair[rightPair[rIdx]];
+          if (poolPair[pIdx] !== undefined) delete rightPair[poolPair[pIdx]];
+          rightPair[rIdx] = pIdx;
+          poolPair[pIdx] = rIdx;
+          pending = null;
+          studentAnswers[`${exerciseId}:${rIdx}`] = shuffledPool[pIdx];
+          render();
+          return;
+        }
+        pending = { side, idx };
+        render();
+      }
+
+      function render() {
+        rightCells.forEach((cell, i) => {
+          cell.style.outline = "none";
+          cell.style.background = "transparent";
+          cell.style.color = "var(--ink)";
+          cell.style.fontWeight = "400";
+          if (pending && pending.side === "right" && pending.idx === i) {
+            cell.style.outline = "2px solid var(--ink-soft)";
+          } else if (rightPair[i] !== undefined) {
+            cell.style.background = colors[i % colors.length];
+            cell.style.color = colorText[i % colors.length];
+            cell.style.fontWeight = "700";
+          }
+        });
+        poolCells.forEach((cell, i) => {
+          cell.style.outline = "none";
+          cell.style.background = "transparent";
+          cell.style.color = "var(--ink)";
+          cell.style.fontWeight = "400";
+          if (pending && pending.side === "pool" && pending.idx === i) {
+            cell.style.outline = "2px solid var(--ink-soft)";
+          } else if (poolPair[i] !== undefined) {
+            const rIdx = poolPair[i];
+            cell.style.background = colors[rIdx % colors.length];
+            cell.style.color = colorText[rIdx % colors.length];
+            cell.style.fontWeight = "700";
+          }
+        });
+      }
+
+      render();
+    }
+
+    // ---------- عرض تمرين أكمل الجدول للطالب (خلايا الإجابة فاضية قابلة للتعبئة) ----------
+    function renderFillTable(container, exerciseId, t) {
+      const cellsMatrix = (t.cells || []).map((r) => r.row || []);
+      const grid = document.createElement("div");
+      grid.style.cssText = `display:grid;grid-template-columns:repeat(${t.cols},minmax(80px,1fr));gap:6px;`;
+      container.appendChild(grid);
+
+      for (let r = 0; r < cellsMatrix.length; r++) {
+        for (let c = 0; c < cellsMatrix[r].length; c++) {
+          const cellData = cellsMatrix[r][c];
+          if (cellData.type === "header") {
+            const cell = document.createElement("div");
+            cell.textContent = cellData.value || "";
+            cell.style.cssText = "background:var(--bg-2f5aa8,#2f5aa8);color:var(--fg-ffffff,#fff);border-radius:6px;padding:8px;font-size:12px;text-align:center;font-weight:700;";
+            grid.appendChild(cell);
+          } else {
+            const input = document.createElement("input");
+            input.type = "text";
+            input.style.cssText = "width:100%;box-sizing:border-box;border:2px solid var(--bd-d43d8f,#d43d8f);border-radius:6px;padding:8px;font-size:12px;text-align:center;";
+            input.addEventListener("input", (e) => {
+              studentAnswers[`${exerciseId}:${r}:${c}`] = e.target.value;
+            });
+            grid.appendChild(input);
+          }
+        }
+      }
+    }
+
+    function bindAnswerEvents() {
+      document.querySelectorAll("[data-fb]").forEach((input) => {
+        input.addEventListener("input", (e) => { studentAnswers[e.target.dataset.fb] = e.target.value; });
+      });
+      document.querySelectorAll("[data-tf]").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          const key = e.target.dataset.tf;
+          const val = e.target.dataset.val;
+          document.querySelectorAll(`[data-tf="${key}"]`).forEach((b) => b.classList.remove("active-true", "active-false"));
+          e.target.classList.add(val === "true" ? "active-true" : "active-false");
+          studentAnswers[key] = val === "true";
+        });
+      });
+      document.querySelectorAll("[data-mcq]").forEach((opt) => {
+        opt.addEventListener("click", (e) => {
+          const key = e.target.dataset.mcq;
+          document.querySelectorAll(`[data-mcq="${key}"]`).forEach((o) => o.classList.remove("selected"));
+          e.target.classList.add("selected");
+          studentAnswers[key] = +e.target.dataset.oi;
+        });
+      });
+      document.querySelectorAll("[data-open]").forEach((ta) => {
+        ta.addEventListener("input", (e) => { studentAnswers[e.target.dataset.open] = e.target.value; });
+      });
+    }
+
+    function normalize(s) {
+      return (s || "").toString().trim().toLowerCase().replace(/\s+/g, "");
+    }
+
+    // ---------- التصحيح التلقائي وتجميع الإجابات للحفظ ----------
+    function gradeAndCollect() {
+      const answersArray = [];
+      let autoTotal = 0, autoCorrect = 0;
+
+      (worksheetData.exercises || []).forEach((ex) => {
+        if (ex.type === "fill-blank") {
+          const items = ex.data.items || [];
+          const vals = items.map((it, i) => studentAnswers[`${ex.exerciseId}:${i}`] || "");
+          const results = items.map((it, i) => {
+            const correct = normalize(it.answer) === normalize(vals[i]) && it.answer;
+            if (it.answer) { autoTotal++; if (correct) autoCorrect++; }
+            return correct;
+          });
+          answersArray.push({ exerciseId: ex.exerciseId, answer: vals, isCorrect: results.every(Boolean) ? true : results.some(Boolean) ? null : false });
+
+        } else if (ex.type === "true-false") {
+          const items = ex.data.items || [];
+          const vals = items.map((it, i) => studentAnswers[`${ex.exerciseId}:${i}`]);
+          const results = items.map((it, i) => {
+            if (it.answer === null) return null;
+            autoTotal++;
+            const correct = vals[i] === it.answer;
+            if (correct) autoCorrect++;
+            return correct;
+          });
+          answersArray.push({ exerciseId: ex.exerciseId, answer: vals, isCorrect: results.every((r) => r === true) });
+
+        } else if (ex.type === "mcq") {
+          const items = ex.data.items || [];
+          const vals = items.map((it, i) => studentAnswers[`${ex.exerciseId}:${i}`]);
+          const results = items.map((it, i) => {
+            autoTotal++;
+            const correct = vals[i] === it.correctIndex;
+            if (correct) autoCorrect++;
+            return correct;
+          });
+          answersArray.push({ exerciseId: ex.exerciseId, answer: vals, isCorrect: results.every(Boolean) });
+
+        } else if (ex.type === "matching") {
+          const pairs = ex.data.pairs || [];
+          const vals = pairs.map((p, i) => studentAnswers[`${ex.exerciseId}:${i}`] || "");
+          const results = pairs.map((p, i) => {
+            autoTotal++;
+            const correct = normalize(vals[i]) === normalize(p.right);
+            if (correct) autoCorrect++;
+            return correct;
+          });
+          answersArray.push({ exerciseId: ex.exerciseId, answer: vals, isCorrect: results.every(Boolean) });
+
+        } else if (ex.type === "ordering") {
+          const items = ex.data.items || [];
+          const vals = items.map((it, i) => studentAnswers[`${ex.exerciseId}:${i}`] || "");
+          const results = items.map((it, i) => {
+            autoTotal++;
+            const correct = normalize(vals[i]) === normalize(it);
+            if (correct) autoCorrect++;
+            return correct;
+          });
+          answersArray.push({ exerciseId: ex.exerciseId, answer: vals, isCorrect: results.every(Boolean) });
+
+        } else if (ex.type === "fill-table") {
+          const t = ex.data;
+          const cellsMatrix = (t.cells || []).map((row) => row.row || []);
+          const grid = [];
+          let allCorrect = true;
+          for (let r = 0; r < cellsMatrix.length; r++) {
+            const rowVals = [];
+            for (let c = 0; c < cellsMatrix[r].length; c++) {
+              const cellData = cellsMatrix[r][c];
+              if (cellData.type === "header") { rowVals.push(""); continue; }
+              const val = studentAnswers[`${ex.exerciseId}:${r}:${c}`] || "";
+              rowVals.push(val);
+              autoTotal++;
+              const correct = normalize(val) === normalize(cellData.value) && cellData.value;
+              if (correct) autoCorrect++; else allCorrect = false;
+            }
+            grid.push(rowVals);
+          }
+          answersArray.push({ exerciseId: ex.exerciseId, answer: grid.map((row) => ({ row })), isCorrect: allCorrect });
+
+        } else {
+          answersArray.push({ exerciseId: ex.exerciseId, answer: studentAnswers[ex.exerciseId] || "", isCorrect: null });
+        }
+      });
+
+      return { answersArray, autoTotal, autoCorrect };
+    }
+
+    document.getElementById("submitBtn").addEventListener("click", async () => {
+      const statusEl = document.getElementById("submitStatus");
+      statusEl.textContent = "جاري التسليم...";
+      statusEl.style.color = "var(--ink-soft)";
+
+      try {
+        const { answersArray, autoTotal, autoCorrect } = gradeAndCollect();
+        const hasOpenText = (worksheetData.exercises || []).some((ex) => ex.type === "open-text");
+        const score = autoTotal > 0 ? `${autoCorrect} / ${autoTotal}` : null;
+
+        const payload = {
+          worksheetId,
+          studentId,
+          studentUid: AUTH_UID,
+          teacherUid: worksheetData.createdBy || null,
+          schoolId: worksheetData.schoolId || null,
+          period: worksheetData.period || "first",
+          status: "submitted",
+          answers: answersArray,
+          totalScore: score,
+          submittedAt: serverTimestamp(),
+          correctedAt: null,
+          updatedAt: serverTimestamp()
+        };
+
+        if (existingSubmissionId) {
+          await updateDoc(doc(db, "submissions", existingSubmissionId), payload);
+        } else {
+          await addDoc(collection(db, "submissions"), payload);
+        }
+
+        statusEl.textContent = hasOpenText
+          ? `تم التسليم. نتيجة الأسئلة المصححة تلقائيًا: ${score || "لا يوجد"} — الأسئلة المفتوحة بانتظار تصحيح المعلم.`
+          : `تم التسليم بنجاح. نتيجتك: ${score}`;
+        statusEl.style.color = "var(--ok)";
+        document.getElementById("submitBtn").disabled = true;
+        setTimeout(() => { window.location.href = "student-worksheets.html"; }, 1800);
+      } catch (err) {
+        statusEl.textContent = "حدث خطأ أثناء التسليم: " + err.message;
+        statusEl.style.color = "var(--bad)";
+      }
+    });
+
+    function escapeHtml(str) {
+      return (str || "").toString().replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+  </script>
+</body>
+</html>

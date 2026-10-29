@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<!-- إصدار: 2026-10-29.1 · الاختبار — صفحة اختيار الوكلاء: بطاقات وكيل الشؤون المدرسية والتعليمية والطلابية (حلّت محل لوحة الوكيل القديمة) -->
+<!-- [ADMIN-TOOLS] صفحة مستقلة بالكامل — تُحذف عند إزالة الأدوات الإدارية (انظر ADMIN-TOOLS-LOG.md) -->
+<html lang="ar" dir="rtl">
+<head>
+<script src="fb-config.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>الوكلاء</title>
+<meta name="theme-color" content="#0f766e">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>.ag-g{display:grid;gap:12px;grid-template-columns:1fr;max-width:640px;margin:18px auto}.ag-c{display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--line);border-right:6px solid var(--k,var(--brand));border-radius:14px;padding:18px 16px;text-decoration:none;color:var(--ink);box-shadow:var(--shadow)}.ag-c .ic{font-size:30px}.ag-c .nm{flex:1;font-weight:800;font-size:17px}.ag-c .ar{color:var(--muted);font-size:22px}.ag-h{max-width:640px;margin:14px auto 0;font-weight:800;font-size:18px}.ag-s{max-width:640px;margin:2px auto 0;color:var(--muted);font-size:13px}</style>
+<script src="nav-back.js?v=2026-10-28.1" defer></script>
+</head>
+<body>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-auth-compat.js"></script>
+<script src="sem-guard.js?v=2026-10-14.5"></script>
+<script src="dash-base.js?v=2026-10-15.1"></script>
+<script>
+const {esc} = Dash;
+/* الوكلاء الثلاثة: المدير يرى الكل بالدور، وغيره يرى ما فُوِّض به فقط (وصول أو تعديل) */
+const AGENTS = [
+  {perm:'tools.agentSchool', t:'وكيل الشؤون المدرسية', ic:'🛠️', href:'school-affairs.html', k:'#3f6659'},
+  {perm:'tools.agentEdu', t:'وكيل الشؤون التعليمية', ic:'📚', href:'edu-affairs.html', k:'#2f6fa5'},
+  {perm:'tools.agentStudents', t:'وكيل الشؤون الطلابية', ic:'🎒', href:'student-affairs.html', k:'#a5562f'}
+];
+const mine = (ctx, isSA)=>{ const P = (ctx && ctx.permissions) || {}; return AGENTS.filter(a=> isSA || (P[a.perm] && (P[a.perm].access || P[a.perm].edit))); };
+Dash.boot({
+  title:'الوكلاء',
+  allow:(u,ctx,sid,isSA)=> mine(ctx, isSA).length ? true : 'هذه الصفحة للمدير ولمن فُوِّض بصفحة وكيل.',
+  render: async env=>{
+    const L = mine(env.ctx, env.isSA);
+    if(L.length===1){ location.replace(L[0].href); return; }
+    env.main.innerHTML = '<div class="ag-h">الوكلاء</div><div class="ag-s">اختر صفحة الوكيل</div><div class="ag-g">'
+      + L.map(a=>'<a class="ag-c" style="--k:'+a.k+'" href="'+esc(a.href)+'"><span class="ic">'+a.ic+'</span><span class="nm">'+esc(a.t)+'</span><span class="ar">‹</span></a>').join('') + '</div>';
+  }
+});
+</script>
+</body>
+</html>

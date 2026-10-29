@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<!-- إصدار: 2026-10-29.1 · الاختبار — عرض تعميم «الحالات الصحية» (healthCases: الاسم · الحالة · الإجراء). سابقًا 2026-10-27.1 — عرض تعميم «محضر لجنة التوجيه» (committeeMinutes) و«قرار تشكيل لجنة التوجيه والإرشاد» (committeeFormation) -->
+<!-- [ADMIN-TOOLS] صفحة مستقلة بالكامل — تُحذف عند إزالة الأدوات الإدارية (انظر ADMIN-TOOLS-LOG.md) -->
+<html lang="ar" dir="rtl">
+<head>
+<script src="fb-config.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>التعاميم والمساءلات</title>
+<meta name="theme-color" content="#3f6659">
+<link rel="stylesheet" href="theme.css?v=2026-10-05.1">
+<script src="mn-dialog.js?v=2026-10-06.1"></script>
+<script src="theme.js?v=2026-10-05.1"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f7f6; --surface:#ffffff; --surface-2:#eef4f3; --surface-3:#e3ecea;
+  --brand:#0f766e; --brand-2:#0b5a54; --brand-l:#d5ece9;
+  --ink:#15242b; --muted:#5b6f76; --line:#d8e2e0;
+  --danger:#c0392b; --warn:#b7791f; --ok:#1f9d55; --info:#2563eb;
+  --green-bg:#d9f5e3; --green-bd:#1f9d55; --red-bg:#fbdcdc; --red-bd:#c0392b;
+  --r:14px; --shadow:0 1px 2px rgba(16,40,40,.06),0 8px 24px rgba(16,40,40,.06);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:'Tajawal',"Segoe UI",Tahoma,system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14.5px;line-height:1.55;min-height:100vh}
+button{font-family:inherit;cursor:pointer;border:none}
+input,select,textarea{font-family:inherit;font-size:14px}
+.hidden{display:none !important}
+.boot{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:var(--muted);text-align:center;padding:20px}
+.spin{display:inline-block;width:22px;height:22px;border:3px solid var(--line);border-top-color:var(--brand);border-radius:50%;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.topbar{position:sticky;top:0;z-index:40;background:var(--brand);color:var(--fg-ffffff,#fff);padding:10px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.topbar h1{margin:0;font-size:17px;font-weight:800;white-space:nowrap}
+.tb-badge{background:rgba(255,255,255,.15);padding:5px 12px;border-radius:20px;font-size:13px;font-weight:600;white-space:nowrap}
+.tb-spacer{flex:1}
+.tb-btn{background:rgba(255,255,255,.17);color:var(--fg-ffffff,#fff);padding:7px 14px;border-radius:10px;font-weight:700;font-size:13px;white-space:nowrap}
+.tb-btn:hover{background:rgba(255,255,255,.27)}
+main{max-width:980px;margin:0 auto;padding:20px 16px 60px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+.card h3{margin:0 0 10px;font-size:16px}
+.sub{color:var(--muted);font-size:12.5px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+.field{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted);font-weight:600;flex:1;min-width:180px}
+.field input,.field select,.field textarea{padding:8px 10px;border:1.5px solid var(--line);border-radius:9px;background:var(--surface-2);color:var(--ink);font-weight:500}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--brand);background:var(--bg-ffffff,#fff)}
+.btn{background:var(--brand);color:var(--fg-ffffff,#fff);padding:9px 16px;border-radius:10px;font-weight:700;font-size:14px;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:var(--brand-2)}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.sec{background:var(--surface-2);color:var(--brand);border:1.5px solid var(--line)}
+.btn.sec:hover{background:var(--surface-3)}
+.btn.danger{background:var(--danger)}
+.btn.sm{padding:5px 11px;font-size:12.5px;border-radius:8px}
+.btn.ghost{background:transparent;color:var(--muted);padding:5px 8px}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;background:var(--surface-2);color:var(--brand);border:1px solid var(--line)}
+.chip.warn{background:var(--bg-fdf1dc,#fdf1dc);color:var(--warn);border-color:var(--bd-f3d9a8,#f3d9a8)}
+.chip.ok{background:var(--bg-e0f4e8,#e0f4e8);color:var(--ok);border-color:var(--bd-b9e3c9,#b9e3c9)}
+.alert{padding:10px 14px;border-radius:10px;font-size:13.5px;margin-bottom:12px;font-weight:500}
+.alert.info{background:var(--bg-e8f0fd,#e8f0fd);color:var(--fg-1e40af,#1e40af);border:1px solid var(--bd-c3d4fa,#c3d4fa)}
+.alert.ok{background:var(--bg-e0f4e8,#e0f4e8);color:var(--fg-17693b,#17693b);border:1px solid var(--bd-b9e3c9,#b9e3c9)}
+.alert.err{background:var(--bg-fbe4e1,#fbe4e1);color:var(--fg-9b2c21,#9b2c21);border:1px solid var(--bd-f2c1bb,#f2c1bb)}
+.empty{color:var(--muted);text-align:center;padding:30px 10px}
+.circ-card{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;margin-bottom:9px;cursor:pointer;background:var(--bg-ffffff,#fff)}
+.circ-card:hover{border-color:var(--brand);background:var(--surface-2)}
+.circ-card .nb{width:34px;height:34px;border-radius:9px;background:var(--brand-l);color:var(--brand-2);display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0}
+.circ-card .info{flex:1;min-width:0}
+.circ-card .ttl{font-weight:700;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.circ-card .meta{color:var(--muted);font-size:12px;margin-top:2px}
+.sig-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;margin-bottom:6px}
+.sig-row.bad{background:var(--red-bg)}
+.sig-row.good{background:var(--green-bg)}
+.sig-row .nm{flex:1;font-weight:600}
+.sig-row img{height:34px;border-radius:4px;background:var(--bg-ffffff,#fff)}
+.modal-ov{position:fixed;inset:0;background:rgba(10,30,30,.45);z-index:100;display:flex;align-items:center;justify-content:center;padding:14px;overflow:auto}
+.modal{background:var(--bg-ffffff,#fff);border-radius:16px;max-width:620px;width:100%;max-height:90vh;overflow:auto;padding:20px 22px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal h2{margin:0 0 12px;font-size:18px}
+.modal-actions{display:flex;gap:8px;justify-content:flex-start;margin-top:16px;flex-wrap:wrap}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(30px);background:var(--bg-1c2b30,#1c2b30);color:var(--fg-ffffff,#fff);padding:10px 20px;border-radius:12px;font-weight:600;opacity:0;transition:.25s;z-index:200;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.pagewrap{display:flex;gap:10px;overflow:auto;padding:4px 0}
+.pagewrap img{max-height:420px;border:1px solid var(--line);border-radius:8px;background:var(--bg-ffffff,#fff)}
+.recip-pick{max-height:280px;overflow:auto;border:1.5px solid var(--line);border-radius:10px;padding:8px}
+.recip-pick label{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:7px;cursor:pointer}
+.recip-pick label:hover{background:var(--surface-2)}
+.sigpad-wrap{text-align:center}
+#sigCanvas{border:2px dashed var(--line);border-radius:10px;background:var(--bg-ffffff,#fff);touch-action:none;max-width:100%}
+.switch{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:13px;cursor:pointer}
+.switch input{width:18px;height:18px}
+/* ===== الطباعة ===== */
+#printArea{display:none}
+@media print{
+  @page{size:A4 portrait;margin:10mm}
+  body{background:var(--bg-ffffff,#fff)}
+  body > *:not(#printArea){display:none !important}
+  #printArea{display:block}
+  .psheet{font-family:'Tajawal',Tahoma,sans-serif;direction:rtl}
+  .phead{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid var(--bd-333333,#333);padding-bottom:8px;margin-bottom:10px}
+  .phead h2{margin:0;font-size:17px}
+  .phead .pmeta{font-size:11.5px;line-height:1.8;text-align:left}
+  .pcols{display:flex;gap:14px}
+  .pcols > div{flex:1}
+  .psheet table{border-collapse:collapse;width:100%;font-size:11.5px}
+  .psheet th,.psheet td{border:1px solid var(--bd-333333,#333);padding:4px 6px;text-align:center}
+  .psheet th{background:var(--bg-eeeeee,#eee)}
+  .psheet td.nm{text-align:right}
+  .psheet td.sg{height:30px}
+  .psheet td.sg img{max-height:26px;max-width:100%}
+  .pfoot{margin-top:14px;font-size:12px;text-align:center;color:var(--fg-333333,#333)}
+}
+</style>
+<script src="nav-back.js?v=2026-10-28.1" defer></script>
+</head>
+<body>
+<div id="bootView" class="boot"><span class="spin"></span><div id="bootMsg">جارٍ التحميل…</div></div>
+
+<div id="app" class="hidden">
+  <div class="topbar">
+    <h1>✍️ التعاميم والمساءلات</h1>
+    <span class="tb-badge" id="tbSchool">—</span>
+    <span class="tb-spacer"></span>
+    <button class="tb-btn" id="tbBack">→ الرئيسية</button>
+  </div>
+  <main id="main"></main>
+</div>
+
+<div id="modalRoot"></div>
+<div id="toast" class="toast"></div>
+<div id="printArea"></div>
+
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-auth-compat.js"></script>
+<script src="users-api.js"></script>
+<script src="form-header.js?v=2026-10-15.3"></script>
+<script src="staff-docs.js?v=2026-10-20.1"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+'use strict';
+/* =========================================================================
+   التوقيع على التعاميم — الأدوات الإدارية
+   خصوصية كاملة للمدرسة: لا صلاحية تلقائية لأدمن النظام هنا إطلاقًا (بطلب صريح، خلاف باقي الأدوات)
+   البيانات بمجموعة مستقلة:
+     circulars/{sid}                         عدّاد الترقيم (nextNumber)
+     circulars/{sid}/items/{cid}              بيانات التعميم (العنوان، الإلزامية، المستلمون...)
+     circulars/{sid}/items/{cid}/pages/{n}    صفحات الملف المرفق (صورة base64 لكل صفحة، حتى 4)
+     circulars/{sid}/items/{cid}/signatures/{uid}   توقيع كل مستلم
+   ========================================================================= */
+const firebaseConfig = window.FB_CONFIG;
+// لا نفترض نجاح تحميل pdf.js من الـCDN دايمًا — لو فشل أو تأخر، لا نكسر بقية الأداة (رفع الصور يبقى يشتغل، وفقط PDF يتعطل برسالة واضحة)
+try{ pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"; }catch(e){}
+const MAX_PAGES = 4;
+let db = null;
+
+/* ---------- أدوات عامة ---------- */
+const $ = s=>document.querySelector(s);
+const $$ = s=>[...document.querySelectorAll(s)];
+const esc = s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let toastT;
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2600); }
+function modal(html, cls){
+  const root=$('#modalRoot');
+  root.innerHTML=`<div class="modal-ov" id="modalOv"><div class="modal ${cls||''}">${html}</div></div>`;
+  $('#modalOv').addEventListener('mousedown', e=>{ if(e.target.id==='modalOv') closeModal(); });
+}
+function closeModal(){ $('#modalRoot').innerHTML=''; }
+function confirmBox(title, msg, okLabel, danger){
+  return new Promise(res=>{
+    modal(`<h2>${esc(title)}</h2><div style="white-space:pre-line">${esc(msg)}</div>
+      <div class="modal-actions"><button class="btn ${danger?'danger':''}" id="cbOk">${esc(okLabel||'تأكيد')}</button>
+      <button class="btn sec" id="cbNo">إلغاء</button></div>`);
+    $('#cbOk').onclick=()=>{ closeModal(); res(true); };
+    $('#cbNo').onclick=()=>{ closeModal(); res(false); };
+  });
+}
+function fatal(msg){
+  $('#bootView').innerHTML = `<div class="card" style="max-width:460px;text-align:center"><h3>${esc(msg)}</h3>
+    <button class="btn" onclick="location.href='index.html'">العودة للرئيسية</button></div>`;
+}
+function fmtDate(ms){ return ms ? new Date(ms).toLocaleString('ar-SA') : '—'; }
+
+/* =========================================================================
+   الإقلاع: الجلسة، المصادقة، الصلاحيات
+   ========================================================================= */
+const CR = { session:null, sid:null, cid:null, me:null, canManage:false, canEdit:false, roster:{classes:[],students:[]}, staff:[] };
+(function start(){
+  let s=null; try{ s = JSON.parse(localStorage.getItem('cls_session')||'null'); }catch(e){}
+  const params = new URLSearchParams(location.search);
+  const linkSid = params.get('sid'), linkCid = params.get('cid');
+  if(!s || !s.userId){
+    if(linkSid && linkCid){ try{ localStorage.setItem('cls_pending_circular', JSON.stringify({sid:linkSid,cid:linkCid})); }catch(e){} }
+    location.replace('index.html'); return;
+  }
+  if(s.role==='soloTeacher' || s.role==='admin'){ fatal('هذه الأداة خاصة بالمدرسة ولا صلاحية لأدمن النظام أو الحساب الفردي عليها.'); return; }
+  CR.session = s;
+  CR.sid = linkSid || s.schoolId || null;
+  CR.cid = linkCid || null;
+  if(linkSid && s.schoolId && linkSid !== s.schoolId){
+    fatal('هذا الرابط يخص مدرسة مختلفة عن سياقك الحالي. بدّل السياق من الصفحة الرئيسية ثم أعد فتح الرابط.'); return;
+  }
+  if(!CR.sid){ fatal('لا يمكن تحديد المدرسة.'); return; }
+  try{ firebase.initializeApp(firebaseConfig); db = firebase.firestore(); }
+  catch(e){ fatal('تعذّر الاتصال بقاعدة البيانات.'); return; }
+  firebase.auth().onAuthStateChanged(async au=>{
+    if(!au){ try{ localStorage.removeItem('cls_session'); }catch(e){} location.replace('index.html'); return; }
+    try{ await boot(au); }catch(e){ console.error(e); fatal('تعذّر تحميل الأداة: '+(e.message||e)); }
+  });
+})();
+
+async function boot(au){
+  const us = await db.collection('users').doc(CR.session.userId).get();
+  if(!us.exists || us.data().authUid !== au.uid){ await firebase.auth().signOut(); location.replace('index.html'); return; }
+  const u = us.data();
+  if(u.active===false){ fatal('حسابك موقوف.'); return; }
+  CR.me = { id: us.id, name: u.username||CR.session.username||'' };
+  if(u.role==='schoolAdmin'){
+    if(!(u.adminSchools||[]).includes(CR.sid)){ fatal('لا يمكن الوصول لهذه المدرسة.'); return; }
+    CR.me.role='schoolAdmin'; CR.canManage = true; CR.canEdit = true;
+  } else {
+    const ctx = (u.schools||{})[CR.sid];
+    if(!ctx || ctx.active===false){ fatal('ليست لديك صلاحية الوصول لهذه الأداة.'); return; }
+    CR.me.role = ctx.role||'';
+    const p = (ctx.permissions||{})['tools.circulars']||{};
+    CR.canManage = !!p.access; CR.canEdit = !!p.edit;
+  }
+  $('#tbSchool').textContent = CR.sid;
+  try{
+    const sd = await db.collection('schoolData').doc(CR.sid).get();
+    if(sd.exists) $('#tbSchool').textContent = sd.data().name || CR.sid;
+  }catch(e){}
+  $('#tbBack').onclick = ()=>location.href='index.html';
+  $('#bootView').classList.add('hidden');
+  $('#app').classList.remove('hidden');
+  await loadRoster();
+  await loadStaff();
+  if(CR.cid){ await openCircularView(CR.cid); }
+  else if(CR.canManage){ await showManagerList(); }
+  else { await showMyList(); }
+}
+
+async function loadRoster(){
+  try{
+    const snap = await db.collection('schoolData').doc('roster_'+CR.sid).get();
+    const d = snap.exists ? JSON.parse(snap.data().value||'{}') : {};
+    CR.roster.classes = (Array.isArray(d.classes)?d.classes:[]).map(c=>Object.assign({}, c, { code:String(c.code) }));
+  }catch(e){ CR.roster.classes = []; }
+}
+function classLabel(code){
+  const c = CR.roster.classes.find(x=>x.code===String(code));
+  return c ? (c.name+' '+c.code) : String(code);
+}
+async function loadStaff(){
+  const snap = await UsersAPI.listSnap(CR.sid);
+  const list = [];
+  snap.forEach(d=>{
+    const u = d.data();
+    const ctx = (u.schools||{})[CR.sid];
+    if(!ctx || ctx.active===false) return;
+    const classes = Array.isArray(ctx.assignedClasses) ? ctx.assignedClasses.map(String) : [];
+    const tt = Array.isArray(ctx.ttAssignedClasses) ? ctx.ttAssignedClasses.map(String) : [];
+    list.push({ id:d.id, name:u.username||'', role:ctx.role||'', classes:[...new Set([...classes,...tt])] });
+  });
+  list.sort((a,b)=>(a.name||'').localeCompare(b.name||'','ar'));
+  CR.staff = list;
+}
+function staffById(id){ return CR.staff.find(s=>s.id===id); }
+const ROLE_NAMES = { schoolAdmin:'مدير', agent:'وكيل', counselor:'موجه طلابي', assistant:'كادر إداري', teacherAssistant:'مساعد معلم', teacher:'معلم' };
+
+/* =========================================================================
+   لوحة الإدارة: قائمة التعاميم + إنشاء جديد
+   ========================================================================= */
+let MGR_UNSUB = null;
+async function showManagerList(){
+  if(MGR_UNSUB){ MGR_UNSUB(); MGR_UNSUB=null; }
+  $('#main').innerHTML = `
+    <div class="card">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <h3 style="margin:0">تعاميم المدرسة</h3>
+        <button class="btn" id="newCircBtn">+ تعميم جديد</button>
+      </div>
+      <div class="sub" style="margin-top:4px">${CR.canManage ? 'لديك صلاحية إنشاء التعاميم ومتابعة توقيعاتها.' : ''}</div>
+    </div>
+    <div id="circList"></div>
+    <div class="card">
+      <button class="btn sec sm" id="toMyListBtn">عرض تعاميمي الشخصية (إن وُجدت)</button>
+    </div>`;
+  $('#newCircBtn').onclick = openCreateCircularModal;
+  $('#toMyListBtn').onclick = showMyList;
+  MGR_UNSUB = db.collection('circulars').doc(CR.sid).collection('items').orderBy('number','desc')
+    .onSnapshot(snap=>{
+      const items = []; snap.forEach(d=>items.push(Object.assign({id:d.id}, d.data())));
+      renderManagerList(items);
+    }, e=>{ console.error(e); $('#circList').innerHTML = `<div class="alert err">تعذّر تحميل التعاميم: ${esc(e.message)}</div>`; });
+}
+/* (2026-10-14.6) شارة «من الفصل السابق»: للتعميم الصادر في فصل غير الفصل الحالي (التعاميم القديمة بلا فصل لا شارة لها) */
+function prevBadge(c){ const cur=(CR.session&&CR.session.period)||'first'; return (c.period && c.period!==cur) ? ' <span class="chip" style="background:#eef2f1;color:#5b6f76">من الفصل السابق</span>' : ''; }
+function renderManagerList(items){
+  const host = $('#circList'); if(!host) return;
+  if(!items.length){ host.innerHTML = '<div class="card"><div class="empty">لا توجد تعاميم بعد.</div></div>'; return; }
+  host.innerHTML = '<div class="card">' + items.map(c=>`
+    <div class="circ-card" data-id="${esc(c.id)}">
+      <div class="nb">${esc(c.number)}</div>
+      <div class="info">
+        <div class="ttl">${esc(c.title||'(بدون عنوان)')}${prevBadge(c)}</div>
+        <div class="meta">${esc(c.createdByName||'')} · ${esc(fmtDate(c.createdAt))} · ${c.mandatory?'إلزامي':'اختياري'} · ${esc((c.recipients||[]).length)} مستلم</div>
+      </div>
+      <span class="chip" id="prog-${esc(c.id)}">…</span>
+    </div>`).join('') + '</div>';
+  $$('#circList .circ-card').forEach(el=>{
+    el.onclick = ()=>openCircularView(el.dataset.id);
+    loadProgressChip(el.dataset.id);
+  });
+}
+async function loadProgressChip(cid){
+  try{
+    const c = await db.collection('circulars').doc(CR.sid).collection('items').doc(cid).get();
+    if(!c.exists) return;
+    const recips = c.data().recipients||[];
+    const sigs = await db.collection('circulars').doc(CR.sid).collection('items').doc(cid).collection('signatures').get();
+    const el = $('#prog-'+cid); if(!el) return;
+    const n = sigs.size, t = recips.length;
+    el.textContent = `${n}/${t} وقّعوا`;
+    el.className = 'chip ' + (n>=t && t>0 ? 'ok' : 'warn');
+  }catch(e){}
+}
+
+/* ---------- إنشاء تعميم جديد ---------- */
+let NEW_PAGES = [];
+function openCreateCircularModal(){
+  NEW_PAGES = [];
+  modal(`<h2>تعميم جديد</h2>
+    <div class="field"><label>موضوع التعميم (اختياري)</label><input id="ncTitle" placeholder="مثال: تعميم اجتماع نهاية الفصل"></div>
+    <div class="field" style="margin-top:10px"><label>الملف المرفق (صورة أو PDF — حتى ${MAX_PAGES} صفحات)</label>
+      <input type="file" id="ncFile" accept="image/*,application/pdf"></div>
+    <div id="ncPreview" class="pagewrap" style="margin-top:8px"></div>
+    <div class="row" style="margin-top:12px">
+      <label class="switch"><input type="checkbox" id="ncMandatory"> التوقيع إلزامي</label>
+    </div>
+    <div class="field" style="margin-top:10px"><label>المستلمون</label>
+      <div class="row" style="margin-bottom:6px">
+        <button class="btn sec sm" id="ncAll">تحديد الكل</button>
+        <button class="btn sec sm" id="ncNone">إلغاء التحديد</button>
+        <select id="ncByClass" class="sm" style="flex:1;min-width:140px">
+          <option value="">— تحديد حسب الفصل —</option>
+          ${CR.roster.classes.map(c=>`<option value="${esc(c.code)}">${esc(c.name)} ${esc(c.code)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="recip-pick" id="ncRecipPick">
+        ${CR.staff.map(s=>`<label><input type="checkbox" value="${esc(s.id)}"> ${esc(s.name)} <span class="sub">(${esc(ROLE_NAMES[s.role]||s.role)})</span></label>`).join('') || '<div class="empty">لا يوجد مستخدمون بهذه المدرسة.</div>'}
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="ncSave">حفظ ونشر</button>
+      <button class="btn sec" onclick="closeModal()">إلغاء</button>
+    </div>`, 'wide');
+  $('#ncFile').onchange = async (e)=>{
+    const f = e.target.files[0]; if(!f) return;
+    $('#ncPreview').innerHTML = '<div class="sub">جارٍ معالجة الملف…</div>';
+    try{
+      NEW_PAGES = await fileToPages(f);
+      $('#ncPreview').innerHTML = NEW_PAGES.map(p=>`<img src="${p}">`).join('');
+    }catch(err){
+      $('#ncPreview').innerHTML = `<div class="alert err">${esc(err.message)}</div>`; NEW_PAGES = [];
+    }
+  };
+  $('#ncAll').onclick = ()=>$$('#ncRecipPick input[type=checkbox]').forEach(c=>c.checked=true);
+  $('#ncNone').onclick = ()=>$$('#ncRecipPick input[type=checkbox]').forEach(c=>c.checked=false);
+  $('#ncByClass').onchange = (e)=>{
+    const code = e.target.value; if(!code) return;
+    $$('#ncRecipPick input[type=checkbox]').forEach(cb=>{
+      const st = staffById(cb.value);
+      if(st && st.classes.includes(code)) cb.checked = true;
+    });
+    e.target.value = '';
+  };
+  $('#ncSave').onclick = async ()=>{
+    const title = $('#ncTitle').value.trim();
+    const mandatory = $('#ncMandatory').checked;
+    const recipients = $$('#ncRecipPick input[type=checkbox]:checked').map(c=>c.value);
+    if(!NEW_PAGES.length){ toast('أرفق صورة أو ملف التعميم أولًا'); return; }
+    if(!recipients.length){ toast('اختر مستلمًا واحدًا على الأقل'); return; }
+    $('#ncSave').disabled = true; $('#ncSave').textContent = 'جارٍ الحفظ…';
+    try{
+      const cid = await createCircular({ title, mandatory, recipients, pages: NEW_PAGES });
+      closeModal();
+      toast('تم نشر التعميم');
+      openCircularView(cid, true);
+    }catch(e){
+      toast('خطأ: '+e.message); $('#ncSave').disabled=false; $('#ncSave').textContent='حفظ ونشر';
+    }
+  };
+}
+async function fileToPages(file){
+  const pages = [];
+  if(file.type==='application/pdf' || /\.pdf$/i.test(file.name)){
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data:buf }).promise;
+    const n = Math.min(pdf.numPages, MAX_PAGES);
+    if(pdf.numPages > MAX_PAGES) toast(`سيُؤخَذ أول ${MAX_PAGES} صفحات فقط من الملف`);
+    for(let i=1;i<=n;i++){
+      const page = await pdf.getPage(i);
+      const vp0 = page.getViewport({ scale:1 });
+      const scale = 1400/vp0.width;
+      const vp = page.getViewport({ scale });
+      const canvas = document.createElement('canvas');
+      canvas.width = vp.width; canvas.height = vp.height;
+      await page.render({ canvasContext:canvas.getContext('2d'), viewport:vp }).promise;
+      pages.push(canvas.toDataURL('image/jpeg', 0.8));
+    }
+  } else if(file.type.startsWith('image/')){
+    const dataUrl = await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); });
+    const img = await new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=rej; im.src=dataUrl; });
+    const scale = Math.min(1, 1400/img.width);
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(img.width*scale); canvas.height = Math.round(img.height*scale);
+    canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+    pages.push(canvas.toDataURL('image/jpeg', 0.85));
+  } else {
+    throw new Error('صيغة غير مدعومة — يُقبل صور (JPG/PNG) أو PDF فقط.');
+  }
+  return pages;
+}
+async function createCircular({title, mandatory, recipients, pages}){
+  const counterRef = db.collection('circulars').doc(CR.sid);
+  const itemRef = db.collection('circulars').doc(CR.sid).collection('items').doc();
+  await db.runTransaction(async tx=>{
+    const snap = await tx.get(counterRef);
+    const next = snap.exists ? (snap.data().nextNumber||1) : 1;
+    tx.set(counterRef, { nextNumber: next+1 }, { merge:true });
+    tx.set(itemRef, {
+      number: next, title: title||'', mandatory: !!mandatory,
+      recipients, pageCount: pages.length,
+      createdBy: CR.me.id, createdByName: CR.me.name, createdAt: Date.now(),
+      period: (CR.session && CR.session.period) || 'first'   // (2026-10-14.6) فصل الإصدار: لشارة «من الفصل السابق»
+    });
+  });
+  await Promise.all(pages.map((dataUrl,i)=> itemRef.collection('pages').doc(String(i)).set({ dataUrl, index:i })));
+  return itemRef.id;
+}
+
+/* =========================================================================
+   تعاميمي (للمستخدم العادي بلا صلاحية إدارة)
+   ========================================================================= */
+const EDU_KEYLAB = { queue:'الطابور', wait:'الانتظار', cls:'حضور الحصص', sup:'الإشراف', duty:'المناوبة', early:'الانصراف مبكرًا دون استئذان', prep:'تحضير الدرس' };
+/* التنبيه الخطي / التعهد الخطي (١) و(٢) / لفت النظر (وكيل الشؤون المدرسية) + المساءلات التعليمية بعد اعتماد المدير */
+async function renderMyStaffDocs(){
+  const host = $('#myStaffDocs'); if(!host) return;
+  const col = db.collection('staffDocs').doc(CR.sid).collection('items');
+  const logCol = db.collection('eduLog').doc(CR.sid).collection('items');
+  let docs = [];
+  try{ const sn = await col.where('empId','==',CR.me.id).get(); sn.forEach(d=>docs.push(Object.assign({id:d.id, src:'staff'}, d.data()))); }
+  catch(e){ console.warn(e); }
+  /* المساءلات التعليمية التي اعتمدها المدير (تصل المعلم من تاريخ وصولها) */
+  try{
+    const sn = await logCol.where('empId','==',CR.me.id).get();
+    sn.forEach(d=>{ const x = d.data(); if(x.type!=='acc' || x.status!=='sent' || (x.visibleFrom||0) > Date.now()) return;
+      docs.push(Object.assign({}, x, { id:d.id, src:'edu', title:'مساءلة: '+(EDU_KEYLAB[x.key]||x.key), needSign:true, status:x.sign==='signed'?'signed':'sent', createdAt:x.approvedAt||x.createdAt })); });
+  }catch(e){ console.warn(e); }
+  if(!docs.length){ host.innerHTML=''; return; }
+  docs.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  host.innerHTML = '<div class="card"><h3 style="margin:0 0 6px">المساءلات الواردة إليّ</h3><div class="sub" style="margin-bottom:8px">التنبيه الخطي والتعهد الخطي ولفت النظر.</div>'
+    + docs.map(d=>{
+        const signed = d.status==='signed';
+        const need = d.needSign ? 'بانتظار توقيعك' : 'بانتظار تأكيد اطلاعك';
+        return '<div class="circ-card" data-sd="'+esc(d.id)+'"><div class="info"><div class="ttl">'+esc(d.title||'')+'</div><div class="meta">'+esc(d.dateText||'')+(d.minutes!=null?' · '+esc(String(d.minutes))+' دقيقة':'')+'</div></div>'
+        + '<span class="chip '+(signed?'ok':'warn')+'">'+(signed?(d.needSign?'تم التوقيع':'تم تأكيد الاطلاع'):need)+'</span></div>';
+      }).join('')
+    + '<div id="sdView"></div></div>';
+  host.querySelectorAll('[data-sd]').forEach(el=> el.onclick = ()=>openMyStaffDoc(docs.find(x=>x.id===el.dataset.sd), col, logCol));
+}
+async function openMyStaffDoc(d, col, logCol){
+  if(!d) return;
+  let c = {}; try{ c = await FormHdr.resolve({db, session:CR.session, period:CR.session&&CR.session.period}); }catch(e){}
+  const v = $('#sdView');
+  v.innerHTML = '<div style="margin-top:12px;border-top:1px solid var(--line);padding-top:12px"><div id="sdDoc"></div><div id="sdPad"></div><div id="sdAct" style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"></div></div>';
+  const edu = d.src==='edu';
+  const eduText = edu ? 'المكرم الأستاذ / '+d.empName+' حفظه الله\nالسلام عليكم ورحمة الله وبركاته\n\nمساءلة بشأن «'+(EDU_KEYLAB[d.key]||d.key)+'» في يوم '+d.dateText+':\n'+d.detail+'.\n'+(d.extra?'\n'+d.extra+'\n':'')+'\nنأمل إفادتنا بما لديكم خلال المدة المحددة، وتقبلوا خالص التحية.\nوكيل الشؤون التعليمية' : '';
+  const eduBody = edu ? '<pre style="white-space:pre-wrap;font:inherit;line-height:2;margin:0">'+esc(eduText)+'</pre>'+(d.signature?'<div style="margin-top:12px">توقيع المعلم:<br><img src="'+d.signature+'" alt="" style="max-height:80px"></div>':'') : '';
+  $('#sdDoc').innerHTML = edu ? eduBody : StaffDocs.html(d, c);
+  const act = $('#sdAct');
+  const tail = '<button class="btn sec sm" id="sdPrint">طباعة</button><button class="btn sec sm" id="sdClose">إغلاق</button>';
+  act.innerHTML = d.status==='sent'
+    ? (d.needSign ? '<button class="btn sm" id="sdSign">أوقّع بإصبعي</button>' : '<button class="btn sm" id="sdAck">أؤكد اطلاعي</button>') + tail
+    : tail;
+  const done = async patch=>{
+    try{
+      if(edu) await logCol.doc(d.id).update(Object.assign({sign:'signed', signedAt:Date.now()}, patch));
+      else await col.doc(d.id).update(Object.assign({status:'signed', signedAt:Date.now()}, patch));
+      await renderMyStaffDocs();
+    }
+    catch(e){ console.error(e); alert('تعذّر الحفظ: '+(e.message||e)); }
+  };
+  if($('#sdSign')) $('#sdSign').onclick = ()=>{ act.innerHTML=''; StaffDocs.signPad($('#sdPad'), img=>done({signature:img}), ()=>openMyStaffDoc(d, col, logCol)); };
+  if($('#sdAck')) $('#sdAck').onclick = ()=>done({});
+  $('#sdPrint').onclick = ()=>{ if(!edu) return StaffDocs.print(d, c); const w = window.open('', '_blank'); if(!w) return; w.document.open(); w.document.write(FormHdr.doc({ title:d.title, formTitle:d.title, ctx:c||{}, body:eduBody, margin:'10mm' })); w.document.close(); };
+  $('#sdClose').onclick = ()=>{ v.innerHTML=''; };
+}
+
+async function showMyList(){
+  if(MGR_UNSUB){ MGR_UNSUB(); MGR_UNSUB=null; }
+  $('#main').innerHTML = `<div id="myStaffDocs"></div><div class="card"><h3 style="margin:0">تعاميمي</h3><div class="sub">التعاميم التي وصلتك وتحتاج توقيعك أو اطّلاعك.</div></div><div id="myList"></div>`;
+  renderMyStaffDocs();;
+  try{
+    const snap = await db.collection('circulars').doc(CR.sid).collection('items').where('recipients','array-contains', CR.me.id).get();
+    const items = []; snap.forEach(d=>items.push(Object.assign({id:d.id}, d.data())));
+    items.sort((a,b)=>(b.number||0)-(a.number||0));
+    const host = $('#myList');
+    if(!items.length){ host.innerHTML = '<div class="card"><div class="empty">لا توجد تعاميم موجّهة إليك حاليًا.</div></div>'; return; }
+    const rows = await Promise.all(items.map(async c=>{
+      const sig = await db.collection('circulars').doc(CR.sid).collection('items').doc(c.id).collection('signatures').doc(CR.me.id).get();
+      return { c, signed: sig.exists };
+    }));
+    host.innerHTML = '<div class="card">' + rows.map(({c,signed})=>`
+      <div class="circ-card" data-id="${esc(c.id)}">
+        <div class="nb">${esc(c.number)}</div>
+        <div class="info">
+          <div class="ttl">${esc(c.title||'(بدون عنوان)')}${prevBadge(c)}</div>
+          <div class="meta">${esc(fmtDate(c.createdAt))} · ${c.mandatory?'إلزامي':'اختياري'}</div>
+        </div>
+        <span class="chip ${signed?'ok':'warn'}">${signed?'تم التوقيع':'بانتظار توقيعك'}</span>
+      </div>`).join('') + '</div>';
+    $$('#myList .circ-card').forEach(el=> el.onclick = ()=>openCircularView(el.dataset.id));
+  }catch(e){ $('#myList').innerHTML = `<div class="alert err">تعذّر التحميل: ${esc(e.message)}</div>`; }
+}
+
+/* =========================================================================
+   عرض تعميم واحد — الصفحات، التوقيع، جدول المتابعة (للمدير)، المشاركة، الطباعة
+   ========================================================================= */
+let VIEW_UNSUB = null;
+/* محضر اجتماع لجنة التوجيه (يصدره وكيل الشؤون الطلابية): يُعرض نصًا للاطّلاع والتوقيع، ولا يُطبع إلا من صفحة الوكيل بعد اعتماد المدير */
+function minutesHtml(m, c){
+  const A = n=>String(n).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);
+  const ol = L=>'<ol style="margin:4px 0 12px;padding-right:24px">'+(L||[]).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol>';
+  const mem = (m.members||[]).filter(x=>x.present).map((x,i)=>'<tr><td>'+A(i+1)+'</td><td>'+esc(x.name)+'</td><td>'+esc(x.role)+'</td></tr>').join('');
+  return '<div class="sub" style="margin-top:10px">'+esc(m.school||'')+' — '+esc(m.eduDept||'')+'</div>'+
+    '<h4 style="margin:10px 0">محضر اجتماع لجنة التوجيه والإرشاد بالمدرسة</h4>'+
+    '<div class="sub">'+esc(m.dayName||'')+' '+A(esc(m.dateH||''))+' هـ'+(m.place?' — المكان: '+esc(m.place):'')+' — الحالة: '+esc(m.caseText||'')+'</div>'+
+    '<b>نقاط النقاش خلال الاجتماع:</b>'+ol(m.points)+'<b>التوصيات:</b>'+ol(m.recs)+
+    '<b>الأعضاء الحاضرون:</b><table style="width:100%;border-collapse:collapse;margin-top:6px" border="1" cellpadding="6"><tr><th>م</th><th>الاسم</th><th>عمله في اللجنة</th></tr>'+mem+'</table>'+
+    (c && c.approvedAt?'<div class="alert ok" style="margin-top:10px">اعتمد المدير هذا المحضر.</div>':'');
+}
+/* حصر الحالات الصحية المزمنة (يعتمده المدير من «التقارير والاعتمادات»): الاسم والحالة والإجراء فقط، والتوقيع إلزامي */
+function healthHtml(m, c){
+  const A = n=>String(n).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);
+  const rows = (m.rows||[]).map((x,i)=>'<tr><td>'+A(i+1)+'</td><td>'+esc(x.name)+'</td><td>'+esc(x.cond||'')+'</td><td>'+esc(x.proc||'')+'</td></tr>').join('');
+  return '<div class="sub" style="margin-top:10px">'+esc(m.school||'')+'</div>'+
+    '<h4 style="margin:10px 0">حصر الحالات الصحية المزمنة للطلاب</h4>'+
+    '<div class="sub">'+esc(m.termText||'')+'</div>'+
+    '<table style="width:100%;border-collapse:collapse;margin-top:6px" border="1" cellpadding="6"><tr><th>م</th><th>الاسم</th><th>الحالة</th><th>الإجراء</th></tr>'+rows+'</table>'+
+    '<div class="alert ok" style="margin-top:10px">اعتمد المدير هذا الحصر. لا تُتداول بياناته خارج المدرسة، والتوقيع على التعميم إلزامي.</div>';
+}
+/* قرار تشكيل لجنة التوجيه والإرشاد (يصدره المدير بعد اعتماده من وكيل الشؤون الطلابية): يُعرض نصًا للاطّلاع والتوقيع الإلزامي */
+function formationHtml(m, c){
+  const A = n=>String(n).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);
+  const mem = (m.members||[]).map((x,i)=>'<tr><td>'+A(i+1)+'</td><td>'+esc(x.name)+'</td><td>'+esc(x.job||'')+'</td><td>'+(x.job==='الموجه الطلابي'?'مقررًا':'عضوًا')+'</td></tr>').join('');
+  return '<div class="sub" style="margin-top:10px">'+esc(m.school||'')+(m.eduDept?' — '+esc(m.eduDept):'')+'</div>'+
+    '<h4 style="margin:10px 0">قرار تشكيل لجنة التوجيه والإرشاد</h4>'+
+    '<div class="sub">رقم القرار: '+A(esc(m.decNo||''))+' — التاريخ: '+A(esc(m.dateH||''))+' هـ</div>'+
+    '<p style="line-height:2">بناءً على ما ورد في الدليل الإجرائي لقواعد السلوك والمواظبة، ولتحقيق بيئة مدرسية آمنة، تقرر تشكيل لجنة التوجيه والإرشاد بالمدرسة على النحو الآتي:</p>'+
+    '<div><b>رئيس اللجنة:</b> '+esc((m.president||{}).name||'')+'</div>'+
+    '<table style="width:100%;border-collapse:collapse;margin-top:6px" border="1" cellpadding="6"><tr><th>م</th><th>الاسم</th><th>الصفة</th><th>العمل في اللجنة</th></tr>'+mem+'</table>'+
+    '<div class="alert ok" style="margin-top:10px">اعتمد المدير هذا القرار، والتوقيع على التعميم إلزامي للرئيس والأعضاء.</div>';
+}
+async function openCircularView(cid, skipHistory){
+  if(VIEW_UNSUB){ VIEW_UNSUB(); VIEW_UNSUB=null; }
+  CR.cid = cid;
+  const itemRef = db.collection('circulars').doc(CR.sid).collection('items').doc(cid);
+  const snap = await itemRef.get();
+  if(!snap.exists){ $('#main').innerHTML = '<div class="card"><div class="alert err">هذا التعميم غير موجود أو حُذف.</div></div>'; return; }
+  const c = Object.assign({ id:cid }, snap.data());
+  const isRecipient = (c.recipients||[]).includes(CR.me.id);
+  if(!CR.canManage && !isRecipient){ $('#main').innerHTML = '<div class="card"><div class="alert err">ليست لديك صلاحية الوصول لهذا التعميم.</div></div>'; return; }
+
+  // جدول التعميم الأحدث يُقرأ من النسخة المعتمدة (يحدّثه المدير أو الوكيل عند أي تعديل)
+  if(c.table && c.planId){ try{ const ps = await db.collection('dutyPlans').doc(c.planId).get(); const t = ps.exists && ps.data().pub && (ps.data().pub.tables||{})[c.kind]; if(t) c.table = t; }catch(e){} }
+  let pages = [];
+  if(!c.table && !c.minutes && !c.formation && !c.health){ const pagesSnap = await itemRef.collection('pages').orderBy('index').get(); pages = pagesSnap.docs.map(d=>d.data().dataUrl); }
+
+  let html = `
+    <div class="card">
+      <button class="btn sec sm" id="backBtn">→ رجوع للقائمة</button>
+      <h3 style="margin:10px 0 2px">تعميم رقم ${esc(c.number)}${c.title?' — '+esc(c.title):''}</h3>
+      <div class="sub">${esc(c.createdByName||'')} · ${esc(fmtDate(c.createdAt))} · ${c.mandatory?'<b>التوقيع إلزامي</b>':'التوقيع اختياري'}</div>
+      ${c.table?'<div id="liveTbl" style="margin-top:12px"></div>':(c.minutes?minutesHtml(c.minutes, c):(c.formation?formationHtml(c.formation, c):(c.health?healthHtml(c.health, c):`<div class="pagewrap" style="margin-top:10px">${pages.map(p=>`<img src="${p}">`).join('')}</div>`)))}
+    </div>`;
+
+  if(isRecipient){
+    html += `<div class="card" id="mySignCard"></div>`;
+  }
+  if(CR.canManage){
+    html += `
+      <div class="card">
+        <div class="row" style="justify-content:space-between">
+          <h3 style="margin:0">المشاركة</h3>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button class="btn sec sm" id="copyLinkBtn">📋 نسخ الرابط</button>
+          <button class="btn sec sm" id="copyMsgBtn">💬 نسخ نص الرسالة</button>
+          ${c.table?'':'<button class="btn sec sm" id="printSigBtn">🖨️ طباعة صفحة التوقيعات</button>'}
+          ${c.table?'<button class="btn sec sm" id="printTblBtn">🖨️ طباعة الجدول بالتواقيع</button>':''}
+          ${CR.canEdit?'<button class="btn danger sm" id="delCircBtn">حذف التعميم</button>':''}
+        </div>
+      </div>
+      <div class="card">
+        <h3 style="margin:0 0 10px">متابعة التوقيعات</h3>
+        <div id="sigTable"></div>
+      </div>`;
+  }
+  $('#main').innerHTML = html;
+  $('#backBtn').onclick = ()=>{ CR.cid=null; history.replaceState(null,'',location.pathname+'?sid='+encodeURIComponent(CR.sid)); CR.canManage ? showManagerList() : showMyList(); };
+
+  if(isRecipient) renderMySignCard(c);
+  if(c.table){
+    const host = $('#liveTbl'); CR._drawLive = sigs=>{ if(host) host.innerHTML = liveTableHtml(c, sigs); };
+    if(CR.canManage) CR._drawLive({});
+    else itemRef.collection('signatures').doc(CR.me.id).get().then(d=>{ const o = {}; if(d.exists) o[CR.me.id] = d.data(); CR._drawLive(o); }).catch(()=>CR._drawLive({}));
+  } else CR._drawLive = null;
+  if(CR.canManage){
+    if(c.table && $('#printTblBtn')) $('#printTblBtn').onclick = ()=>printLiveTable(c);
+    $('#copyLinkBtn').onclick = ()=>copyText(circularLink(c.id), 'نُسخ الرابط');
+    $('#copyMsgBtn').onclick = ()=>copyText(circularMessage(c), 'نُسخ نص الرسالة');
+    if($('#printSigBtn')) $('#printSigBtn').onclick = ()=>printSignaturesSheet(c);
+    if(CR.canEdit) $('#delCircBtn').onclick = ()=>deleteCircular(c);
+    VIEW_UNSUB = itemRef.collection('signatures').onSnapshot(snap=>{
+      const sigs = {}; snap.forEach(d=> sigs[d.id]=d.data());
+      CR._lastSigs = sigs;
+      if(CR._drawLive) CR._drawLive(sigs);
+      renderSigTable(c, sigs);
+    });
+  }
+}
+function circularLink(cid){
+  const base = location.origin + location.pathname.replace(/[^/]*$/, '');
+  return base + 'circulars.html?sid=' + encodeURIComponent(CR.sid) + '&cid=' + encodeURIComponent(cid);
+}
+function circularMessage(c){
+  return `تعميم رقم ${c.number}${c.title?' — '+c.title:''}\nالرجاء الاطّلاع${c.mandatory?' والتوقيع':''} عبر الرابط التالي:\n${circularLink(c.id)}`;
+}
+async function copyText(text, okMsg){
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){ await navigator.clipboard.writeText(text); toast(okMsg); return; }
+    throw new Error('no-clipboard');
+  }catch(e){
+    modal(`<h2>انسخ النص يدويًا</h2><textarea style="width:100%;height:120px" readonly>${esc(text)}</textarea>
+      <div class="modal-actions"><button class="btn sec" onclick="closeModal()">إغلاق</button></div>`);
+  }
+}
+async function deleteCircular(c){
+  const ok = await confirmBox('حذف التعميم', 'سيُحذف التعميم وكل توقيعاته نهائيًا. متابعة؟', 'حذف', true);
+  if(!ok) return;
+  try{
+    const itemRef = db.collection('circulars').doc(CR.sid).collection('items').doc(c.id);
+    const [pages, sigs] = await Promise.all([ itemRef.collection('pages').get(), itemRef.collection('signatures').get() ]);
+    const batch = db.batch();
+    pages.forEach(d=>batch.delete(d.ref)); sigs.forEach(d=>batch.delete(d.ref));
+    batch.delete(itemRef);
+    await batch.commit();
+    toast('حُذف التعميم');
+    CR.cid = null; showManagerList();
+  }catch(e){ toast('خطأ: '+e.message); }
+}
+
+/* ---------- بطاقة توقيعي (المستلم) ---------- */
+function renderMySignCard(c){
+  const host = $('#mySignCard'); if(!host) return;
+  db.collection('circulars').doc(CR.sid).collection('items').doc(c.id).collection('signatures').doc(CR.me.id).get().then(sig=>{
+    if(sig.exists){
+      const d = sig.data();
+      host.innerHTML = `<div class="alert ok">✅ تم توقيعك على هذا التعميم بتاريخ ${esc(fmtDate(d.signedAt))}.</div>
+        ${d.image?`<img src="${d.image}" style="height:60px;background:var(--bg-ffffff,#fff);border:1px solid var(--line);border-radius:6px;padding:4px">`:''}`;
+    } else {
+      host.innerHTML = `<div class="alert ${c.mandatory?'err':'info'}">${c.mandatory?'⚠️ هذا التعميم يتطلّب توقيعك.':'يمكنك توقيع الاطّلاع على هذا التعميم.'}</div>
+        <button class="btn" id="goSignBtn">✍️ توقيع</button>`;
+      $('#goSignBtn').onclick = ()=>openSignPad(c);
+    }
+  });
+}
+function openSignPad(c){
+  modal(`<h2>توقيعك</h2>
+    <div class="sigpad-wrap">
+      <canvas id="sigCanvas" width="520" height="220"></canvas><br>
+      <button class="btn sec sm" id="sigClear" style="margin-top:8px">مسح</button>
+    </div>
+    <div class="modal-actions"><button class="btn" id="sigSave">حفظ التوقيع</button><button class="btn sec" onclick="closeModal()">إلغاء</button></div>`);
+  const canvas = $('#sigCanvas'); const ctx = canvas.getContext('2d');
+  ctx.lineWidth = 2.4; ctx.lineCap='round'; ctx.strokeStyle='#15242b';
+  let drawing=false, has=false;
+  function pos(e){
+    const r = canvas.getBoundingClientRect();
+    const p = e.touches ? e.touches[0] : e;
+    return { x:(p.clientX-r.left)*(canvas.width/r.width), y:(p.clientY-r.top)*(canvas.height/r.height) };
+  }
+  function start(e){ drawing=true; has=true; const p=pos(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); e.preventDefault(); }
+  function move(e){ if(!drawing) return; const p=pos(e); ctx.lineTo(p.x,p.y); ctx.stroke(); e.preventDefault(); }
+  function end(){ drawing=false; }
+  canvas.addEventListener('pointerdown', start); canvas.addEventListener('pointermove', move);
+  window.addEventListener('pointerup', end);
+  $('#sigClear').onclick = ()=>{ ctx.clearRect(0,0,canvas.width,canvas.height); has=false; };
+  $('#sigSave').onclick = async ()=>{
+    if(!has){ toast('ارسم توقيعك أولًا'); return; }
+    const image = canvas.toDataURL('image/png');
+    $('#sigSave').disabled = true;
+    try{
+      await db.collection('circulars').doc(CR.sid).collection('items').doc(c.id).collection('signatures').doc(CR.me.id).set({
+        signedAt: Date.now(), image, manual:false, userName: CR.me.name
+      });
+      closeModal(); toast('تم حفظ توقيعك'); renderMySignCard(c);
+    }catch(e){ toast('خطأ: '+e.message); $('#sigSave').disabled=false; }
+  };
+}
+
+/* ---------- جدول المتابعة (المدير) ---------- */
+function renderSigTable(c, sigs){
+  const host = $('#sigTable'); if(!host) return;
+  const recips = c.recipients||[];
+  if(!recips.length){ host.innerHTML = '<div class="empty">لا يوجد مستلمون.</div>'; return; }
+  host.innerHTML = recips.map(uid=>{
+    const st = staffById(uid); const name = st ? st.name : uid;
+    const sig = sigs[uid];
+    if(sig){
+      return `<div class="sig-row good"><div class="nm">${esc(name)}</div>
+        ${sig.image?`<img src="${sig.image}">`:'<span class="chip ok">محدَّد يدويًا</span>'}
+        <span class="sub">${esc(fmtDate(sig.signedAt))}</span></div>`;
+    }
+    return `<div class="sig-row bad"><div class="nm">${esc(name)}</div>
+      <span class="chip warn">لم يوقّع</span>
+      ${CR.canEdit?`<button class="btn sec sm" data-mark="${esc(uid)}">تحديد كموقَّع يدويًا</button>`:''}
+      </div>`;
+  }).join('');
+  if(CR.canEdit){
+    $$('#sigTable [data-mark]').forEach(btn=>{
+      btn.onclick = async ()=>{
+        const uid = btn.dataset.mark; const st = staffById(uid);
+        const ok = await confirmBox('تحديد توقيع يدوي', `تأكيد أن "${st?st.name:uid}" وقّع هذا التعميم (مثلًا على ورقة)، وسيُحتسب موقَّعًا بدون توقيع رقمي.`, 'تأكيد');
+        if(!ok) return;
+        try{
+          await db.collection('circulars').doc(CR.sid).collection('items').doc(c.id).collection('signatures').doc(uid).set({
+            signedAt: Date.now(), image:null, manual:true, byManager:CR.me.id, byManagerName:CR.me.name, userName: st?st.name:uid
+          });
+          toast('حُدِّد كموقَّع');
+        }catch(e){ toast('خطأ: '+e.message); }
+      };
+    });
+  }
+}
+
+/* ---------- الطباعة: صفحة توقيعات بعمودين ---------- */
+/* ---------- جدول التعميم الحيّ (المناوبة / الإشراف اليومي) مع عمود التوقيع ---------- */
+function liveSigCell(c, uid, sigs){
+  if(!(c.recipients||[]).includes(uid)) return '<span style="color:#888">—</span>';
+  const s = sigs[uid];
+  if(s && s.image) return '<img src="'+s.image+'" style="height:30px;max-width:100%;vertical-align:middle">';
+  return s ? '✔' : '';
+}
+function liveTableInner(c, sigs){
+  const t = c.table, isSup = t.kind==='sup', rows = t.rows||[];
+  const head = isSup ? ['اليوم','المشرف','الموقع','ملاحظات','التوقيع'] : ['اليوم','التاريخ','المناوب','التوقيع'];
+  let out = '', i = 0;
+  while(i<rows.length){
+    let j = i; while(j<rows.length && rows[j].day===rows[i].day && (isSup || rows[j].date===rows[i].date)) j++;
+    for(let k=i;k<j;k++){
+      const r = rows[k];
+      out += '<tr>'+(k===i ? '<td rowspan="'+(j-i)+'" class="lt-b">'+esc(r.day)+'</td>'+(isSup?'':'<td rowspan="'+(j-i)+'">'+esc(r.date)+'</td>') : '')
+        + '<td>'+esc(r.name)+'</td>'+(isSup?'<td>'+esc(r.where)+'</td><td></td>':'')+'<td class="lt-s">'+liveSigCell(c, r.uid, sigs)+'</td></tr>';
+    }
+    i = j;
+  }
+  return '<table class="lt"><thead><tr>'+head.map(h=>'<th>'+h+'</th>').join('')+'</tr></thead><tbody>'+out+'</tbody></table>';
+}
+const LT_CSS = '.lt{width:100%;border-collapse:collapse;margin-top:6px}.lt th,.lt td{border:1px solid #222;padding:5px 4px;text-align:center;font-size:12px;height:22px}.lt th{background:#eef4f3}.lt-b{font-weight:800}.lt-s{width:110px}';
+function liveTableHtml(c, sigs){
+  const t = c.table;
+  return '<style>'+FormHdr.css()+LT_CSS+'</style><div style="overflow-x:auto">'+FormHdr.header({ formTitle:t.formTitle, ctx:t.ctx, extra:[['المرحلة', t.stage]] })+liveTableInner(c, sigs)+'</div>';
+}
+function printLiveTable(c){
+  const w = window.open('','_blank'); if(!w){ toast('اسمح بالنوافذ المنبثقة للطباعة'); return; }
+  const t = c.table, sigs = CR._lastSigs || {};
+  const sg = '<div class="fh-sig"><span>وكيل الشؤون التعليمية: '+(esc(t.agent)||'....................')+'</span><span>مدير المدرسة: '+(esc((t.ctx||{}).principal)||'....................')+'</span></div>';
+  w.document.write(FormHdr.doc({ title:t.formTitle, formTitle:t.formTitle, ctx:t.ctx, extra:[['المرحلة', t.stage]], body:liveTableInner(c, sigs)+sg, extraCss:LT_CSS+'.lt tr{page-break-inside:avoid}' }));
+  w.document.close();
+}
+function printSignaturesSheet(c){
+  const sigs = CR._lastSigs || {};
+  const recips = c.recipients||[];
+  const rows = recips.map((uid,i)=>{
+    const st = staffById(uid); const name = st?st.name:uid;
+    const sig = sigs[uid];
+    const sigCell = (sig && sig.image) ? `<img src="${sig.image}">` : '';
+    return { n:i+1, name, sigCell };
+  });
+  const half = Math.ceil(rows.length/2);
+  const colA = rows.slice(0, half), colB = rows.slice(half);
+  const colHtml = (col)=> `<table><thead><tr><th>م</th><th>الاسم</th><th>التوقيع</th></tr></thead><tbody>
+    ${col.map(r=>`<tr><td>${r.n}</td><td class="nm">${esc(r.name)}</td><td class="sg">${r.sigCell}</td></tr>`).join('')}
+    </tbody></table>`;
+  const today = new Date().toLocaleDateString('ar-SA');
+  $('#printArea').innerHTML = `<div class="psheet">
+    <div class="phead">
+      <h2>سجل اطّلاع المستخدمين على التعاميم</h2>
+      <div class="pmeta">المدرسة: ${esc($('#tbSchool').textContent)}<br>التاريخ: ${esc(today)}<br>تعميم رقم: ${esc(c.number)}${c.title?'<br>الموضوع: '+esc(c.title):''}</div>
+    </div>
+    <div class="pcols"><div>${colHtml(colA)}</div><div>${colHtml(colB)}</div></div>
+    <div class="pfoot">التوقيع إقرار بالاطّلاع على التعميم أعلاه، والله الموفّق.</div>
+  </div>`;
+  setTimeout(()=>window.print(), 80);
+}
+</script>
+</body>
+</html>

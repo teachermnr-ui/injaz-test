@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<!-- إصدار: 2026-10-29.1 · الاختبار -->
+<html lang="ar" dir="rtl">
+<head>
+<script src="fb-config.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>أوراقي</title>
+<meta name="theme-color" content="#3f6659">
+<link rel="stylesheet" href="theme.css?v=2026-10-05.1">
+<script src="mn-dialog.js?v=2026-10-06.1"></script>
+<script src="theme.js?v=2026-10-05.1"></script>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --teal:#0f766e; --teal-d:#0b5a54; --teal-l:#e6f2f0;
+    --ink:#15242b; --muted:#5b6f76; --line:#d8e2e0; --paper:#f6f8f7; --white:#fff;
+    --ok:#1f9d55; --bad:#d64545;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Tajawal',sans-serif;background:var(--paper);color:var(--ink);direction:rtl;}
+  header{background:linear-gradient(180deg,var(--teal),var(--teal-d));color:var(--fg-ffffff,#fff);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;}
+  header h1{font-size:17px;margin:0;}
+  main{max-width:640px;margin:0 auto;padding:16px;}
+  .card{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:14px;}
+  .btn{border:none;border-radius:10px;padding:12px 20px;font-family:'Tajawal',sans-serif;font-size:14px;font-weight:700;cursor:pointer;background:var(--teal);color:var(--fg-ffffff,#fff);}
+  .ws-card{background:var(--bg-ffffff,#fff);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+  .ws-card:active{background:var(--paper);}
+  .ws-list-row{background:var(--bg-ffffff,#fff);border-bottom:1px solid var(--line);padding:10px 4px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+  .status-pill{display:inline-block;border-radius:20px;padding:3px 12px;font-size:12px;font-weight:700;}
+  .status-not-started{background:var(--line);color:var(--muted);}
+  .status-in-progress{background:var(--bg-fdf1d8,#fdf1d8);color:var(--fg-97650b,#97650b);}
+  .status-submitted{background:var(--teal-l);color:var(--teal);}
+  .status-corrected{background:var(--bg-e1f5ee,#e1f5ee);color:var(--ok);}
+  .status-ended{background:var(--bg-fdecec,#fdecec);color:var(--bad);}
+</style>
+<script src="nav-back.js?v=2026-10-28.1" defer></script>
+</head>
+<body>
+  <header>
+    <h1>أوراقي</h1>
+    <span style="display:flex;align-items:center;gap:10px;">
+      <span id="studentNameLabel" style="font-size:13px;"></span>
+      <button id="stuLogoutBtn" style="display:none;background:rgba(255,255,255,.18);color:var(--fg-ffffff,#fff);border:none;padding:6px 12px;border-radius:8px;font-family:'Tajawal',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">خروج</button>
+    </span>
+  </header>
+
+  <main>
+    <div id="notLoggedIn" class="card" style="display:none;">
+      <p>لازم تسجّل دخولك الأول.</p>
+      <a href="index.html" class="btn" style="display:inline-block;text-decoration:none;">تسجيل الدخول</a>
+    </div>
+
+    <div id="worksheetsWrap"></div>
+  </main>
+  <p style="text-align:center;font-size:12.5px;margin:12px 0"><a href="privacy.html" style="color:inherit;opacity:.7">سياسة الخصوصية</a> · <a href="delete-account.html" style="color:inherit;opacity:.7">حذف الحساب</a></p>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import {
+      getFirestore, collection, query, where, getDocs, doc, getDoc
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
+
+    /* إعدادات مشروع Firebase الموحّد — نفس مفاتيح worksheets.html/index.html */
+    const firebaseConfig = window.FB_CONFIG;
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    const fns = getFunctions(app);
+    // قواعد Firestore تمنع أي قراءة قبل المصادقة — ننتظر جاهزية الجلسة
+    const authReady = new Promise((resolve)=>{
+      const un = onAuthStateChanged(auth, (u)=>{ un(); resolve(u); });
+    });
+
+    /* جلسة الطالب (حساب بريد مربوط برقم الهوية) */
+    let STU = null;
+    try { STU = JSON.parse(localStorage.getItem('stu_session') || 'null'); } catch (e) { STU = null; }
+
+    (async () => {
+      const au = await authReady;
+      if (!STU || !STU.seat || !STU.googleUid || !au) {
+        localStorage.removeItem("stu_session");
+        document.getElementById("notLoggedIn").style.display = "block";
+        return;
+      }
+      document.getElementById("studentNameLabel").textContent = STU.name || "";
+      document.getElementById("stuLogoutBtn").style.display = "inline-block";
+      loadWorksheets();
+    })();
+
+    document.getElementById("stuLogoutBtn").addEventListener("click", () => {
+      localStorage.removeItem("stu_session");
+      try { auth.signOut(); } catch (e) {}
+      window.location.href = "index.html";
+    });
+
+    const statusLabels = {
+      "not-started": "لم يبدأ",
+      "in-progress": "جاري",
+      "submitted": "مُسلّم",
+      "corrected": "مُصحح",
+      "ended": "منتهي"
+    };
+
+    /* يجلب كل الروسترات التي يظهر فيها رقم هوية الطالب، ويفصل بين:
+       - المعتمدة: مدارس (تلقائية) + معلمون فرديون سبق للطالب تأكيدهم برمز الفصل
+       - المعلّقة: معلمون فرديون أضافوه ولم يؤكدهم بعد (تُعرض كدعوات) */
+    async function resolveMemberships() {
+      // (2026-10-13) البحث في فهرس الطلاب يتم على الخادم: يُرجع فصول هذا الطالب فقط بلا أي رموز دخول
+      const res = await httpsCallable(fns, "studentMemberships")({});
+      const d = (res && res.data) || {};
+      return { approved: d.approved || [], invites: d.invites || [] };
+    }
+
+    /* دعوة من معلم فردي: يؤكدها الطالب بإدخال رمز الفصل المدموج */
+    function renderInvites(invites, wrap) {
+      invites.forEach((inv) => {
+        const box = document.createElement("div");
+        box.className = "card";
+        box.style.cssText = "border:1.5px solid var(--teal);margin-bottom:12px;";
+        box.innerHTML = `
+          <p style="margin:0 0 4px;font-weight:700;font-size:14px;">أضافك المعلم: ${inv.ownerName}</p>
+          <p style="margin:0 0 10px;font-size:13px;color:var(--muted);">الفصول: ${inv.classNames.join("، ")}</p>
+          <p style="margin:0 0 8px;font-size:12px;color:var(--muted);">أدخل رمز الفصل الذي زوّدك به المعلم لعرض أنشطته.</p>
+          <input class="inv-code" placeholder="مثال: T1H1" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:9px;font:inherit;text-align:center;letter-spacing:2px;text-transform:uppercase;">
+          <button class="btn inv-btn" style="margin-top:8px;">تأكيد</button>
+          <p class="inv-msg" style="margin:8px 0 0;font-size:12px;color:var(--bad,var(--fg-c0392b,#c0392b));"></p>
+        `;
+        wrap.appendChild(box);
+        box.querySelector(".inv-btn").addEventListener("click", async () => {
+          const msg = box.querySelector(".inv-msg");
+          const code = box.querySelector(".inv-code").value.trim().toUpperCase();
+          if (!code) { msg.textContent = "أدخل رمز الفصل."; return; }
+          try {
+            // التحقق من الرمز على الخادم (بحدّ للمحاولات)، والخادم هو من يضيف الربط
+            await httpsCallable(fns, "studentConfirmInvite")({ rosterId: String(inv.rosterId), code });
+            loadWorksheets();
+          } catch (e) { msg.textContent = "تعذّر التأكيد: " + e.message; }
+        });
+      });
+    }
+
+    async function loadWorksheets() {
+      const wrap = document.getElementById("worksheetsWrap");
+      wrap.innerHTML = `<p style="font-size:13px;color:var(--muted);">جاري التحميل...</p>`;
+
+      const settingSnap = await getDoc(doc(db, "settings", "display"));
+      const viewMode = settingSnap.exists() ? settingSnap.data().worksheetView : "cards";
+
+      const { approved, invites } = await resolveMemberships();
+
+      // كل أكواد الفصول المعتمدة عبر جميع المعلمين والمدارس
+      const myClassCodes = [...new Set(approved.flatMap(a => a.classCodes.map(String)))];
+
+      wrap.innerHTML = "";
+      if (invites.length) renderInvites(invites, wrap);
+
+      if (!myClassCodes.length) {
+        const p = document.createElement("div");
+        p.className = "card";
+        p.innerHTML = `<p style="font-size:13px;color:var(--muted);">لا توجد أنشطة متاحة لك حالياً.</p>`;
+        wrap.appendChild(p);
+        return;
+      }
+
+      // Firestore يسمح بـ 30 قيمة كحد أقصى في array-contains-any — نقسّم على دفعات
+      const wDocs = [];
+      for (let i = 0; i < myClassCodes.length; i += 30) {
+        const chunk = myClassCodes.slice(i, i + 30);
+        const wq = query(
+          collection(db, "worksheets"),
+          where("status", "==", "published"),
+          where("assignedClassIds", "array-contains-any", chunk)
+        );
+        const s = await getDocs(wq);
+        s.docs.forEach(d => wDocs.push(d));
+      }
+      // إزالة التكرار (نشاط مسند لأكثر من فصل يخص الطالب)
+      const seen = new Set();
+      // ص-١: رموز الفصول قد تتكرر بين المدارس — النشاط يُعرض فقط إن كان من روستر الطالب نفسه (مدرسته أو معلمه الفردي)
+      const belongs = (w) => {
+        const rid = w.schoolId ? String(w.schoolId) : ("solo_" + w.createdBy);
+        const m = approved.find((a) => String(a.rosterId) === rid);
+        return !!m && (w.assignedClassIds || []).some((c) => m.classCodes.map(String).includes(String(c)));
+      };
+      let uniqueDocs = wDocs.filter(d => (seen.has(d.id) ? false : (seen.add(d.id), true))).filter(d => belongs(d.data()));
+      /* (2026-10-14.6) الفصل الدراسي: الطالب لا يرى إلا أنشطة الفصل الحالي لمدرسته (أو لمعلمه الفردي)؛ كل ما سبق من فصل سابق لا يظهر له.
+         الفصل الحالي يأتي من الخادم (currentPeriod) بوقته هو لا بساعة الجهاز، ومع تمديد المدرسة إن وُجد. عند انتهاء العام تُعرض رسالة بدل القائمة. */
+      {
+        const perCache = {};
+        const curP = (sid) => (perCache[sid || "_"] = perCache[sid || "_"] || httpsCallable(fns, "currentPeriod")(sid ? { schoolId: sid } : {}).then(r => r.data || {}).catch(e => ({ err: e })));
+        const keep = [];
+        let closedYear = false;
+        for (const d of uniqueDocs) {
+          const w = d.data();
+          const r = await curP(w.schoolId ? String(w.schoolId) : "");
+          if (r.err) { const dd = r.err && r.err.details; if (dd && dd.yearClosed) { closedYear = true; continue; } keep.push(d); continue; }
+          if (r.closed) { closedYear = true; continue; }
+          if (!r.period || (w.period || "first") === r.period) keep.push(d);
+        }
+        if (closedYear && !keep.length) {
+          const p = document.createElement("div");
+          p.className = "card";
+          p.innerHTML = `<p style="font-size:13px;color:var(--muted);">انتهى العام الدراسي، ولا توجد أنشطة متاحة حاليًا.</p>`;
+          wrap.appendChild(p);
+          return;
+        }
+        uniqueDocs = keep;
+      }
+
+      // تسليماتي: الجديدة بحساب الطالب، والقديمة برقم الهوية إن سمحت بها القواعد
+      const submissionByWorksheet = {};
+      const au = auth.currentUser;
+      if (au) {
+        const s1 = await getDocs(query(collection(db, "submissions"), where("studentUid", "==", au.uid)));
+        s1.docs.forEach((d) => { submissionByWorksheet[d.data().worksheetId] = { id: d.id, ...d.data() }; });
+      }
+      try {
+        const s2 = await getDocs(query(collection(db, "submissions"), where("studentId", "==", String(STU.seat))));
+        s2.docs.forEach((d) => { if (!submissionByWorksheet[d.data().worksheetId]) submissionByWorksheet[d.data().worksheetId] = { id: d.id, ...d.data() }; });
+      } catch (e) { /* الاستعلام القديم غير مسموح — تكفي التسليمات الجديدة */ }
+
+      if (!uniqueDocs.length) {
+        const p = document.createElement("div");
+        p.className = "card";
+        p.innerHTML = `<p style="font-size:13px;color:var(--muted);">لا توجد أنشطة متاحة لك حالياً.</p>`;
+        wrap.appendChild(p);
+        return;
+      }
+
+      // تقسيم: أنشطة لم تُسلَّم بعد (تتجمّع حسب المادة والمعلم) + أنشطة مُسلّمة (قائمة واحدة أسفل الصفحة)
+      const pending = [];
+      const submitted = [];
+      uniqueDocs.forEach((d) => {
+        const w = d.data();
+        const sub = submissionByWorksheet[d.id];
+        let status = sub ? sub.status : "not-started";
+        if (w.stopped && status === "not-started") status = "ended";
+        const item = { id: d.id, w, sub, status };
+        if (status === "submitted" || status === "corrected") submitted.push(item);
+        else pending.push(item);
+      });
+
+      wrap.innerHTML = "";
+
+      function buildCard(item) {
+        const card = document.createElement("div");
+        card.className = viewMode === "list" ? "ws-list-row" : "ws-card";
+        const scoreHtml = item.sub && item.sub.totalScore ? `<span style="font-size:11px;color:var(--teal);font-weight:700;margin-top:2px;">${item.sub.totalScore}</span>` : "";
+        if (viewMode === "list") {
+          card.innerHTML = `
+            <span style="font-size:14px;font-weight:500;">${item.w.title}</span>
+            <span style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+              <span class="status-pill status-${item.status}">${statusLabels[item.status]}</span>
+              ${scoreHtml}
+            </span>
+          `;
+        } else {
+          card.innerHTML = `
+            <div>
+              <p style="margin:0;font-weight:700;font-size:15px;">${item.w.title}</p>
+              <p style="margin:4px 0 0;font-size:12px;color:var(--muted);">${item.w.unit || ""} ${item.w.lesson ? "— " + item.w.lesson : ""}</p>
+            </div>
+            <span style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+              <span class="status-pill status-${item.status}">${statusLabels[item.status]}</span>
+              ${scoreHtml}
+            </span>
+          `;
+        }
+        card.addEventListener("click", () => { window.location.href = `student-solve.html?worksheetId=${item.id}`; });
+        return card;
+      }
+
+      // تجميع الأنشطة الغير مسلّمة حسب "المادة .... اسم المعلم"
+      const groups = {};
+      pending.forEach((item) => {
+        const key = (item.w.subject || "بدون مادة") + " .... " + (item.w.createdByName || "المعلم");
+        (groups[key] = groups[key] || []).push(item);
+      });
+
+      Object.keys(groups).sort().forEach((key) => {
+        const header = document.createElement("div");
+        header.style.cssText = "font-weight:800;font-size:15px;color:var(--teal-d);margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--teal-l);";
+        header.textContent = key;
+        wrap.appendChild(header);
+
+        const listContainer = viewMode === "list" ? document.createElement("div") : null;
+        if (listContainer) {
+          listContainer.style.cssText = "background:var(--bg-ffffff,#fff);border:1px solid var(--line);border-radius:12px;padding:0 12px;";
+          wrap.appendChild(listContainer);
+        }
+        groups[key].forEach((item) => {
+          const card = buildCard(item);
+          (listContainer || wrap).appendChild(card);
+        });
+      });
+
+      // الأنشطة المُسلّمة — قائمة واحدة مجمّعة أسفل الصفحة
+      if (submitted.length) {
+        const header = document.createElement("div");
+        header.style.cssText = "font-weight:800;font-size:15px;color:var(--muted);margin:22px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--line);";
+        header.textContent = "أنشطة تم تسليمها";
+        wrap.appendChild(header);
+
+        const listContainer = viewMode === "list" ? document.createElement("div") : null;
+        if (listContainer) {
+          listContainer.style.cssText = "background:var(--bg-ffffff,#fff);border:1px solid var(--line);border-radius:12px;padding:0 12px;";
+          wrap.appendChild(listContainer);
+        }
+        submitted.forEach((item) => {
+          const card = buildCard(item);
+          (listContainer || wrap).appendChild(card);
+        });
+      }
+    }
+  </script>
+</body>
+</html>

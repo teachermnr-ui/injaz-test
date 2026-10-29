@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<!-- إصدار: 2026-10-29.1 · الاختبار -->
+<!-- [ADMIN-TOOLS] صفحة مستقلة بالكامل — تُحذف عند إزالة الأدوات الإدارية (انظر ADMIN-TOOLS-LOG.md) -->
+<html lang="ar" dir="rtl">
+<head>
+<script src="fb-config.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>الإرشاد الصحي</title>
+<meta name="theme-color" content="#0f766e">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<script src="nav-back.js?v=2026-10-28.1" defer></script>
+</head>
+<body>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-auth-compat.js"></script>
+<script src="sem-guard.js?v=2026-10-14.5"></script>
+<script src="dash-base.js?v=2026-10-15.1"></script>
+<script>
+Dash.boot({
+  title:'الإرشاد الصحي',
+  allow:(u,ctx,sid,isSA)=> (isSA || (((ctx&&ctx.permissions)||{})['tools.health']||{}).access===true || (((ctx&&ctx.permissions)||{})['tools.health']||{}).edit===true) ? true : 'ليست لديك صلاحية «الإرشاد الصحي».',
+  render: async env=>{ env.main.innerHTML = Dash.soon('🩺','الإرشاد الصحي'); }
+});
+</script>
+</body>
+</html>

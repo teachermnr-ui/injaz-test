@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<!-- إصدار: 2026-10-29.1 · الاختبار -->
+<!-- [ADMIN-TOOLS] صفحة مستقلة — «الأنشطة اللاصفية» للمعلم: تكاليفي، أنشطة متاحة، أنشطتي المنفذة -->
+<html lang="ar" dir="rtl">
+<head>
+<script src="fb-config.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>الأنشطة اللاصفية</title>
+<meta name="theme-color" content="#0f766e">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<script src="nav-back.js?v=2026-10-28.1" defer></script>
+</head>
+<body>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-storage-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="mn-dialog.js?v=2026-10-06.1"></script>
+<script src="users-api.js"></script>
+<script src="form-header.js?v=2026-10-16.4"></script>
+<script src="sem-guard.js?v=2026-10-14.5"></script>
+<script src="dash-base.js?v=2026-10-15.1"></script>
+<script src="activity-core.js?v=2026-10-17.5"></script>
+<script>
+(function(){
+const { esc, arN:N, $ } = ACT;
+const S = { env:null, tab:'mine', assigns:[], opens:[], mine:[], marks:[], joined:[], clubs:[], staff:null, roster:null };
+const isExpired = o=>o.deadlineMs ? o.deadlineMs < Date.now() : (o.deadline ? o.deadline < ACT.today() : false);
+const isOver = o=>isExpired(o) || o.status!=='open';     // انتهى أو أغلقه الرائد
+const chip = (t,c)=>'<span class="dh-chip '+(c||'')+'">'+esc(t)+'</span>';
+
+async function load(){
+  const e = S.env, uid = e.me.id, base = c=>e.db.collection(c).where('schoolId','==',e.sid).where('period','==',e.period);
+  const [a,o,m,mk] = await Promise.all([
+    base('actAssignments').where('teacherId','==',uid).where('status','==','approved').get(),
+    base('actOpenEvents').get(),
+    base('activityEvents').where('documentedBy','==',uid).get(),
+    base('actOpenMarks').get()
+  ]);
+  S.marks = mk.docs.map(d=>Object.assign({id:d.id},d.data()));
+  S.assigns = a.docs.map(d=>Object.assign({id:d.id},d.data()));
+  S.opens = o.docs.map(d=>Object.assign({id:d.id},d.data())).sort((x,y)=>(y.ts||0)-(x.ts||0));
+  S.mine = m.docs.map(d=>Object.assign({id:d.id},d.data())).sort((x,y)=>(y.date||'').localeCompare(x.date||''));
+  /* أندية فيها بنود أنا مسؤول عنها (تصلني مباشرة من رائد النشاط دون اعتماد قائد) */
+  S.clubs = [];
+  try{ const cs = await base('activityClubs').where('respUids','array-contains',uid).get(); S.clubs = cs.docs.map(d=>Object.assign({id:d.id},d.data())).filter(c=>c.status!=='inactive'); }catch(err){ console.warn('clubs', err); }
+  // توثيقات اختارني فيها زملائي مشاركًا (مدعو أو مؤكِّد)
+  const mp = S.marks.filter(x=>x.uid===uid && x.role==='participant' && (x.confirm==='invited'||x.confirm==='confirmed') && x.evId);
+  S.joined = [];
+  await Promise.all(mp.map(async x=>{ try{ const d = await e.db.collection('activityEvents').doc(x.evId).get(); if(d.exists) S.joined.push(Object.assign({id:d.id},d.data())); }catch(err){ console.warn('joined', err); } }));
+}
+const myMark = o=>S.marks.find(m=>m.id===o.id+'_'+S.env.me.id);
+const partMark = o=>{ const m = myMark(o); return (m && m.role==='participant' && (m.confirm==='invited'||m.confirm==='confirmed')) ? m : null; };
+const evOf = (a,i)=>S.mine.find(x=>x.assignmentId===a.id && x.programIdx===i);
+/* تاريخ انتهاء برنامج التكليف (endDate)؛ التكليفات القديمة ذات الموعد النصي لا تنتهي */
+const progExpired = p=>!!(p && p.endDate && p.endDate < ACT.today());
+const progNeedsDoc = (a,i)=>{ const ev = evOf(a,i); return ev ? ev.approvalStatus==='returned' : !progExpired((a.programs||[])[i]); };
+const stepBar = (ev)=>{
+  const s2 = !!ev, s3 = ev && ev.approvalStatus==='approved';
+  return '<div class="ac-steps"><b class="on">● القائد اعتمد</b>—<b class="'+(s2?'on':'')+'">'+(s2?'●':'○')+' المعلم وثّق</b>—<b class="'+(s3?'on':'')+'">'+(s3?'●':'○')+' رائد النشاط اعتمد</b></div>';
+};
+function stateLine(ev){
+  if(!ev) return '';
+  if(ev.approvalStatus==='approved') return '<div class="dh-sub">✅ تم التوثيق والاعتماد</div>';
+  if(ev.approvalStatus==='returned') return '<div style="color:#b42318;font-weight:700">↩ أعاده رائد النشاط للتعديل'+(ev.returnNote?': '+esc(ev.returnNote):'')+'</div>';
+  return '<div class="dh-sub">⏳ بانتظار اعتماد رائد النشاط</div>';
+}
+/* بنود خطط الأندية المسندة إليّ */
+const clubItems = ()=>{ const out = []; S.clubs.forEach(c=>(c.plan||[]).forEach(it=>{ if(it.responsibleId===S.env.me.id && it.status!=='cancelled') out.push({ c, it }); })); return out.sort((a,b)=>(a.it.expectedDate||'9').localeCompare(b.it.expectedDate||'9')); };
+const evOfClub = (c,it)=>S.mine.find(x=>x.sourceType==='club' && x.clubId===c.id && x.planItemId===it.id);
+const clubNeedsDoc = ({c,it})=>{ const ev = evOfClub(c,it); return it.status==='planned' && (!ev || ev.approvalStatus==='returned'); };
+function vClubItems(){
+  return clubItems().filter(({c,it})=>{ const ev = evOfClub(c,it); return !(ev && ev.approvalStatus==='approved'); }).map(({c,it})=>{
+    const ev = evOfClub(c,it), others = it.status==='executed' && !ev;
+    const steps = '<div class="ac-steps"><b class="on">● كلّفك رائد النشاط</b>—<b class="'+(ev?'on':'')+'">'+(ev?'●':'○')+' وثّقت</b>—<b class="">○ اعتماد رائد النشاط</b></div>';
+    return '<div class="dh-card"><div class="ac-row sb"><b>'+esc(it.title)+'</b><span>'+chip('فعالية نادٍ')+' '+chip(c.name||'')+'</span></div>'
+      +'<div class="dh-sub">'+(it.expectedDate?'التاريخ المتوقع: '+ACT.hijri(it.expectedDate):'')+'</div>'
+      +(others ? '<div class="dh-sub" style="margin-top:6px">✔ نُفِّذ من رائد النشاط ولا يحتاج توثيقًا منك.</div>' : steps+stateLine(ev))
+      +'<div class="ac-row" style="margin-top:6px">'
+      +(clubNeedsDoc({c,it})?'<button class="ac-btn" data-a="doc-club" data-id="'+c.id+'" data-pid="'+it.id+'">📝 '+(ev?'تعديل التوثيق وإعادة الإرسال':'توثيق التنفيذ')+'</button>':'')
+      +(ev?'<button class="ac-btn sec" data-a="ev-print" data-id="'+ev.id+'">معاينة النموذج</button>':'')+'</div></div>';
+  }).join('');
+}
+function vMine(){
+  const cl = vClubItems();
+  if(!S.assigns.length) return cl || '<div class="dh-card dh-empty">لا توجد تكليفات معتمدة لك حاليًا.</div>';
+  return cl + S.assigns.map(a=>(a.programs||[]).map((p,i)=>{
+    const ev = evOf(a,i), expd = !ev && progExpired(p), canDoc = progNeedsDoc(a,i);
+    return '<div class="dh-card"><div class="ac-row sb"><b>'+esc(p.name)+'</b>'+chip(a.clubName||'')+'</div>'
+      +'<div class="dh-sub">'+[p.target?'الفئة: '+esc(p.target):'', p.endDate?'تاريخ انتهاء التكليف: '+ACT.hijri(p.endDate):(p.timeline?'الموعد: '+esc(p.timeline):'')].filter(Boolean).join(' — ')+'</div>'
+      +(expd ? '<div style="color:#b42318;font-weight:700;margin-top:6px">⛔ منتهي — انتهى تاريخ التكليف قبل توثيقه</div>' : stepBar(ev)+stateLine(ev))
+      +'<div class="ac-row" style="margin-top:6px">'
+      +(canDoc?'<button class="ac-btn" data-a="doc-asg" data-id="'+a.id+'" data-i="'+i+'">📝 '+(ev?'تعديل التوثيق وإعادة الإرسال':'توثيق التنفيذ')+'</button>':'')
+      +(ev?'<button class="ac-btn sec" data-a="ev-print" data-id="'+ev.id+'">معاينة النموذج</button>':'')+'</div></div>';
+  }).join('')).join('');
+}
+function markState(m){ return m.state==='approved'?'معتمد':(m.state==='returned'?'أُعيد للتعديل':'بانتظار الاعتماد'); }
+function vOpen(){
+  if(!S.opens.length) return '<div class="dh-card dh-empty">لا توجد أنشطة متاحة حاليًا.</div>';
+  const U = ACT.ustaz;
+  const list = S.opens.slice().sort((x,y)=>(isOver(x)?1:0)-(isOver(y)?1:0)).filter(o=>{
+    /* ما اعتمده الرائد انتقل إلى «أنشطتي المنفذة» ويختفي من هنا (عند الموثِّق وعند المشارك المؤكِّد) */
+    const e = S.mine.find(x=>x.openEventId===o.id), pm0 = partMark(o), j0 = pm0 ? S.joined.find(x=>x.id===pm0.evId) : null;
+    return !((e && e.approvalStatus==='approved') || (j0 && j0.approvalStatus==='approved'));
+  });
+  if(!list.length) return '<div class="dh-card dh-empty">لا توجد أنشطة متاحة حاليًا.</div>';
+  return list.map(o=>{
+    const ev = S.mine.find(x=>x.openEventId===o.id), exp = isOver(o), pm = partMark(o);
+    const jev = pm ? S.joined.find(x=>x.id===pm.evId) : null;
+    /* النشاط الملغى من الرائد ولم أتفاعل معه لا يظهر */
+    if(o.status!=='open' && !isExpired(o) && !ev && !pm) return '';
+    const canDoc = !exp && !pm && (!ev || ev.approvalStatus==='returned');
+    const info = '<div>'+esc(o.description||'')+'</div><div class="dh-sub">'+(o.domain?'المجال: '+esc(o.domain)+' — ':'')+'آخر موعد للتوثيق: '+(o.deadline?ACT.hijri(o.deadline):'غير محدد')+'</div>';
+    const stOf = e=>e.approvalStatus==='approved' ? ['ok','✅ تم التوثيق والاعتماد'] : e.approvalStatus==='returned' ? ['bad','↩ أعاده رائد النشاط للتعديل'+(e.returnNote?': '+esc(e.returnNote):'')] : ['warn','⏳ بانتظار اعتماد رائد النشاط'];
+    let tone, status, body = info, actions = '';
+    if(pm && pm.confirm==='invited' && exp){
+      tone = 'bad'; status = '⛔ منتهي — انتهى الموعد قبل تأكيد مشاركتك مع '+esc(U(pm.ownerName||''));
+      actions = '<button class="ac-btn sec" data-a="part-view" data-id="'+(jev?jev.id:'')+'">عرض ملف التوثيق</button>';
+    } else if(pm && pm.confirm==='invited'){
+      tone = 'warn'; status = '🔔 اختارك '+esc(U(pm.ownerName||''))+' مشاركًا في توثيقه — بانتظار ردّك';
+      body += '<div class="dh-sub" style="background:#fff7e6;border:1px solid #f3d9a4;border-radius:10px;padding:9px 12px;line-height:1.9;margin-top:6px">اطّلع على الملف ثم أكّد مشاركتك أو اعتذر. لا تُحسب موثّقًا إلا بعد التأكيد.</div>';
+      actions = '<button class="ac-btn sec" data-a="part-view" data-id="'+(jev?jev.id:'')+'">عرض ملف التوثيق</button><button class="ac-btn" data-a="part-confirm" data-id="'+o.id+'">✅ أؤكد مشاركتي</button><button class="ac-btn sec" data-a="part-decline" data-id="'+o.id+'">لا أؤكد</button>';
+    } else if(pm){
+      const s2 = jev ? stOf(jev) : ['warn','⏳ بانتظار اعتماد رائد النشاط'];
+      tone = s2[0]; status = s2[1]+' (أكّدت مشاركتك مع '+esc(U(pm.ownerName||''))+')';
+      actions = '<button class="ac-btn sec" data-a="part-view" data-id="'+(jev?jev.id:'')+'">عرض ملف التوثيق</button>';
+    } else if(ev){
+      const s2 = stOf(ev); tone = s2[0]; status = s2[1];
+      actions = (canDoc?'<button class="ac-btn" data-a="doc-open" data-id="'+o.id+'">📝 تعديل التوثيق</button>':'')+'<button class="ac-btn sec" data-a="ev-print" data-id="'+ev.id+'">معاينة النموذج</button>';
+    } else if(exp){
+      tone = 'bad'; status = '⛔ منتهي — لم يُوثَّق'; body += '<div class="dh-sub" style="color:#b42318">انتهى آخر موعد للتوثيق، ولا يمكن التوثيق أو التعديل.</div>';
+    } else {
+      tone = 'info'; status = 'متاح — لم توثّقه بعد';
+      actions = '<button class="ac-btn" data-a="doc-open" data-id="'+o.id+'">📝 توثيق التنفيذ</button>';
+    }
+    return ACT.foldCard({ title:o.title+(o.deadline?' — آخر موعد: '+ACT.hijri(o.deadline):''), tone, status, body, actions });
+  }).join('') || '<div class="dh-card dh-empty">لا توجد أنشطة متاحة حاليًا.</div>';
+}
+function vDone(){
+  const stTxt = {approved:'✅ معتمد',pending:'⏳ بانتظار الاعتماد',returned:'↩ أُعيد للتعديل'};
+  /* «أنشطتي المنفذة»: المعتمد من رائد النشاط فقط (توثيقي أنا، أو مشاركتي المؤكَّدة) */
+  const joined = S.joined.filter(x=>{ const m = S.marks.find(k=>k.id===x.openEventId+'_'+S.env.me.id); return m && m.confirm==='confirmed' && x.approvalStatus==='approved'; });
+  const mineA = S.mine.filter(x=>x.approvalStatus==='approved');
+  if(!mineA.length && !joined.length) return '<div class="dh-card dh-empty">لا توجد أنشطة معتمدة بعد. تظهر هنا الأنشطة بعد اعتماد رائد النشاط.</div>';
+  const rows = mineA.map(x=>({ x, t:x.title, d:x.date, st:stTxt[x.approvalStatus], a:'ev-print', n:'' }))
+    .concat(joined.map(x=>({ x, t:x.title, d:x.date, st:stTxt[x.approvalStatus], a:'part-view', n:' <span class="dh-sub">(مشاركة مع '+esc(ACT.ustaz(x.documentedByName||''))+')</span>' })));
+  return '<div class="dh-card ac-wrap"><table class="ac-tbl"><tr><th>م</th><th>النشاط</th><th>التاريخ</th><th>الحالة</th><th></th></tr>'
+    +rows.map((r,i)=>'<tr><td>'+N(i+1)+'</td><td>'+esc(r.t)+r.n+'</td><td>'+ACT.hijri(r.d)+'</td><td>'+r.st+'</td><td><button class="ac-btn sec sm" data-a="'+r.a+'" data-id="'+r.x.id+'">معاينة</button></td></tr>').join('')+'</table></div>';
+}
+function paint(){
+  const tabs = [['mine','تكاليفي',S.assigns.reduce((n,a)=>n+(a.programs||[]).filter((p,i)=>!evOf(a,i) && !progExpired(p)).length,0)+clubItems().filter(clubNeedsDoc).length],['open','أنشطة متاحة',S.opens.filter(o=>{ const pm = partMark(o); return pm ? (pm.confirm==='invited' && !isOver(o)) : (o.status==='open' && !isExpired(o) && !S.mine.find(x=>x.openEventId===o.id)); }).length],['done','أنشطتي المنفذة',0]];
+  const barH = tabs.map(t=>'<button class="ac-tab'+(S.tab===t[0]?' on':'')+'" data-a="tab" data-v="'+t[0]+'">'+t[1]+(t[2]?'<span class="n">'+N(t[2])+'</span>':'')+'</button>').join('');
+  let bar = document.getElementById('acMainBar');
+  if(!bar || !S.env.main.contains(bar)){ S.env.main.innerHTML = '<div class="ac-tabs" id="acMainBar">'+barH+'</div><div id="acBody"></div>'; bar = document.getElementById('acMainBar'); S._ctab = null; }
+  else { const sl = bar.scrollLeft; bar.innerHTML = barH; bar.scrollLeft = sl; }
+  if(S._ctab !== S.tab){ ACT.centerTab(bar, S._ctab !== null); S._ctab = S.tab; }
+  document.getElementById('acBody').innerHTML = ({mine:vMine,open:vOpen,done:vDone}[S.tab])();
+  ACT.saveState(S.env,'mine',{ tab:S.tab });
+}
+async function people(){ if(!S.staff) S.staff = await ACT.loadStaff(S.env); if(!S.roster) S.roster = await ACT.loadRoster(S.env); }
+async function openDoc(opts){ await people(); ACT.openDocForm(Object.assign({ env:S.env, staff:S.staff, roster:S.roster, onSaved: async ()=>{ await load(); paint(); } }, opts)); }
+const H = {
+  tab: el=>{ S.tab=el.dataset.v; paint(); },
+  'doc-asg': async el=>{
+    const a = S.assigns.find(x=>x.id===el.dataset.id), i = Number(el.dataset.i), p = a.programs[i], ex = evOf(a,i) || null;
+    /* اسم البرنامج والمجال لا يُعدَّلان: الاسم من التكليف، والمجال مجال النادي المرتبط (إن كان صالحًا) */
+    const dom = ACT.DOMAINS.includes(a.domain) ? a.domain : '';
+    if(ex && ex.approvalStatus==='approved'){ ACT.toast('هذا التوثيق معتمد ولا يُعدَّل.'); return; }
+    if(!ex && progExpired(p)){ ACT.toast('انتهى تاريخ هذا التكليف قبل توثيقه.'); return; }
+    await openDoc({ existing:ex, prefill:Object.assign({ title:p.name, beneficiaries:{type:'طلاب',count:''} }, dom?{domain:dom}:{}), lockTitle:true, lockDomain:!!dom,
+      dateMin:a.ts?ACT.dateOfMs(a.ts):'', dateMax:p.endDate||'', dateHint:'من يوم إنشاء التكليف إلى تاريخ انتهائه، ولا يتجاوز اليوم.', minMsg:'لا يمكن أن يسبق تاريخ التنفيذ تاريخ إنشاء التكليف', maxMsg:'لا يمكن أن يتجاوز تاريخ التنفيذ تاريخ انتهاء التكليف',
+      source:{ type:'assignment', assignmentId:a.id, programIdx:i, clubId:a.clubId } });
+  },
+  'doc-open': async el=>{
+    const o = S.opens.find(x=>x.id===el.dataset.id), ex = S.mine.find(x=>x.openEventId===o.id) || null, me = S.env.me;
+    if(isExpired(o)||o.status!=='open'){ ACT.toast('انتهى موعد التوثيق لهذا النشاط'); return; }
+    if(partMark(o)){ ACT.toast('أنت مختار مشاركًا في توثيق زميل لهذا النشاط'); return; }
+    await people();
+    // من لا يصلح اختياره: من وثّق (اعتُمد أو لم يُعتمد)، أو من اختاره زميل آخر مشاركًا
+    const locked = new Set(S.marks.filter(m=>m.openEventId===o.id && m.uid!==me.id && ((m.role||'owner')!=='participant' || ((m.confirm==='invited'||m.confirm==='confirmed') && m.ownerId!==me.id))).map(m=>m.uid));
+    const done = new Set(S.marks.filter(m=>m.openEventId===o.id && ACT.markDone(m)).map(m=>m.uid));
+    // المشاركون الفعليون الآن: من بقيت دعوتهم قائمة (من اعتذر لا يُعاد اختياره تلقائيًا)
+    const act = new Set(ex ? S.marks.filter(m=>m.openEventId===o.id && m.role==='participant' && m.ownerId===me.id && (m.confirm==='invited'||m.confirm==='confirmed')).map(m=>m.uid) : []);
+    const oldU = Array.from(act);
+    const exForm = ex ? Object.assign({}, ex, { participants:(ex.participants||[]).filter(p=>p.type!=='staff' || act.has(p.uid)) }) : null;
+    await ACT.openDocForm({ env:S.env, staff:S.staff.filter(s=>!locked.has(s.id)), roster:S.roster, existing:exForm, lockTitleDomain:true, openMode:true,
+      execStatus:S.staff.filter(s=>s.id!==me.id).map(s=>({ name:s.name, on:done.has(s.id) })),
+      infoHtml:'<b>بيانات النشاط من رائد النشاط (للاطلاع فقط):</b><br>'+esc(o.description||'')+'<br>آخر موعد للتوثيق: '+(o.deadline?ACT.hijri(o.deadline):'—'),
+      prefill:{ title:o.title, domain:o.domain||'' }, source:{ type:'open', openEventId:o.id },
+      dateMin:(o.publishDate || (o.ts ? ACT.dateOfMs(o.ts) : '')) || '', dateMax:o.deadline||'',
+      dateHint:'يجب أن يقع التنفيذ بين يوم نشر النشاط وآخر موعد للتوثيق، ولا يتجاوز اليوم.', minMsg:'لا يمكن أن يسبق تاريخ التنفيذ يوم نشر النشاط', maxMsg:'لا يمكن أن يتجاوز تاريخ التنفيذ آخر موعد للتوثيق',
+      afterSave: async (evId, data)=>{
+        const db = S.env.db, now = Date.now(), col = db.collection('actOpenMarks'), nm = id=>((S.staff||[]).find(s=>s.id===id)||{}).name||'';
+        await col.doc(o.id+'_'+me.id).set({ schoolId:S.env.sid, period:S.env.period, openEventId:o.id, uid:me.id, name:me.name, state:'pending', role:'owner', confirm:'none', evId, updatedAt:now },{ merge:true });
+        const newU = data.partUids||[];
+        for(const u of oldU.filter(x=>!newU.includes(x))){ try{ await col.doc(o.id+'_'+u).update({ confirm:'released', updatedAt:now }); }catch(err){ console.warn('release', err); } }
+        for(const u of newU.filter(x=>!oldU.includes(x))){
+          await col.doc(o.id+'_'+u).set({ schoolId:S.env.sid, period:S.env.period, openEventId:o.id, uid:u, name:nm(u), state:'pending', role:'participant', confirm:'invited', ownerId:me.id, ownerName:me.name, evId, updatedAt:now });
+        }
+      },
+      onSaved: async ()=>{ await load(); paint(); } });
+  },
+  'doc-club': async el=>{
+    await load(); paint();                                   // قراءة حديثة: قد يكون الرائد غيّر البند أو نفّذه
+    const me = S.env.me, c = S.clubs.find(x=>x.id===el.dataset.id), it = c && (c.plan||[]).find(x=>x.id===el.dataset.pid);
+    if(!c || !it || it.responsibleId!==me.id || it.status==='cancelled'){ ACT.toast('تغيّر هذا البند أو لم تعد مسؤولًا عنه.'); return; }
+    if(it.status==='executed'){ ACT.toast('نُفِّذ هذا البند من رائد النشاط ولا يحتاج توثيقًا منك.'); return; }
+    const ex = evOfClub(c,it) || null; await people();
+    const domOk = ACT.DOMAINS.includes(c.dom);
+    await ACT.openDocForm({ env:S.env, staff:S.staff, roster:S.roster, existing:ex, clubMode:true, lockTitle:true, lockDomain:domOk,
+      clubMemberSeats:(c.members||[]).filter(m=>m.type!=='staff').map(m=>m.seat), eventId:'cl_'+c.id+'_'+it.id,
+      prefill:{ title:it.title, domain:domOk?c.dom:'', date:it.expectedDate||ACT.today() }, dateMin:ACT.planItemDate(it),
+      dateHint:'لا يسبق تاريخ إنشاء البند في الخطة، ولا يتجاوز اليوم.', minMsg:'لا يمكن أن يسبق تاريخ التنفيذ تاريخ إنشاء البند في الخطة',
+      source:{ type:'club', clubId:c.id, planItemId:it.id, viaTeacher:true },
+      beforeSave: async ()=>{
+        const cs = await S.env.db.collection('activityClubs').where('schoolId','==',S.env.sid).where('period','==',S.env.period).where('respUids','array-contains',me.id).get();
+        const d = cs.docs.find(x=>x.id===c.id), cur = d && (d.data().plan||[]).find(x=>x.id===it.id);
+        if(!cur || cur.responsibleId!==me.id || cur.status==='cancelled') return 'تغيّر هذا البند أو أُلغي أو لم تعد مسؤولًا عنه — لم يُحفظ التوثيق.';
+        if(cur.status==='executed' && !ex) return 'نُفِّذ هذا البند من رائد النشاط قبل حفظك — لم يُحفظ توثيقك.';
+        return null; },
+      onSaved: async ()=>{ await load(); paint(); } });
+  },
+  'part-view': async el=>{
+    const ev = S.joined.find(x=>x.id===el.dataset.id); if(!ev){ ACT.toast('تعذّر فتح الملف'); return; }
+    await ACT.printDoc(S.env, ev, {});
+  },
+  'part-confirm': async el=>{
+    const o = S.opens.find(x=>x.id===el.dataset.id); if(!o) return;
+    if(isOver(o)){ ACT.toast('انتهى موعد هذا النشاط.'); return; }
+    await S.env.db.collection('actOpenMarks').doc(o.id+'_'+S.env.me.id).update({ confirm:'confirmed', confirmedAt:Date.now(), updatedAt:Date.now() });
+    ACT.toast('تم تأكيد مشاركتك في التوثيق'); await load(); paint();
+  },
+  'part-decline': async el=>{
+    const o = S.opens.find(x=>x.id===el.dataset.id); if(!o) return;
+    if(isOver(o)){ ACT.toast('انتهى موعد هذا النشاط.'); return; }
+    if(!await ACT.confirmBox('بعد الاعتذار تُرفع عنك المشاركة وتقدر توثّق النشاط بنفسك. متابعة؟')) return;
+    await S.env.db.collection('actOpenMarks').doc(o.id+'_'+S.env.me.id).update({ confirm:'declined', updatedAt:Date.now() });
+    await load(); paint();
+  },
+  'ev-print': async el=>{ const ev = S.mine.find(x=>x.id===el.dataset.id); if(ev) await ACT.printDoc(S.env, ev, {}); }
+};
+Dash.boot({
+  title:'الأنشطة اللاصفية',
+  allow:()=>true,
+  render: async env=>{
+    ACT.injectCss(); S.env = env;
+    env.main.innerHTML = '<div class="dh-empty">جارٍ التحميل...</div>';
+    await load();
+    people().then(()=>paint()).catch(()=>{});
+    const u = ACT.loadState(env,'mine'); if(['mine','open','done'].includes(u.tab)) S.tab = u.tab;
+    paint();
+    /* تحديث حي خفيف: عند عودة الصفحة للواجهة وكل دقيقة (دون مقاطعة نافذة مفتوحة) */
+    const live = async ()=>{ if(document.querySelector('.ac-ov')) return; try{ await load(); paint(); }catch(err){} };
+    document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) live(); });
+    setInterval(live, 60000);
+    env.main.addEventListener('click', async e=>{
+      const el = e.target.closest('[data-a]'); if(!el) return; const f = H[el.dataset.a]; if(!f) return;
+      el.disabled = true; try{ await f(el); }catch(err){ console.error(err); ACT.toast(err&&err.message?err.message:'تعذّر تنفيذ العملية'); } el.disabled = false;
+    });
+    window.__MYACT = S;
+  }
+});
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<!-- إصدار: 2026-10-29.1 · الاختبار — الإشعارات والمرفقات: الإشعارات التعليمية، ملفات مطلوبة (رفع وحالة)، وللمدير ما ينتظر اعتماده، وللوكيل اعتمادات المدير -->
+<html lang="ar" dir="rtl">
+<head>
+<script src="fb-config.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>الإشعارات والمرفقات</title>
+<meta name="theme-color" content="#0f766e">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<script src="nav-back.js?v=2026-10-28.1" defer></script>
+</head>
+<body>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-auth-compat.js"></script>
+<script src="users-api.js"></script>
+<script src="form-header.js?v=2026-10-16.4"></script>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-storage-compat.js"></script>
+<script src="file-requests.js?v=2026-10-21.1"></script>
+<script src="sem-guard.js?v=2026-10-14.5"></script>
+<script src="dash-base.js?v=2026-10-20.1"></script>
+<script>
+const {esc, arN, stat} = Dash;
+const KEYLAB = { queue:'الطابور', wait:'الانتظار', cls:'حضور الحصص', sup:'الإشراف', duty:'المناوبة', early:'الانصراف مبكرًا دون استئذان', prep:'تحضير الدرس',
+  vis:'الزيارات بين المعلمين', act:'حضور الأنشطة والبرامج', cv:'الزيارات الصفية', rec:'سجل الأعمال', cur:'إكمال المنهج الدراسي', an:'تحليل الدرجات' };
+Dash.boot({
+  title:'الإشعارات والمرفقات',
+  allow:()=>true,
+  render: async env=>{
+    const {db, sid, me, isSA, period} = env;
+    const P = k=>(env.ctx && env.ctx.permissions && env.ctx.permissions[k]) || {};
+    const isAgent = !isSA && !!(P('tools.agentSchool').access || P('tools.agentSchool').edit);      // وكيل الشؤون المدرسية
+    const isEdu = !isSA && !!(P('tools.agentEdu').access || P('tools.agentEdu').edit);               // وكيل الشؤون التعليمية
+    const base = db.collection('schoolAffairs').doc(sid);
+    const logCol = db.collection('eduLog').doc(sid).collection('items');
+    const dateOf = ms=>{ try{ return new Date(ms).toLocaleDateString('ar-SA-u-ca-islamic-umalqura',{day:'numeric',month:'long',year:'numeric'}); }catch(e){ return ''; } };
+    const safe = p=>p.then(s=>s.docs.map(d=>({id:d.id,...d.data()}))).catch(e=>{ console.warn(e); return []; });
+    const startOfTomorrow = ()=>{ const d = new Date(); d.setHours(0,0,0,0); return d.getTime()+86400000; };
+    const todayKey = ()=>{ const d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
+
+    env.main.innerHTML = '<div id="nSumm"></div><div id="nMgr"></div><div id="nEdu"></div><div id="nFiles"></div><div id="nAgent"></div><div id="nAgentEdu"></div>';
+    const $ = s=>document.querySelector(s);
+    let openNotice = null;
+
+    async function load(){
+      const [decs, mts, mine, accs] = await Promise.all([
+        isSA || isAgent ? safe(base.collection('decisions').get()) : Promise.resolve([]),
+        isSA || isAgent ? safe(base.collection('maint').get()) : Promise.resolve([]),
+        safe(logCol.where('empId','==',me.id).get()),
+        isSA || isEdu ? safe(logCol.where('type','==','acc').get()) : Promise.resolve([])
+      ]);
+      const waitDec = decs.filter(d=>d.st==='wait'), waitMt = mts.filter(m=>m.l==='wait'), waitAcc = accs.filter(a=>a.status==='wait');
+      const fctx = {db, sid, me, period};
+      const fm = await FileReq.mountMine($('#nFiles'), fctx, ()=>load());
+      /* إشعار طلب الملف لا يظهر للمعلم إن أنجز ما طُلب منه (رفع كل ما عليه) */
+      const FK = { vis:'visits', rec:'worklog', cur:'completion', an:'grades' };
+      const stale = x=>{ if(x.scope!=='s' || !FK[x.key]) return false; const rs = fm.rows.filter(r=>r.kind===FK[x.key]); return rs.length>0 && !rs.some(r=>FileReq.isOpen(r, fctx.classes)); };
+      const notes = mine.filter(x=>x.type==='notice' && (x.visibleFrom||0) <= Date.now() && !stale(x)).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+      $('#nSumm').innerHTML = '<div class="dh-stats">'
+        + stat('ملفات مطلوبة مني', arN(fm.pending), '#nFiles', fm.pending?'bad':'')
+        + stat('إشعارات تعليمية وصلتني', arN(notes.length), '#nEdu', '')
+        + (isSA ? stat('قرارات حسم بانتظار اعتمادي', arN(waitDec.length), 'school-affairs.html#c', waitDec.length?'bad':'')
+                + stat('خطابات صيانة بانتظار اعتمادي', arN(waitMt.length), 'school-affairs.html#m', waitMt.length?'warn':'')
+                + stat('مساءلات تعليمية بانتظار اعتمادي', arN(waitAcc.length), '#nMgr', waitAcc.length?'bad':'') : '')
+        + '</div>';
+      /* المدير: ما ينتظر اعتماده */
+      $('#nMgr').innerHTML = isSA ? '<div class="dh-card"><h3>بانتظار اعتمادي</h3>'
+        + (waitDec.length || waitMt.length || waitAcc.length ? '<div class="dh-list">'
+          + waitDec.map(d=>'<div class="dh-item"><div>قرار حسم: '+esc(d.empName||'')+'<div class="m">'+esc(d.why||'')+'</div></div><a class="dh-link" href="school-affairs.html#c">فتح قرارات الحسم</a></div>').join('')
+          + waitMt.map(m=>'<div class="dh-item"><div>خطاب طلب صيانة: '+esc(m.loc||'')+'<div class="m">'+esc(m.d||'')+'</div></div><a class="dh-link" href="school-affairs.html#m">فتح الصيانة</a></div>').join('')
+          + waitAcc.map(a=>'<div class="dh-item"><div>مساءلة تعليمية: '+esc(a.empName||'')+' — '+esc(KEYLAB[a.key]||a.key)+'<div class="m">'+esc(a.dateText||'')+' · '+esc(a.detail||'')+(a.extra?' · '+esc(a.extra):'')+'</div></div><button class="dh-link" data-apv="'+esc(a.id)+'" style="background:#0f766e;color:#fff">اعتماد</button></div>').join('')
+          + '</div>' : '<div class="dh-empty">لا شيء بانتظار اعتمادك.</div>') + '</div>' : '';
+      $('#nMgr').querySelectorAll('[data-apv]').forEach(b=>b.onclick = async ()=>{
+        const a = waitAcc.find(x=>x.id===b.dataset.apv); if(!a) return;
+        b.disabled = true;
+        try{
+          // اعتُمدت في يوم كتابتها ← تصل المعلم في اليوم التالي، وإلا فور الاعتماد
+          await logCol.doc(a.id).update({ status:'sent', approvedAt:Date.now(), approvedBy:me.id, visibleFrom: a.dateKey===todayKey() ? startOfTomorrow() : Date.now() });
+          await load();
+        }catch(e){ console.error(e); alert('تعذّر الاعتماد: '+(e.message||e)); b.disabled = false; }
+      });
+      /* الإشعارات التعليمية: ما أرسله وكيل الشؤون التعليمية (يصل المعلم في اليوم التالي) */
+      $('#nEdu').innerHTML = '<div class="dh-card"><h3>الإشعارات التعليمية</h3>'
+        + (notes.length ? '<div class="dh-list">' + notes.map(x=>'<div class="dh-item"><div>'+esc(KEYLAB[x.key]||x.key)+'<div class="m">إشعار رقم '+arN(x.n||1)+' · '+esc(x.dateText||'')+'</div>'
+            + (openNotice===x.id ? '<pre style="white-space:pre-wrap;font:inherit;margin:8px 0 0;line-height:1.9">'+esc(x.text||'')+'</pre>' : '')
+            + '</div><button class="dh-link" data-nt="'+esc(x.id)+'">'+(openNotice===x.id?'إغلاق':'فتح')+'</button></div>').join('') + '</div>'
+          : '<div class="dh-empty">لا إشعارات تعليمية جديدة.</div>') + '</div>';
+      $('#nEdu').querySelectorAll('[data-nt]').forEach(b=>b.onclick = ()=>{ openNotice = openNotice===b.dataset.nt ? null : b.dataset.nt; load(); });
+      /* صاحب صلاحية وكيل الشؤون المدرسية: اعتمادات المدير */
+      if(isAgent){
+        const ap = []
+          .concat(mts.filter(m=>m.l==='ok'||m.l==='no').map(m=>({t:m.lAt||0, h:(m.l==='ok'?'اعتمد المدير خطاب طلب الصيانة: ':'لم يعتمد المدير خطاب طلب الصيانة: ')+esc(m.loc||''), bad:m.l==='no'})))
+          .concat(decs.filter(d=>d.st==='ok'||d.st==='sent').map(d=>({t:d.approvedAt||0, h:'اعتمد المدير قرار الحسم: '+esc(d.empName||'')+(d.days!==''&&d.days!=null?' ('+arN(d.days)+' يوم)':''), bad:false})))
+          .sort((a,b)=>b.t-a.t).slice(0,20);
+        $('#nAgent').innerHTML = '<div class="dh-card"><h3>اعتمادات المدير</h3>' + (ap.length ? '<div class="dh-list">'+ap.map(x=>'<div class="dh-item"><div>'+x.h+'<div class="m">'+esc(x.t?dateOf(x.t):'')+'</div></div><span class="dh-chip '+(x.bad?'bad':'')+'">'+(x.bad?'لم يُعتمد':'معتمد')+'</span></div>').join('')+'</div>' : '<div class="dh-empty">لا اعتمادات بعد.</div>') + '</div>';
+      }
+      /* صاحب صلاحية وكيل الشؤون التعليمية: اعتمادات المدير للمساءلات */
+      if(isEdu){
+        const ap = accs.filter(a=>a.status==='sent').sort((a,b)=>(b.approvedAt||0)-(a.approvedAt||0)).slice(0,20);
+        $('#nAgentEdu').innerHTML = '<div class="dh-card"><h3>اعتمادات المدير للمساءلات التعليمية</h3>' + (ap.length ? '<div class="dh-list">'+ap.map(a=>'<div class="dh-item"><div>اعتمد المدير مساءلة '+esc(a.empName||'')+' — '+esc(KEYLAB[a.key]||a.key)+'<div class="m">'+esc(a.approvedAt?dateOf(a.approvedAt):'')+'</div></div><span class="dh-chip '+(a.sign==='signed'?'':'bad')+'">'+(a.sign==='signed'?'وقّع المعلم':'لم يوقّع بعد')+'</span></div>').join('')+'</div>' : '<div class="dh-empty">لا اعتمادات بعد.</div>') + '</div>';
+      }
+    }
+    await load();
+  }
+});
+</script>
+</body>
+</html>

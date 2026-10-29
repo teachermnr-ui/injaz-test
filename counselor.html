@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<!-- إصدار: 2026-10-29.1 · الاختبار — «الحالات الصحية» تبويب جديد ضمن الحالات الخاصة والسرية، ونسخة عامة مختصرة healthCases، وتقرير للمدير healthReports؛ سابقًا 2026-10-28.8 — صفحة الموجه الطلابي: مبنية على الدليل التنظيمي لمدارس التعليم العام (مهام الموجه الطلابي ولجنة التوجيه والإرشاد) -->
+<html lang="ar" dir="rtl">
+<head>
+<script src="fb-config.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>الموجه الطلابي</title>
+<meta name="theme-color" content="#3f6659">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap">
+<style>
+/* Layout: RTL dashboard — header, 6 stat cards (3x2 / 6x1), then two cards: curriculum list + daily follow-up tile grid */
+:root{
+  --bg:#f1f5f3; --surface:#ffffff; --fg:#1b2a25; --muted:#5b6d66; --line:#d8e3de;
+  --brand:#3f6659; --brand-soft:#e2ede8; --brand-fg:#ffffff;
+  --sum-bg:#f0f9f3; --ok:#2f7d4f; --ok-soft:#dff1e5; --warn:#a8650f; --warn-soft:#fbeed6; --bad:#b4412f; --bad-soft:#f9e1dc;
+  --font:'Tajawal',system-ui,-apple-system,'Segoe UI',Tahoma,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121a17; --surface:#1b2622; --fg:#e6efeb; --muted:#9bb0a8; --line:#2e3d37;
+    --brand:#7fb5a2; --brand-soft:#243630; --brand-fg:#10201a;
+    --sum-bg:#18271f; --ok:#6fcf97; --ok-soft:#1f3a2b; --warn:#e5ad5c; --warn-soft:#3b2f18; --bad:#ef8b78; --bad-soft:#3d221d;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121a17; --surface:#1b2622; --fg:#e6efeb; --muted:#9bb0a8; --line:#2e3d37;
+  --brand:#7fb5a2; --brand-soft:#243630; --brand-fg:#10201a;
+  --sum-bg:#18271f; --ok:#6fcf97; --ok-soft:#1f3a2b; --warn:#e5ad5c; --warn-soft:#3b2f18; --bad:#ef8b78; --bad-soft:#3d221d;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{direction:rtl}
+body{direction:rtl;text-align:right;
+  background:var(--bg); color:var(--fg); font-family:var(--font); font-size:15px; line-height:1.6;
+  padding-block:20px 48px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+}
+.wrap{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.mock{background:var(--warn-soft);color:var(--warn);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:500}
+header.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+.top h1{margin:0;font-size:24px;font-weight:800;text-wrap:balance}
+.top .sub{color:var(--muted);font-size:14px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--brand-soft);color:var(--brand);border-radius:99px;padding:3px 12px;font-size:13px;font-weight:700}
+
+.qa{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media (min-width:760px){.qa{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.qc{background:var(--surface);border:1px solid var(--line);border-right:4px solid var(--k,var(--brand));border-radius:12px;padding:8px 9px 4px;display:flex;flex-direction:column;min-width:0}
+.qc .top{display:flex;align-items:center;gap:7px}
+.qc .top b{font-size:24px;line-height:1;min-width:26px;text-align:center;color:var(--k,var(--brand));font-variant-numeric:tabular-nums}
+.qc .top div{display:flex;flex-direction:column;gap:1px;min-width:0}
+.qc .t{font-size:12px;font-weight:800;line-height:1.25}
+.qc small{font-size:10px;color:var(--muted)}
+.qc .tb{margin-top:6px;border-top:1px solid var(--line)}
+.qc .tb button{display:flex;justify-content:space-between;align-items:center;width:100%;font:inherit;font-size:10.5px;color:inherit;background:none;border:0;border-bottom:1px solid var(--line);padding:5px 1px;text-align:right;cursor:pointer}
+.qc .tb button:last-child{border-bottom:0}
+.qc .tb button:after{content:"‹";color:var(--muted)}
+.qc .tb button:hover{color:var(--brand)}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (min-width:760px){.stats{grid-template-columns:repeat(6,minmax(0,1fr))}}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.stat .n{font-size:28px;font-weight:800;line-height:1.2;font-variant-numeric:tabular-nums}
+.stat .l{font-size:13px;font-weight:700}
+.stat .d{font-size:12px;color:var(--muted)}
+.stat.bad .n{color:var(--bad)} .stat.warn .n{color:var(--warn)} .stat.ok .n{color:var(--ok)}
+
+.cols{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+@media (min-width:760px){.cols{grid-template-columns:minmax(0,5fr) minmax(0,6fr)}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.card h2{margin:0;font-size:17px;font-weight:800}
+.card .hd{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.muted{color:var(--muted);font-size:13px}
+
+.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.list li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid var(--line);min-width:0}
+.list li:first-child{border-top:0}
+.nm{font-weight:500;min-width:0;overflow-wrap:anywhere}
+.nm small{display:block;color:var(--muted);font-size:12px}
+.pill-no{background:var(--bad-soft);color:var(--bad);border-radius:99px;padding:2px 12px;font-size:12px;font-weight:700;white-space:nowrap}
+button{font-family:inherit;font-size:inherit;color:inherit}
+.btn{background:var(--brand-soft);color:var(--brand);border:0;border-radius:8px;padding:5px 14px;font-weight:700;cursor:pointer;white-space:nowrap}
+.btn:hover{filter:brightness(.96)}
+.btn.solid{background:var(--brand);color:var(--brand-fg)}
+.btn.danger{background:var(--bad-soft);color:var(--bad)}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+
+.bar{height:10px;border-radius:99px;background:var(--brand-soft);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ok);border-radius:99px;transition:width .25s}
+.prog{display:flex;align-items:center;gap:10px}
+.prog b{font-variant-numeric:tabular-nums;white-space:nowrap}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.tile{position:relative;min-height:72px;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);text-align:right;cursor:pointer;font-weight:500;font-size:14px;line-height:1.4;display:flex;flex-direction:column;justify-content:space-between;gap:4px}
+.tile:hover{border-color:var(--brand)}
+.tile .mk{font-size:12px;color:var(--muted)}
+.tile.done{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.tile.done .mk{color:var(--ok);font-weight:700}
+.tile.sel{outline:2px solid var(--brand);outline-offset:2px}
+.tile.add{border-style:dashed;align-items:center;justify-content:center;color:var(--brand);font-weight:700}
+.panel{border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--bg)}
+.panel strong{font-size:15px}
+textarea,input[type=text]{width:100%;font-family:inherit;font-size:14px;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+textarea{min-height:64px;resize:vertical}
+.row{display:flex;flex-wrap:wrap;gap:8px}
+
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}
+.ov .box{background:var(--surface);color:var(--fg);border-radius:12px;max-width:440px;width:100%;padding:16px;display:flex;flex-direction:column;gap:10px;max-height:90vh;overflow:auto}
+.doc{border:1px solid var(--line);border-radius:8px;padding:14px;background:var(--bg);display:flex;flex-direction:column;gap:8px}
+.doc i{display:block;height:8px;border-radius:4px;background:var(--line)}
+.doc .t{height:12px;width:55%;background:var(--muted);opacity:.5}
+nav.tabs{display:flex;gap:6px;overflow-x:auto;padding:4px;background:var(--surface);border:1px solid var(--line);border-radius:999px;scrollbar-width:thin}
+nav.tabs button{flex:0 0 auto;border:0;background:transparent;color:var(--muted);font-weight:700;border-radius:999px;padding:7px 16px;cursor:pointer;white-space:nowrap}
+nav.tabs button:hover{background:var(--brand-soft)}
+nav.tabs button.active{background:var(--brand);color:var(--brand-fg)}
+button.stat{font:inherit;color:inherit;text-align:right;cursor:pointer}
+button.stat:hover{border-color:var(--brand)}
+.pane[hidden]{display:none}
+.tag{border-radius:99px;padding:2px 12px;font-size:12px;font-weight:700;white-space:nowrap;background:var(--brand-soft);color:var(--brand)}
+.tag.bad{background:var(--bad-soft);color:var(--bad)} .tag.warn{background:var(--warn-soft);color:var(--warn)} .tag.ok{background:var(--ok-soft);color:var(--ok)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.trow{display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);scroll-margin-top:12px}
+.trow.flash{outline:3px solid var(--brand)}
+#dRows,#sRows{display:flex;flex-direction:column;gap:10px}
+.trow .nm{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;font-weight:800}
+.trow .nm small{display:inline;font-weight:500}
+.trow.abs{flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:space-between;opacity:.75;background:var(--bg)}
+.btns{display:grid;grid-template-columns:repeat(var(--c),minmax(0,1fr));gap:6px}
+@media (max-width:700px){.btns{grid-template-columns:repeat(2,minmax(0,1fr))}.btns .tg:last-child:nth-child(odd){grid-column:1/-1}}
+.tg{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;border:1.5px solid var(--line);background:var(--bg);color:var(--muted);border-radius:8px;padding:7px 6px;min-height:50px;text-align:center;line-height:1.3;font-weight:700;font-size:13px;cursor:pointer}
+.tg .s{font-size:11px;font-weight:500}
+.tg:hover{border-color:var(--brand)}
+.tg.ok{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.tg.bad{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.tg.warn{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+.tg.dis,.tg:disabled{opacity:.5;cursor:default;border-style:dashed;background:var(--bg);border-color:var(--line);color:var(--muted)}
+.sums{display:grid;grid-template-columns:repeat(var(--c),minmax(0,1fr));gap:6px;padding:11px;border:2px solid var(--brand);border-radius:12px;background:var(--brand-soft)}
+.sums::before{content:attr(data-t);grid-column:1/-1;color:var(--brand);font-weight:800;font-size:14px}
+@media (max-width:700px){.sums{grid-template-columns:repeat(2,minmax(0,1fr))}.sums .sm:last-child:nth-child(odd){grid-column:1/-1}}
+.sm{border:0;font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:var(--brand);color:var(--brand-fg);border-radius:8px;padding:6px 4px;min-height:56px;text-align:center;font-size:13px;font-weight:700;line-height:1.3}
+.sm b{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums}
+.sm.sel{outline:3px solid var(--fg);outline-offset:2px}
+.nl{border:2px dashed var(--brand);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.nl[hidden]{display:none}
+.nl strong{color:var(--brand)}
+.nl .names{display:flex;flex-wrap:wrap;gap:6px}
+.nmb{border:0;background:var(--brand-soft);color:var(--brand);border-radius:99px;padding:4px 14px;font-weight:700;cursor:pointer}
+.dp{border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:12px;display:flex;flex-direction:column;gap:8px}
+.dp .t{font-weight:800;font-size:14px}
+#vForm.fromTr{background:#fff1df;border-color:#e08a2e;box-shadow:0 0 0 2px #f3b778 inset}#vForm.fromTr #vTr{color:#8a4b08;font-weight:700}#vForm.fromTr #vQ,#vForm.fromTr #vSg{display:none}
+.kinds{display:flex;flex-wrap:wrap;gap:6px}
+.kd{border:1.5px solid var(--line);background:var(--surface);border-radius:99px;padding:3px 14px;font-weight:700;font-size:13px;cursor:pointer}
+.kd.on{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.pchips{display:flex;flex-wrap:wrap;gap:6px}
+.pc{border:1.5px solid var(--ok);background:var(--ok-soft);color:var(--ok);border-radius:8px;padding:4px 12px;font-weight:700;font-size:13px;cursor:pointer}
+.pc.bad{border-color:var(--bad);background:var(--bad-soft);color:var(--bad)}
+.dp .sub2{border-top:1px dashed var(--line);padding-top:8px;display:flex;flex-direction:column;gap:6px}
+.seg{display:inline-flex;gap:4px;background:var(--bg);border:1px solid var(--line);border-radius:99px;padding:3px}
+.seg button{border:0;background:transparent;border-radius:99px;padding:3px 14px;font-weight:700;cursor:pointer;color:var(--muted)}
+.seg button.on{background:var(--brand);color:var(--brand-fg)}
+.tag{border-radius:99px;padding:2px 12px;font-size:12px;font-weight:700;white-space:nowrap;background:var(--brand-soft);color:var(--brand)}
+.tag.bad{background:var(--bad-soft);color:var(--bad)} .tag.warn{background:var(--warn-soft);color:var(--warn)} .tag.ok{background:var(--ok-soft);color:var(--ok)}
+.dp label{font-size:13px;color:var(--muted)}
+.dp select,.dp input[type=date],.dp input[type=time]{font-family:inherit;font-size:14px;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);max-width:100%}
+.dp textarea{min-height:48px}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.fgrid>div{display:flex;flex-direction:column;gap:3px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+table.rep{border-collapse:collapse;width:100%;min-width:640px;font-size:14px}
+table.rep th,table.rep td{padding:9px 12px;text-align:right;border-top:1px solid var(--line);white-space:nowrap}
+table.rep thead th{background:var(--brand-soft);color:var(--brand);border-top:0;font-size:13px}
+table.rep td.num,table.rep th.num{text-align:center;font-variant-numeric:tabular-nums}
+table.rep td.hi{color:var(--bad);font-weight:800}
+table.rep tfoot td{font-weight:800;background:var(--bg)}
+.demo{display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:var(--bg);border:1px dashed var(--line);border-radius:10px;padding:8px 12px}
+.demo input[type=range]{flex:1;min-width:140px;accent-color:var(--brand)}
+.rtitle{font-size:16px;font-weight:800;text-wrap:balance}
+.hd2{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+.nl .names{display:flex;flex-wrap:wrap;gap:8px}
+.nrow{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:3px 4px 3px 4px}
+.nrow .btn{padding:2px 12px;font-size:13px}
+.okmsg{background:var(--ok-soft);color:var(--ok);border-radius:8px;padding:6px 12px;font-weight:700;font-size:13px}
+.letter{white-space:pre-wrap;font-family:inherit;font-size:14px;line-height:1.8;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px;margin:0}
+.lt{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+#lRows{display:flex;flex-direction:column;gap:10px}
+.lh{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;border:0;background:var(--brand-soft);color:var(--brand);padding:12px;cursor:pointer;text-align:right;font-family:inherit;font-size:15px}
+.lhn{display:flex;flex-direction:column;font-weight:800;min-width:0}
+.lhn small{font-weight:500;color:var(--fg);opacity:.85;font-size:12px}
+.lb{padding:4px 12px 12px}
+.lrow{display:flex;flex-direction:column;gap:6px;padding:10px 0;border-top:1px dashed var(--line)}
+.lrow:first-child{border-top:0}
+.l1,.l2{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px}
+.l1 .grow{flex:1;font-weight:700}
+.l2 .muted{font-size:12px}
+.btn:disabled{opacity:.55;cursor:default}
+.trow.uns{border-color:var(--bad);border-width:2px}
+
+.ov[hidden]{display:none}
+.ov .box textarea{min-height:90px}
+.ov .box .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14px}
+.ov .box .kv b{color:var(--muted);font-weight:700}
+
+.lhn small .redw{color:var(--bad);font-weight:800;opacity:1}
+.hud{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;background:var(--bg);border:1px dashed var(--line);border-radius:12px;padding:16px}
+.hud img{border-radius:12px;background:#fff;padding:4px;width:150px;height:150px}
+.hud>div{text-align:center}
+.hud strong{font-size:18px;color:var(--brand)}
+.stat .src{color:var(--brand);font-weight:700}
+.hud2{align-items:center;text-align:center;padding:12px 8px}
+.hud2 img{background:#fff;border-radius:12px;padding:4px;margin:auto;width:100%;max-width:170px;height:auto;aspect-ratio:1}
+.ci.sel{width:auto;max-width:100%}
+.ci{width:76px;font-family:inherit;font-size:14px;text-align:center;padding:4px 6px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font-variant-numeric:tabular-nums}
+.dp[hidden],#mRep[hidden],#mList[hidden]{display:none}
+.row[hidden],.seg[hidden],.dp[hidden],.muted[hidden]{display:none}
+.rc{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:14px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.rc>.rtitle{margin-bottom:10px}
+.rc>.rtitle:first-child,.rc>.hd2:first-child{margin-top:0}
+.okw{color:var(--ok);font-weight:800}
+.stat .hi{background:#fff;border-radius:6px;padding:1px;vertical-align:middle}
+.lnk{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.lk{display:flex;flex-direction:column;gap:4px;text-align:right;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:14px;cursor:pointer}
+.lk:hover{border-color:var(--brand)}
+.lk b{font-size:15px;color:var(--brand)}
+.lk span{font-size:12px;color:var(--muted)}
+.lk em{font-style:normal;font-size:12px;font-weight:700;color:var(--brand)}
+.sw{display:inline-flex;align-items:center;gap:8px;cursor:pointer}
+.sw input{position:absolute;opacity:0}
+.sw .knob{width:44px;height:24px;border-radius:99px;background:var(--line);position:relative;transition:background .2s}
+.sw .knob::after{content:"";position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s}
+.sw input:checked+.knob{background:var(--ok)}
+.sw input:checked+.knob::after{transform:translateX(-20px)}
+.sw input:focus-visible+.knob{outline:2px solid var(--brand);outline-offset:2px}
+.hud[hidden]{display:none}
+.drow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;border-top:1px solid var(--line);padding-top:6px}
+.drow input[type=checkbox]{width:18px;height:18px;accent-color:var(--brand)}
+.drow .dl{min-width:92px;font-weight:700}
+.dp[hidden]{display:none}
+.lst{white-space:normal;min-width:240px;max-width:340px}
+.srow{border-top:1px solid var(--line);padding-top:8px;display:flex;flex-direction:column;gap:6px}
+.subs{margin:8px 0}
+.r1{flex-wrap:nowrap}.r1 .btn{padding:6px 9px;font-size:13px}
+details summary{cursor:pointer}
+.sp[hidden]{display:none}
+#vRes .btn{white-space:normal}
+.srow{border-top:3px solid var(--line);margin-top:4px;padding-top:10px}
+.trow,.rpc{border:2px solid var(--fg)}
+.srow .st{font-weight:800;font-size:15px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0;font-size:14px}.kv dt{color:var(--muted);font-weight:700}.kv dd{margin:0}
+.pickb{width:100%;text-align:right;font-family:inherit;font-size:14px;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+.vwl{display:flex;flex-direction:column;gap:4px;max-height:60vh;overflow:auto;font-size:14px}
+.vwh{font-weight:800;padding:6px 10px;border-radius:8px;margin-top:8px;background:var(--brand-soft);color:var(--brand);display:flex;justify-content:space-between}
+.vwh.d3,.vwh.d4,.vwh.d5{background:var(--bad-soft);color:var(--bad)}.vwh.d2{background:var(--warn-soft);color:var(--warn)}
+.vwi{text-align:right;font-family:inherit;font-size:14px;background:transparent;border:0;border-right:4px solid var(--brand);padding:6px 10px;cursor:pointer;color:var(--fg);border-radius:0 6px 6px 0}
+.vwi.d2{border-right-color:var(--warn)}.vwi.d3,.vwi.d4,.vwi.d5{border-right-color:var(--bad)}.vwi:hover{background:var(--bg)}
+.rpc{border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:10px 12px}
+.rpc summary{display:flex;justify-content:space-between;align-items:center;gap:8px;cursor:pointer;list-style:none}.rpc summary::-webkit-details-marker{display:none}
+.rpc .rpn{font-size:13px;color:var(--muted);white-space:nowrap}.rpc[open] summary{border-bottom:3px solid var(--line);padding-bottom:8px;margin-bottom:8px}
+.rpc .kv{margin-bottom:6px}
+details>summary.blu{color:#1a5fb4;font-weight:700}
+.rpc summary .nm{font-weight:800}.rpc summary .nm small{display:block;font-weight:500}
+/* النموذج المعتمد معروض بوضع التوافق (بلا DOCTYPE) حيث لا ترث الجداول ارتفاع السطر؛ نُعيد السلوك نفسه هنا ليتطابق الشكل تمامًا */
+table{line-height:normal}
+details.ex{margin:4px 0}details.ex>summary{color:var(--brand);font-size:13px;font-weight:700}details.ex>.muted{margin-top:4px}
+details.vc>summary{list-style:none;display:flex;flex-direction:column;gap:6px}details.vc>summary::-webkit-details-marker{display:none}
+details.vc>summary .nm::before{content:"◂";color:var(--brand);margin-inline-end:4px}details.vc[open]>summary .nm::before{content:"▾"}
+details.vc[open]>summary{border-bottom:3px solid var(--line);padding-bottom:8px;margin-bottom:8px}
+details.vc>.vcb{display:flex;flex-direction:column;gap:8px}
+details.cmx>summary{list-style:none;display:flex;flex-wrap:wrap;align-items:center;gap:8px}details.cmx>summary::-webkit-details-marker{display:none}
+details.cmx>summary .t::before{content:"◂";margin-inline-end:4px}details.cmx[open]>summary .t::before{content:"▾"}
+/* الجزء الظاهر من البطاقة المنكمشة: الاسم في سطر كامل ثم الفصل ثم العدد (أحمر) والحالة، بخلفية خضراء فاتحة جدًا تبقى عند الفتح */
+details.vc>summary,.rpc>summary{background:var(--sum-bg);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;align-items:stretch;gap:4px}
+.trow .nm,.rpc summary .nm{display:block;font-weight:800;overflow-wrap:break-word}
+.trow .nm small,.rpc summary .nm small{display:block;font-weight:500;color:var(--muted)}
+.rpc .rpn{white-space:normal;font-size:13px}
+.cnr,.tag.cnr{color:var(--bad);font-weight:800}
+details.vc[open]>summary,.rpc[open]>summary{border-bottom:0;padding-bottom:8px;margin-bottom:8px}
+.cnh{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.sub2t{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0}
+.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+.tbl th,.tbl td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:right;vertical-align:top}
+.tbl th{color:var(--muted);font-weight:700;white-space:nowrap}
+.tw2{overflow-x:auto}
+.ov .box.wide{max-width:720px}
+.ov .box label{font-weight:700;font-size:13px;color:var(--muted)}
+.ov .box input[type=text],.ov .box input[type=date],.ov .box input[type=time],.ov .box select,.ov .box textarea{width:100%;font-family:inherit;font-size:14px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg)}
+.ov .box textarea{min-height:64px}
+.ov .box .fld{display:flex;flex-direction:column;gap:3px}
+.ov .box .fgrid{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips .chip button{border:0;background:transparent;color:inherit;font-weight:800;cursor:pointer;padding:0 0 0 4px}
+.resl{display:flex;flex-direction:column;gap:4px}
+.resl .btn{text-align:right}
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#1b2a25;color:#fff;padding:9px 16px;border-radius:10px;z-index:60;font-weight:700}
+#toast[hidden]{display:none}
+.nt{background:var(--warn-soft);color:var(--warn);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:500}
+.rbox{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13.5px}
+.sc{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.sec2{margin-top:6px;font-weight:800}
+
+/* === 2026-10-28.1 — تكييف الجوال وتوحيد التبويبات === */
+html,body{max-width:100%;overflow-x:hidden}
+.wrap,#body,.card,.pane,section{min-width:0;max-width:100%}
+.top h1,.top .sub{overflow-wrap:anywhere}
+.btn{max-width:100%}
+.seg.subs,.seg{display:flex;gap:6px;overflow-x:auto;padding:4px;background:var(--surface);border:1px solid var(--line);border-radius:999px;scrollbar-width:thin;max-width:100%;-webkit-overflow-scrolling:touch}
+.seg button,.seg.subs button{flex:0 0 auto;border:0;background:transparent;color:var(--muted);font-weight:700;border-radius:999px;padding:7px 16px;cursor:pointer;white-space:nowrap;font-family:inherit;font-size:inherit}
+.seg button:hover{background:var(--brand-soft)}
+.seg button.on{background:var(--brand);color:var(--brand-fg)}
+.ov .box{min-width:0;overflow-x:hidden;overflow-wrap:anywhere}
+.ov .box *{min-width:0}
+.ov .box .row .btn{white-space:normal}
+.ov .box .kv span{overflow-wrap:anywhere}
+.srow,.srow *{overflow-wrap:anywhere}
+.dl{margin:0;padding-inline-start:18px;color:var(--muted);font-size:14px}
+.row .btn{white-space:normal;text-align:center}
+@media (max-width:700px){
+  body{padding-left:12px;padding-right:12px}
+  .top h1{font-size:20px}
+  .ov{padding:8px;align-items:flex-end}
+  .ov .box,.ov .box.wide{max-width:100%;border-radius:12px 12px 0 0;max-height:92vh}
+  .tbl{display:block;overflow-x:auto}
+  .fgrid{grid-template-columns:minmax(0,1fr)!important}
+}
+tr.gone td{color:var(--muted)}
+tr.gone del{text-decoration:line-through}
+
+/* 2026-10-28 — التعديلات التنظيمية */
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.g3 .btn,.bgrid .btn{white-space:normal;text-align:center;width:100%;padding:9px 8px;line-height:1.5}
+.gbtn.red{background:var(--bad-soft);color:var(--bad);border:1px solid var(--bad)}
+.gbtn.green{background:var(--ok-soft);color:var(--ok);border:1px solid var(--ok)}
+.gbtn:disabled{opacity:.55;cursor:not-allowed}
+.bgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 0}
+@media (min-width:701px){.bgrid{grid-template-columns:repeat(3,1fr)}}
+.frz{background:var(--warn-soft);color:var(--warn);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;margin:8px 0}
+.rg{margin:14px 2px 4px;font-weight:800;font-size:14px;color:var(--brand)}.rl{border:1px solid var(--line);border-radius:12px;overflow:hidden}.rr{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 10px;border-bottom:1px solid var(--line);font-size:13px;font-weight:700}.rr:last-child{border-bottom:0}.rr .btn{padding:3px 14px;font-size:12px;min-height:0;flex:none}
+.grph{margin:12px 0 4px;font-size:15px}
+.seg.ist{margin:10px 0}
+</style>
+<script src="nav-back.js?v=2026-10-28.1" defer></script>
+</head>
+<body>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-auth-compat.js"></script>
+<script src="users-api.js"></script>
+<script src="sem-guard.js?v=2026-10-14.5"></script>
+<script src="dash-base.js?v=2026-10-20.1"></script>
+<script src="form-header.js?v=2026-10-16.4"></script>
+<script>
+    const ia=t=>[t,0], ic=t=>[t,1];
+    const ACT1=[ia('تنبيه شفهي'),ia('تنبيه شفهي ثانٍ مع ملاحظة الطالب وحصر سلوكياته'),ia('تدوين المشكلة في سجل المشكلات وتوقيع الطالب، وإشعار ولي الأمر هاتفيًا، وحسم درجة، وتحويل الطالب للموجه الطلابي'),ic('دعوة ولي الأمر والاتفاق على خطة تعديل السلوك، وحسم درجة، وتحويل الطالب للجنة التوجيه')];
+    const ACTS={
+     pri:{1:ACT1,
+      2:[ia('تحويل للإدارة: إشعار ولي الأمر هاتفيًا، وحسم درجتين، والاعتذار، وإصلاح ما أتلفه، وإحالة للموجه'),ia('تنفيذ الأول مع دعوة ولي الأمر وخطة تعديل السلوك وبرنامج وقائي وتعهد خطي'),ic('تنفيذ الثاني مع التحويل للجنة التوجيه ونقل الطالب إلى فصل آخر بقرارها')],
+      3:[ia('دعوة ولي الأمر وخطة تعديل السلوك وتعهد خطي، وحسم ثلاث درجات، والاعتذار، وإصلاح ما أتلفه، ومصادرة المواد الممنوعة، وإحالة للموجه'),ic('تنفيذ الأول مع نقل الطالب إلى فصل آخر بقرار لجنة التوجيه'),ic('تنفيذ الثاني مع رفع محضر اللجنة عاجلًا لإدارة التعليم، ونقل الطالب لمدرسة أخرى بقرار مدير التعليم')],
+      4:[ic('دعوة ولي الأمر وتعهد خطي، وحسم عشر درجات، والاعتذار، وإحالة للموجه، ورفع محضر اللجنة عاجلًا لإدارة التعليم، ونقل الطالب لمدرسة أخرى بقرار مدير التعليم')]},
+     mid:{1:ACT1,
+      2:[ia('إشعار ولي الأمر هاتفيًا، وحسم درجتين، وتعهد خطي، وإحالة للموجه'),ia('تنفيذ الأول مع دعوة ولي الأمر حضوريًا وخطة تعديل السلوك وبرنامج وقائي'),ic('تنفيذ الثاني مع نقل الطالب إلى فصل آخر بقرار لجنة التوجيه وتحويله للجنة')],
+      3:[ia('دعوة ولي الأمر وخطة تعديل السلوك وتعهد خطي، وحسم ثلاث درجات، والاعتذار، وإصلاح ما أتلفه، ومصادرة المواد الممنوعة، وإحالة للموجه'),ic('تنفيذ الأول مع إنذار الطالب كتابيًا بالنقل لمدرسة أخرى، وتحويله للجنة التوجيه ونقله لفصل آخر بقرارها'),ic('تنفيذ الأول مع رفع محضر اللجنة عاجلًا لإدارة التعليم، ونقل الطالب لمدرسة أخرى بقرار مدير التعليم')],
+      4:[ic('إحالة الطالب للجنة التوجيه، ودعوة ولي الأمر وتعهد خطي وإنذار بالنقل، وحسم عشر درجات، والاعتذار، وإصلاح ما أتلفه، ونقل لفصل آخر'),ic('تنفيذ الأول مع رفع محضر اللجنة عاجلًا لإدارة التعليم، ونقل الطالب لمدرسة أخرى بقرار مدير التعليم')],
+      5:[ic('تدوين محضر الواقعة، ودعوة ولي الأمر، وحسم خمس عشرة درجة، واجتماع لجنة التوجيه فورًا، ورفع محضر لإدارة التعليم، ونقل الطالب لمدرسة أخرى بقرار مدير التعليم')]},
+     staff:{
+      4:[ic('إحالة الطالب للجنة التوجيه، ودعوة ولي الأمر وتعهد خطي، وحسم عشر درجات، والاعتذار، وإصلاح ما أتلفه، ونقل لفصل آخر، وإحالة للموجه'),ic('تنفيذ الأول مع رفع محضر اللجنة عاجلًا لإدارة التعليم، ونقل الطالب لمدرسة أخرى بقرار مدير التعليم')],
+      5:[ic('تدوين محضر الواقعة، ودعوة ولي الأمر، وحسم خمس عشرة درجة، واجتماع لجنة التوجيه فورًا، ورفع محضر لإدارة التعليم، ونقل الطالب لمدرسة أخرى بقرار مدير التعليم')]}};
+    const DEGN=['','الأولى','الثانية','الثالثة','الرابعة','الخامسة'], DPT={1:1,2:2,3:3,4:10,5:15}, DCLS={1:'d1',2:'d2',3:'d3',4:'d4',5:'d5'};
+const TABS = [
+  ['home','الوصول السريع'],
+  ['inbox','الإحالات الواردة'],
+  ['plan','الخطة السنوية والبرامج الإرشادية'],
+  ['cases','دراسة الحالات الفردية'],
+  ['sess','الإرشاد الفردي والجمعي'],
+  ['hasr','الحالات الخاصة والسرية'],
+  ['care','رعاية فئات الطلاب'],
+  ['rep','التقارير']
+];
+const SUBS = {
+  inbox:[['a','إحالات وكيل شؤون الطلاب'],['b','المحالون إلى لجنة التوجيه والإرشاد'],['c','قرارات وتوصيات لجنة التوجيه والإرشاد'],['d','الحالات عالية الخطورة'],['e','تحليل نتائج الطلاب']],
+  plan:[['annual','الخطة السنوية للإرشاد الطلابي'],['prog','البرامج الإرشادية'],['career','التوجيه والإرشاد التعليمي والمهني'],['parents','لقاءات أولياء الأمور ومجالس الآباء'],['group','جماعة التوجيه والإرشاد']],
+  cases:[['list','الحالات'],['contacts','سجل التواصل'],['inc','سجل المواقف اليومية الطارئة']],
+  sess:[['indiv','التوجيه الفردي'],['group','الإرشاد الجمعي']],
+  hasr:[['psy','الحالات النفسية والانفعالية'],['soc','الحالات الاجتماعية'],['orph','الأيتام'],['health','الحالات الصحية'],['aid','الإعانة والمكافأة'],['fu','متابعة الحالات الفردية (بالرموز)']],
+  care:[['weak','المتأخرون دراسيًا'],['rep','المعيدون ومتكررو الرسوب'],['gift','المتفوقون دراسيًا والموهوبون'],['beh','المتميزون سلوكيًا'],['new','المستجدون'],['honor','كشف تكريم الطلاب']],
+};
+/* ----- التقارير: كل تقرير ومجموعته ----- */
+const REP = {
+  term:{t:'التقرير الفصلي للإرشاد الطلابي'}, final:{t:'التقرير الختامي للإرشاد الطلابي'},
+  indiv:{t:'تقرير التوجيه الفردي'}, group:{t:'تقرير الإرشاد الجمعي'},
+  hasr_psy:{t:'تقرير الحالات النفسية والانفعالية', col:'hasr', k:'psy'}, hasr_soc:{t:'تقرير الحالات الاجتماعية', col:'hasr', k:'soc'}, hasr_orph:{t:'تقرير الأيتام', col:'hasr', k:'orph'},
+  hasr_aid:{t:'تقرير الإعانة والمكافأة', col:'aid'}, hasr_fu:{t:'تقرير متابعة الحالات الفردية (بالرموز)', col:'hasr', k:'fu'}, hasr_health:{t:'تقرير الحالات الصحية', col:'hasr', k:'health'},
+  care_weak:{t:'تقرير المتأخرين دراسيًا', col:'care', k:'weak'}, care_rep:{t:'تقرير المعيدين ومتكرري الرسوب', col:'care', k:'rep'}, care_gift:{t:'تقرير المتفوقين دراسيًا والموهوبين', col:'care', k:'gift'},
+  care_beh:{t:'تقرير المتميزين سلوكيًا', col:'care', k:'beh'}, care_new:{t:'تقرير المستجدين', col:'care', k:'new'}, care_honor:{t:'تقرير كشف تكريم الطلاب', col:'care', k:'honor'}
+};
+const REPG = [['التقارير الدورية',['term','final']],['التوجيه والإرشاد',['indiv','group']],['الحالات الخاصة والسرية (تُطبع بالرموز)',['hasr_psy','hasr_soc','hasr_orph','hasr_aid','hasr_fu']],['الحالات الصحية (حصر الحالات الصحية المزمنة)',['hasr_health']],['رعاية فئات الطلاب',['care_weak','care_rep','care_gift','care_beh','care_new','care_honor']]];
+const SP = {first:'الفصل الدراسي الأول', second:'الفصل الدراسي الثاني'};
+const CASE_TYPES = ['سلوكية','دراسية','نفسية وانفعالية','اجتماعية وأسرية','صحية','أخرى'];
+const CASE_ST = {open:['مفتوحة','bad'], watch:['تحت المتابعة','warn'], closed:['مغلقة','ok']};
+
+const HMON = ['محرم','صفر','ربيع الأول','ربيع الآخر','جمادى الأولى','جمادى الآخرة','رجب','شعبان','رمضان','شوال','ذو القعدة','ذو الحجة'];
+/* ----- مواصفات النماذج المتكررة (جداول السجلات) ----- */
+const F = {
+  date:{k:'date',l:'التاريخ',t:'date'}, time:{k:'time',l:'الوقت',t:'time'}, student:{k:'stu',l:'الطالب',t:'student',req:true},
+  note:{k:'note',l:'ملاحظات',t:'textarea',w:1}
+};
+const SPEC = {
+  plans:{
+    annual:{ fields:[{k:'goal',l:'الهدف',t:'textarea',req:true,w:1},{k:'act',l:'البرنامج أو النشاط',t:'text',req:true},{k:'target',l:'الفئة المستهدفة',t:'text'},{k:'month',l:'الشهر (هجري)',t:'select',opt0:'غير محدد',o:HMON},{k:'week',l:'الأسبوع',t:'select',opt0:'غير محدد',o:['الأول','الثاني','الثالث','الرابع','الخامس']},{k:'who',l:'المنفذ',t:'text'},{k:'st',l:'الحالة',t:'select',o:['مخطط','نُفذ','مؤجل']},F.note],
+      cols:[['الهدف',x=>x.goal],['النشاط',x=>x.act],['الفئة المستهدفة',x=>x.target],['الشهر',x=>x.month||x.when],['الأسبوع',x=>x.week],['المنفذ',x=>x.who],['الحالة',x=>x.st]] },
+    prog:{ fields:[{k:'name',l:'اسم البرنامج',t:'text',req:true},{k:'ptype',l:'نوع البرنامج',t:'select',o:['نمائي','وقائي','علاجي']},{k:'target',l:'الفئة المستهدفة',t:'text'},{k:'goal',l:'الهدف',t:'textarea',w:1},{k:'from',l:'من تاريخ',t:'date'},{k:'to',l:'إلى تاريخ',t:'date'},{k:'st',l:'الحالة',t:'select',o:['مخطط','جارٍ','نُفذ']},{k:'result',l:'نتائج التنفيذ',t:'textarea',w:1}],
+      cols:[['البرنامج',x=>x.name],['النوع',x=>x.ptype],['الفئة',x=>x.target],['من',x=>x.from],['إلى',x=>x.to],['الحالة',x=>x.st],['النتائج',x=>x.result]] },
+    career:{ fields:[{k:'act',l:'النشاط',t:'text',req:true},{k:'target',l:'الصف أو الفئة',t:'text'},F.date,{k:'st',l:'الحالة',t:'select',o:['مخطط','نُفذ']},F.note],
+      cols:[['النشاط',x=>x.act],['الفئة',x=>x.target],['التاريخ',x=>x.date],['الحالة',x=>x.st],['ملاحظات',x=>x.note]] },
+    parents:{ fields:[{k:'ptype',l:'النوع',t:'select',o:['لقاء أولياء أمور','مجلس الآباء']},F.date,{k:'topic',l:'الموضوع',t:'text',req:true},{k:'attend',l:'عدد الحضور',t:'text'},{k:'result',l:'المخرجات والتوصيات',t:'textarea',w:1}],
+      cols:[['النوع',x=>x.ptype],['التاريخ',x=>x.date],['الموضوع',x=>x.topic],['الحضور',x=>x.attend],['المخرجات',x=>x.result]] },
+    group:{ fields:[{k:'ptype',l:'البند',t:'select',o:['اجتماع','نشاط']},F.date,{k:'topic',l:'الاسم أو الموضوع',t:'text',req:true},{k:'members',l:'الأعضاء المشاركون',t:'textarea',w:1},{k:'result',l:'المخرجات',t:'textarea',w:1}],
+      cols:[['البند',x=>x.ptype],['التاريخ',x=>x.date],['الاسم أو الموضوع',x=>x.topic],['الأعضاء',x=>x.members],['المخرجات',x=>x.result]] }
+  },
+  contacts:{
+    parent:{ fields:[F.date,F.student,{k:'who',l:'اسم ولي الأمر',t:'text'},{k:'mean',l:'وسيلة التواصل',t:'select',o:['هاتف','حضوري','رسالة','خطاب']},{k:'topic',l:'الموضوع',t:'textarea',w:1},{k:'result',l:'النتيجة',t:'textarea',w:1}],
+      cols:[['التاريخ',x=>x.date],['الطالب',x=>x.name],['ولي الأمر',x=>x.who],['الوسيلة',x=>x.mean],['الموضوع',x=>x.topic],['النتيجة',x=>x.result]] },
+    teacher:{ fields:[F.date,{k:'who',l:'اسم المعلم',t:'text',req:true},{k:'stu',l:'الطالب (اختياري)',t:'student'},{k:'mean',l:'وسيلة التواصل',t:'select',o:['حضوري','هاتف','رسالة']},{k:'topic',l:'الموضوع',t:'textarea',w:1},{k:'result',l:'النتيجة',t:'textarea',w:1}],
+      cols:[['التاريخ',x=>x.date],['المعلم',x=>x.who],['الطالب',x=>x.name],['الوسيلة',x=>x.mean],['الموضوع',x=>x.topic],['النتيجة',x=>x.result]] },
+    ext:{ fields:[F.date,{k:'who',l:'الجهة',t:'text',req:true},{k:'stu',l:'الطالب (اختياري)',t:'student'},{k:'mean',l:'وسيلة التواصل',t:'select',o:['خطاب','هاتف','حضوري','نظام إلكتروني']},{k:'topic',l:'الموضوع',t:'textarea',w:1},{k:'result',l:'النتيجة',t:'textarea',w:1}],
+      cols:[['التاريخ',x=>x.date],['الجهة',x=>x.who],['الطالب',x=>x.name],['الوسيلة',x=>x.mean],['الموضوع',x=>x.topic],['النتيجة',x=>x.result]] }
+  },
+  incidents:{
+    day:{ fields:[F.date,F.time,{k:'place',l:'المكان',t:'text'},{k:'stu',l:'الطالب (اختياري)',t:'student'},{k:'desc',l:'وصف الموقف',t:'textarea',req:true,w:1},{k:'action',l:'الإجراء المتخذ',t:'textarea',w:1},{k:'who',l:'الجهة المبلَّغة',t:'text'}],
+      cols:[['التاريخ',x=>x.date],['الوقت',x=>x.time],['المكان',x=>x.place],['الطالب',x=>x.name],['الموقف',x=>x.desc],['الإجراء',x=>x.action],['المبلَّغ',x=>x.who]] }
+  },
+  hasr:{
+    health:{ fields:[Object.assign({},F.student,{showId:1}),{k:'cond',l:'الحالة الصحية',t:'textarea',req:true,w:1},{k:'proc',l:'إجراءات المتابعة',t:'textarea',w:1},{k:'phone',l:'رقم ولي أمر الطالب',t:'text'}],
+      cols:[['اسم الطالب',x=>x.name],['رقم الهوية',x=>x.seat],['الصف',x=>x.className],['الحالة الصحية',x=>x.cond],['إجراءات المتابعة',x=>x.proc],['جوال ولي الأمر',x=>x.phone]] },
+    _:{ fields:[F.student,{k:'sym',l:'الرمز (يُستعمل بدل الاسم عند الطباعة)',t:'text'},{k:'detail',l:'وصف الحالة',t:'textarea',req:true,w:1},{k:'since',l:'تاريخ الرصد',t:'date'},{k:'action',l:'الإجراء المتخذ',t:'textarea',w:1},F.note],
+      cols:[['الرمز',x=>x.sym],['الطالب',x=>x.name],['الصف',x=>x.className],['الحالة',x=>x.detail],['التاريخ',x=>x.since],['الإجراء',x=>x.action]] } },
+  care:{ _:{ fields:[F.student,{k:'detail',l:'التفاصيل',t:'textarea',w:1},{k:'plan',l:'الخطة أو البرنامج',t:'textarea',w:1},F.date,{k:'result',l:'النتيجة والمتابعة',t:'textarea',w:1}],
+      cols:[['الطالب',x=>x.name],['الصف',x=>x.className],['التفاصيل',x=>x.detail],['الخطة',x=>x.plan],['التاريخ',x=>x.date],['النتيجة',x=>x.result]] },
+    honor:{ fields:[F.student,{k:'htype',l:'نوع التكريم',t:'select',o:['تفوق دراسي','تميز سلوكي','مواظبة','موهبة','مشاركة']},{k:'detail',l:'سبب التكريم',t:'textarea',w:1},F.date],
+      cols:[['الطالب',x=>x.name],['الصف',x=>x.className],['نوع التكريم',x=>x.htype],['السبب',x=>x.detail],['التاريخ',x=>x.date]] } }
+};
+const specOf = (col,kind)=> (SPEC[col]||{})[kind] || (SPEC[col]||{})._;
+
+Dash.boot({
+  title:'الموجه الطلابي', bare:true,
+  allow:(u,ctx,sid,isSA)=>{
+    if(isSA) return true;
+    const p = (ctx && ctx.permissions) || {};
+    if(ctx && ctx.role==='counselor') return true;
+    if((p['index.guidance']||{}).edit===true) return true;
+    const c = p['tools.counselor'];
+    return (c && (c.access || c.edit)) ? true : 'هذه الصفحة خاصة بالموجه الطلابي.';
+  },
+  render: async env=>{
+    const {db, sid, period} = env;
+    const $ = s=>document.querySelector(s);
+    const A = n=>String(n).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);
+    const esc = s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    const perms = (env.ctx && env.ctx.permissions) || {};
+    const canEdit = !env.isSA && ((env.ctx && env.ctx.role==='counselor') || (perms['index.guidance']||{}).edit===true || ((perms['tools.counselor']||{}).edit===true || (perms['tools.counselor']||{}).access===true));
+    const mgrOnly = !!env.isSA && !canEdit;     // المدير: رؤوس الحالات فقط
+    const base = db.collection('counselor').doc(sid), sa = db.collection('studentAffairs').doc(sid);
+    const COLS = ['caseFiles','sessions','hasr','care','plans','contacts','incidents','recs','inbox','reports'];
+    const dk = (()=>{ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
+    const hij = k=>{ try{ const o={}; new Intl.DateTimeFormat('en-u-ca-islamic-umalqura',{year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date(k+'T12:00:00')).forEach(x=>o[x.type]=x.value); return A(o.year+'/'+o.month+'/'+o.day); }catch(e){ return ''; } };
+    const dshow = k=>k ? hij(k)+'هـ' : '';
+    const cv = v=>{ v = String(v==null?'':v); return /^\d{4}-\d{2}-\d{2}$/.test(v) ? dshow(v) : v; };
+    const toast = m=>{ const t=$('#toast'); t.textContent=m; t.hidden=false; clearTimeout(toast.h); toast.h=setTimeout(()=>t.hidden=true,2800); };
+    const fail = e=>{ console.error(e); toast('تعذّر الحفظ: '+(e && e.message ? e.message : e)); };
+
+    env.main.innerHTML =
+      '<div class="wrap"><header class="top"><div><h1>الموجه الطلابي</h1><div class="sub">'+esc(env.school.name||'')+' · '+SP[period]+'</div></div>'
+      +'<div class="row"><button type="button" class="btn" id="back">← الموقع</button><span class="chip">'+(canEdit?'الموجه الطلابي':(mgrOnly?'اطلاع المدير':'اطلاع الوكيل'))+'</span></div></header>'
+      +'<nav class="tabs" id="tabs"></nav><div id="body"></div></div><div id="ovs"></div><div id="toast" hidden></div>';
+    $('#back').onclick = ()=>location.href='index.html';
+
+    /* ===== البيانات ===== */
+    let RAWN = [], RAWR = [], OTHER = null, OTHERLOADING = false;
+    const mapTR = (raw,per)=>raw.filter(x=>x.period===per && x.studentSeat).map(x=>({id:x.id, seat:String(x.studentSeat), name:x.studentName||'', cls:x.className||'', st:x.trSt||'new', note:x.agentReport||'', why:x.trReason||x.referralReason||'', at:x.referredAt||x.createdAt||0}));
+    const mapRP = (raw,per)=>raw.filter(x=>x.referralReason==='تقرير تحليل نتائج' && (!x.period || x.period===per));
+    let HREP = [], CS = [], D = {}, RO = [], VL = [], AB = [], MN = [], HR = [], TR = [], RP = [], AIDS = [], AIDCFG = {}, CMT = null, TASKS = [], CMRS = [], loaded = false;
+    const get = (ref)=>ref.get().then(s=>s.docs.map(d=>Object.assign({id:d.id},d.data()))).catch(e=>{ console.error(e); return []; });
+    async function loadAll(){
+      const byP = c=>get(base.collection(c).where('period','==',period));
+      CS = await byP('cases'); COLS.forEach(c=>D[c]=[]); D.stRec = [];
+      if(mgrOnly){ loaded = true; return; }
+      const r = await Promise.all([
+        ...COLS.map(byP),
+        db.collection('schoolData').doc('roster_'+sid).get().then(d=>d.exists?JSON.parse(d.data().value||'{}'):{}).catch(()=>({})),
+        get(sa.collection('violations').where('period','==',period)),
+        get(sa.collection('absence').where('period','==',period)),
+        get(sa.collection('minutes').where('period','==',period)),
+        get(sa.collection('highRisk').where('period','==',period)),
+        get(db.collection('notes').where('schoolId','==',sid).where('trType','==','st')),
+        get(db.collection('notes').where('recipients','array-contains',env.me.id)),
+        get(sa.collection('aid')),
+        sa.collection('aidCfg').doc('main').get().then(d=>d.exists?d.data():{}).catch(()=>({})),
+        get(base.collection('stRec')),
+        sa.collection('committee').doc(period).get().then(d=>d.exists?d.data():null).catch(()=>null),
+        get(sa.collection('committeeTasks').where('period','==',period)),
+        get(sa.collection('cmRefs').where('period','==',period)),
+        get(db.collection('healthReports').doc(sid).collection('items').where('period','==',period))]);
+      COLS.forEach((c,i)=>D[c]=r[i]);
+      const k = COLS.length, o = r[k];
+      const cm = new Map((o.classes||[]).map(c=>[String(c.code),c]));
+      RO = (o.students||[]).filter(s=>!s.deleted).map(s=>{ const c=cm.get(String(s.classCode))||{}; return {seat:String(s.seat), name:s.name||'', cls:c.name||String(s.classCode||''), health:String(s.health||'').trim()}; })
+        .sort((a,b)=>a.cls.localeCompare(b.cls,'ar') || a.name.localeCompare(b.name,'ar'));
+      VL = r[k+1]; AB = r[k+2]; MN = r[k+3]; HR = r[k+4];
+      RAWN = r[k+5]; RAWR = r[k+6]; TR = mapTR(RAWN, period);
+      RP = mapRP(RAWR, period);
+      AIDS = r[k+7]; AIDCFG = r[k+8] || {};
+      D.stRec = r[k+9]; CMT = r[k+10]; TASKS = r[k+11]; CMRS = r[k+12]; HREP = r[k+13] || [];
+      loaded = true;
+    }
+    const lk = v=> v.k==='other' ? (v.stage==='ابتدائي'?'pri':'mid') : v.k;
+    function vInfo(v){
+      const L = (ACTS[lk(v)]||ACTS.mid)[v.d] || ACTS.mid[1];
+      const same = VL.filter(x=>x.seat===v.seat && x.period===v.period && x.w===v.w).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0) || String(a.id).localeCompare(String(b.id)));
+      const n = (same.findIndex(x=>x.id===v.id)+1) || same.length || 1, i = Math.min(n,L.length), act = L[i-1];
+      return {n, i, act:act[0], com:!!act[1]};
+    }
+    const who = ()=>({by:env.me.id, byName:env.me.name, at:Date.now()});
+    async function put(col, id, data){
+      const ref = id ? base.collection(col).doc(id) : base.collection(col).doc();
+      const rec = Object.assign({period}, data, who());
+      if(['cases','caseFiles','sessions','stRec'].includes(col)){
+        const sk = data.seat || (col==='stRec' ? id : ((col==='cases'||col==='caseFiles') ? (csOf(id)||{}).seat : (D.sessions.find(x=>x.id===id)||{}).seat));
+        if(sk && refSeats().has(String(sk))) rec.cmRef = true;
+      }
+      await ref.set(rec, {merge:true});
+      const row = Object.assign({id:ref.id}, rec);
+      const arr = col==='cases' ? CS : D[col]; const i = arr.findIndex(x=>x.id===ref.id);
+      if(i>=0) arr[i] = Object.assign(arr[i], row); else arr.push(row);
+      if(col==='hasr'){ const m = arr.find(x=>x.id===ref.id); if(m && m.kind==='health') await hMirror(m); }
+      return row;
+    }
+    /* نسخة عامة مختصرة (الاسم والصف والحالة فقط) تقرؤها الصفحة الرئيسية لكل الموظفين؛ التفاصيل (الهوية والجوال والإجراءات) تبقى هنا مغلقة */
+    const hCol = db.collection('healthCases').doc(sid).collection('items');
+    async function hMirror(m){ await hCol.doc(m.id).set({period, seat:String(m.seat||''), name:m.name||'', className:m.className||'', cond:m.cond||'', updatedAt:Date.now(), updatedBy:env.me.id}); }
+    const SOFT = ['hasr','care'];
+    const isDel = x=>!!(x && x.deleted);
+    const live = a=>a.filter(x=>!isDel(x));
+    async function softDel(col, id){
+      await base.collection(col).doc(id).set({deleted:true, deletedAt:Date.now(), deletedBy:env.me.id, deletedByName:env.me.name}, {merge:true});
+      if(col==='hasr'){ const y = D.hasr.find(z=>z.id===id); if(y && y.kind==='health'){ try{ await hCol.doc(id).delete(); }catch(e){ console.warn(e); } } }
+      const x = D[col].find(y=>y.id===id); if(x) Object.assign(x, {deleted:true, deletedAt:Date.now(), deletedBy:env.me.id, deletedByName:env.me.name});
+    }
+    const delNote = x=>'<div class="muted">حُذف بواسطة: '+esc(x.deletedByName||'')+(x.deletedAt?' — '+A(esc(dshow(new Date(x.deletedAt).toISOString().slice(0,10)))):'')+'</div>';
+    async function del(col, id){
+      await base.collection(col).doc(id).delete();
+      const arr = col==='cases' ? CS : D[col]; const i = arr.findIndex(x=>x.id===id); if(i>=0) arr.splice(i,1);
+    }
+
+    /* ===== النوافذ والنماذج ===== */
+    function overlay(html, wide){
+      const ov = document.createElement('div'); ov.className = 'ov';
+      ov.innerHTML = '<div class="box'+(wide?' wide':'')+'">'+html+'</div>';
+      $('#ovs').appendChild(ov); ov.close = ()=>ov.remove(); return ov;
+    }
+    function fieldHtml(f, data){
+      const v = data[f.k] == null ? '' : data[f.k];
+      if(f.t==='student'){
+        const cur = data.seat ? {seat:data.seat, name:data.name, className:data.className} : null;
+        return '<div class="fld" style="grid-column:1/-1" data-stp="'+f.k+'"><label>'+f.l+'</label><div class="chips" data-cur>'+(cur?'<span class="chip">'+esc(cur.name)+' · '+esc(cur.className||'')+(f.showId?' · هوية '+esc(cur.seat):'')+'</span>':'')+'</div>'
+          +'<input type="text" data-q placeholder="ابحث باسم الطالب"><div class="resl" data-res></div></div>';
+      }
+      if(f.t==='students'){
+        return '<div class="fld" style="grid-column:1/-1" data-stm="'+f.k+'"><label>'+f.l+'</label><div class="chips" data-cur></div>'
+          +(f.noCls?'':'<div class="row"><select data-cls><option value="">إضافة صف كامل…</option>'+[...new Set(RO.map(x=>x.cls))].filter(Boolean).sort((a,b)=>String(a).localeCompare(String(b),'ar')).map(c=>'<option>'+esc(c)+'</option>').join('')+'</select><button type="button" class="btn" data-addcls="1">إضافة الصف كاملًا</button></div>')
+          +'<input type="text" data-q placeholder="ابحث باسم الطالب لإضافته"><div class="resl" data-res></div></div>';
+      }
+      const lab = '<label for="f_'+f.k+'">'+f.l+(f.req?' *':'')+'</label>';
+      let inp;
+      if(f.t==='textarea') inp = '<textarea id="f_'+f.k+'">'+esc(v)+'</textarea>';
+      else if(f.t==='select') inp = '<select id="f_'+f.k+'">'+(f.opt0?'<option value="">'+f.opt0+'</option>':'')+f.o.map(o=>{ const val=Array.isArray(o)?o[0]:o, lb=Array.isArray(o)?o[1]:o; return '<option value="'+esc(val)+'"'+(String(v)===String(val)?' selected':'')+'>'+esc(lb)+'</option>'; }).join('')+'</select>';
+      else inp = '<input type="'+(f.t==='date'?'date':f.t==='time'?'time':'text')+'" id="f_'+f.k+'" value="'+esc(v)+'"'+(f.ro?' readonly style="background:var(--brand-soft)"':'')+'>';
+      return '<div class="fld"'+(f.w||f.t==='textarea'?' style="grid-column:1/-1"':'')+'>'+lab+inp+'</div>';
+    }
+    /* يربط حقول الطلاب داخل جذر ويعيد دالة تقرأ كل القيم */
+    function bindForm(root, fields, data){
+      const sel = {}; const multi = {};
+      root.querySelectorAll('[data-stp]').forEach(w=>{ const k=w.dataset.stp; sel[k] = data.seat ? {seat:data.seat, name:data.name, className:data.className} : null; });
+      root.querySelectorAll('[data-stm]').forEach(w=>{ multi[w.dataset.stm] = (data[w.dataset.stm]||[]).slice(); });
+      const drawM = w=>{ const k=w.dataset.stm; w.querySelector('[data-cur]').innerHTML = multi[k].map((s,i)=>'<span class="chip">'+esc(s.name)+' · '+esc(s.className||'')+'<button type="button" data-rm="'+i+'">×</button></span>').join(''); };
+      root.querySelectorAll('[data-stm]').forEach(drawM);
+      root.addEventListener('input', e=>{
+        const q = e.target.closest('[data-q]'); if(!q) return;
+        const w = q.parentElement, t = q.value.trim();
+        w.querySelector('[data-res]').innerHTML = t ? RO.filter(s=>s.name.includes(t)).slice(0,6).map(s=>'<button type="button" class="btn" data-pk="'+esc(s.seat)+'">'+esc(s.name)+' · '+esc(s.cls)+'</button>').join('') || '<span class="muted">لا نتائج.</span>' : '';
+      });
+      root.addEventListener('click', e=>{
+        const pk = e.target.closest('[data-pk]');
+        if(pk){ const w = pk.closest('[data-stp],[data-stm]'); const s = RO.find(x=>x.seat===pk.dataset.pk); if(!s) return;
+          const o = {seat:s.seat, name:s.name, className:s.cls};
+          if(w.dataset.stp){ sel[w.dataset.stp] = o; const fd0 = fields.find(x=>x.k===w.dataset.stp)||{}; w.querySelector('[data-cur]').innerHTML = '<span class="chip">'+esc(o.name)+' · '+esc(o.className)+(fd0.showId?' · هوية '+esc(o.seat):'')+'</span>'; }
+          else { const k=w.dataset.stm, fd=fields.find(x=>x.k===k)||{}; if(!multi[k].some(x=>x.seat===o.seat)){ if(fd.max && multi[k].length>=fd.max){ toast('الحد الأقصى '+A(fd.max)+' طلاب'); return; } multi[k].push(o); } drawM(w); }
+          w.querySelector('[data-q]').value=''; w.querySelector('[data-res]').innerHTML=''; return; }
+        const ac = e.target.closest('[data-addcls]');
+        if(ac){ const w = ac.closest('[data-stm]'), c = w.querySelector('[data-cls]').value; if(!c){ toast('اختر الصف أولًا'); return; }
+          const k = w.dataset.stm; RO.filter(x=>x.cls===c).forEach(s2=>{ if(!multi[k].some(x=>x.seat===s2.seat)) multi[k].push({seat:s2.seat, name:s2.name, className:s2.cls}); });
+          drawM(w); return; }
+        const rm = e.target.closest('[data-rm]'); if(rm){ const w=rm.closest('[data-stm]'); multi[w.dataset.stm].splice(+rm.dataset.rm,1); drawM(w); }
+      });
+      return ()=>{
+        const out = {};
+        for(const f of fields){
+          if(f.t==='student'){ const s = sel[f.k]; if(s){ out.seat=s.seat; out.name=s.name; out.className=s.className; } else { out.seat=''; out.name=''; out.className=''; } }
+          else if(f.t==='students') out[f.k] = multi[f.k];
+          else { const el = root.querySelector('#f_'+f.k); out[f.k] = el ? el.value.trim() : ''; }
+        }
+        return out;
+      };
+    }
+    function missing(fields, out){
+      for(const f of fields){ if(!f.req) continue; if(f.t==='student'){ if(!out.seat) return f.l; } else if(f.t==='students'){ if(!(out[f.k]||[]).length) return f.l; } else if(!out[f.k]) return f.l; }
+      return null;
+    }
+    function formModal(title, fields, data, onSave, wide){
+      const ov = overlay('<h3 style="margin:0">'+esc(title)+'</h3><div class="fgrid" id="fm">'+fields.map(f=>fieldHtml(f,data)).join('')+'</div><div class="row"><button type="button" class="btn solid" id="fmOk">حفظ</button><button type="button" class="btn" id="fmNo">إلغاء</button></div>', wide);
+      const read = bindForm(ov.querySelector('#fm'), fields, data);
+      ov.querySelector('#fmNo').onclick = ()=>ov.close();
+      ov.querySelector('#fmOk').onclick = async ()=>{
+        const out = read(); const m = missing(fields,out); if(m){ toast('أكمل الحقل: '+m.replace(' *','')); return; }
+        const b = ov.querySelector('#fmOk'); b.disabled = true;
+        try{ await onSave(out); ov.close(); }catch(e){ fail(e); b.disabled=false; }
+      };
+      return ov;
+    }
+
+    /* ===== الطباعة ===== */
+    const PCSS = 'table{border-collapse:collapse;width:100%;margin:8px 0}td,th{border:1px solid #333;padding:4px 6px;font-size:12px;text-align:right;vertical-align:top}th{background:#eee}.ln{margin:7px 0;font-size:14px}.sg{display:flex;justify-content:space-between;margin-top:30px;font-size:13px}.sg div{min-width:30%}.sec{font-weight:800;margin:10px 0 4px;border-bottom:1px solid #999}.cnf{text-align:center;font-weight:800;color:#a00}.sgb{display:flex;gap:16px;margin-top:28px;page-break-inside:avoid}.sgb .bx{flex:1;border:1px solid #333;padding:8px 10px;min-height:120px;font-size:13px}.sgb .bx b{display:block;margin-bottom:8px}.sgb .stz{margin-top:10px;height:58px;border:1px dashed #888;text-align:center;color:#888;font-size:11px;line-height:58px}';
+    async function printHtml(title, body, o){
+      o = o||{};
+      const w = window.open('', '_blank'); if(!w){ toast('اسمح بالنوافذ المنبثقة للطباعة'); return; }
+      try{ w.document.write('<!doctype html><meta charset="utf-8"><body dir="rtl" style="font-family:Tahoma,Arial;padding:24px">جارٍ تحضير النموذج…</body>'); }catch(e){}
+      try{
+        const ctx = await FormHdr.resolve({db, session:env.session, period});
+        const html = FormHdr.doc({title, formTitle:title, ctx, extra:o.extra||[], body:'<div class="f">'+(typeof body==='function'?body(ctx):body)+'</div>', extraCss:PCSS, landscape:!!o.land});
+        w.document.open(); w.document.write(html); w.document.close();
+      }catch(e){ try{ w.close(); }catch(x){} fail(e); }
+    }
+    const dots = (t,n)=>'<span style="display:inline-block;min-width:'+(n||120)+'px;border-bottom:1px dotted #333">'+esc(t||'')+'&nbsp;</span>';
+    const sigC = ()=>'<div class="sg"><div>الموجه الطلابي: '+dots(env.me.name,140)+'</div><div>التوقيع: '+dots('',110)+'</div></div>';
+    const sigBox = ctx=>'<div class="sgb"><div class="bx"><b>الموجه الطلابي</b><div>الاسم: '+dots(env.me.name,150)+'</div><div style="margin-top:14px">التوقيع: '+dots('',130)+'</div></div><div class="bx"><b>اعتماد مدير المدرسة</b><div>الاسم: '+dots(ctx&&ctx.principal||'',150)+'</div><div class="stz">موضع الختم والتوقيع</div></div></div>';
+    const sigM = ctx=>'<div class="sg"><div></div><div>مدير المدرسة: '+dots(ctx&&ctx.principal||'',140)+'<div style="height:46px"></div>التوقيع: '+dots('',110)+'<div style="height:26px"></div></div></div>';
+    function printTable(title, cols, rows, o){
+      o = o||{};
+      return printHtml(title, (o.top||'')+'<table><thead><tr><th>م</th>'+cols.map(c=>'<th>'+esc(c[0])+'</th>').join('')+'</tr></thead><tbody>'
+        +(rows.map((r,i)=>'<tr><td>'+A(i+1)+'</td>'+cols.map(c=>'<td>'+esc(cv(c[1](r)))+'</td>').join('')+'</tr>').join('') || '<tr><td colspan="'+(cols.length+1)+'">لا سجلات.</td></tr>')
+        +'</tbody></table>'+(o.nosig?'':sigC()), {land:o.land!==false, extra:o.extra});
+    }
+
+    /* ===== ملفات الحالات ===== */
+    const csOf = id=>CS.find(c=>c.id===id);
+    const fileOf = id=>D.caseFiles.find(x=>x.id===id) || {id};
+    const openCaseOfSeat = seat=>CS.find(c=>c.seat===seat && c.st!=='closed');
+    async function newCase(o){
+      const ex = o.seat ? openCaseOfSeat(o.seat) : null;
+      if(ex){ toast('للطالب حالة مفتوحة، فُتحت أمامك'); return ex; }
+      const row = await put('cases', null, {seat:o.seat, name:o.name, className:o.cls||o.className||'', type:o.type||'سلوكية', st:'open', src:o.src||'فتح مباشر', srcKey:o.srcKey||'', openedAt:Date.now(), nextFollow:''});
+      if(o.srcKey) await put('inbox', o.srcKey, {st:'case', caseId:row.id}).catch(()=>{});
+      return row;
+    }
+
+    /* ===== الإحالات الواردة (محسوبة من بيانات الوكيل) ===== */
+    const inboxDoc = key=>D.inbox.find(x=>x.id===key);
+    function inboxItems(){
+      const items = [];
+      { const gm = {};
+        TR.filter(t=>t.st==='ref' || (t.st==='done' && (inboxDoc('tg_'+t.seat) || inboxDoc('tr_'+t.id)))).forEach(t=>{ (gm[t.seat]=gm[t.seat]||[]).push(t); });
+        Object.keys(gm).forEach(seat=>{ const L = gm[seat].sort((x,y)=>(x.at||0)-(y.at||0)), f = L[0];
+          items.push({grp:'a', key:'tg_'+seat, seat, name:f.name, cls:f.cls, title:'إحالة ملف الطالب من وكيل شؤون الطلاب (تحويلات المعلمين)', lines:L.map((t,i)=>'التحويل '+A(i+1)+': '+(t.note||t.why||'—')), trIds:L.filter(t=>t.st==='ref').map(t=>t.id), trDone:L.every(t=>t.st==='done'), cnt:L.length, type:'سلوكية', at:Math.max.apply(null, L.map(t=>t.at||0))}); }); }
+      VL.forEach(v=>{ const I = vInfo(v);
+        if(v.cm) items.push({grp:'b', key:'c_'+v.id, seat:v.seat, name:v.name, cls:v.className, title:'أُحيل إلى لجنة التوجيه والإرشاد: '+v.w, detail:'الدرجة '+DEGN[v.d]+' · '+I.act, type:'سلوكية', at:v.cmAt||v.createdAt||0, letter:true});
+        else if(/للموجه/.test(I.act)) items.push({grp:'a', key:'v_'+v.id, seat:v.seat, name:v.name, cls:v.className, title:'إحالة للموجه الطلابي: '+v.w, detail:'الدرجة '+DEGN[v.d]+' · الإجراء '+A(I.i)+': '+I.act, type:'سلوكية', at:v.createdAt||0}); });
+      AB.forEach(a=>{ (a.actions||[]).forEach(x=>{
+        if(x.k===0) items.push({grp:'a', key:'a3_'+a.seat, seat:String(a.seat), name:a.name, cls:a.className, title:'غياب بدون عذر: تحويل واستدعاء ولي الأمر', detail:'بلغ الغياب بدون عذر '+A(x.n)+' أيام', type:'دراسية', at:x.at||0});
+        if(x.k===1) items.push({grp:'b', key:'a5_'+a.seat, seat:String(a.seat), name:a.name, cls:a.className, title:'غياب بدون عذر: إحالة إلى لجنة التوجيه والإرشاد', detail:'بلغ الغياب بدون عذر '+A(x.n)+' أيام', type:'دراسية', at:x.at||0, letter:true}); }); });
+      HR.filter(h=>h.st==='approved').forEach(h=>items.push({grp:'d', key:'h_'+h.id, seat:String(h.seat), name:h.name, cls:h.className, title:'حالة عالية الخطورة معتمدة: '+(h.type||''), detail:h.desc||'', type:'نفسية وانفعالية', at:h.approvedAt||0, hr:h}));
+      RP.forEach(n=>items.push({grp:'e', key:'r_'+n.id, seat:'', name:'', cls:n.className||'', title:n.text||'تقرير تحليل نتائج', detail:'من المعلم '+(n.fromName||''), at:n.createdAt||0, note:n, pdf:n.hasPdf}));
+      CS.filter(c=>c.cm).forEach(c=>{ if(!items.some(i=>i.grp==='b' && String(i.seat)===String(c.seat))) items.push({grp:'b', key:'cc_'+c.id, seat:String(c.seat), name:c.name, cls:c.className, title:'أُحيل إلى لجنة التوجيه والإرشاد: '+(c.src||c.type||''), detail:'إحالة من الموجه الطلابي', type:c.type||'', at:c.cmAt||0, letter:true}); });
+      const seen = new Set(); return items.filter(i=>seen.has(i.key)?false:(seen.add(i.key),true)).sort((a,b)=>(b.at||0)-(a.at||0));
+    }
+    const done = it=>{ const d = inboxDoc(it.key); return !!(d && d.st==='handled'); };
+    const refSeats = ()=>new Set(inboxItems().filter(i=>i.grp==='b' && i.seat).map(i=>String(i.seat)));
+    const caseOfSeat = seat=>{ const L = CS.filter(c=>String(c.seat)===String(seat)).sort((a,b)=>(b.openedAt||0)-(a.openedAt||0)); return L.find(c=>c.st!=='closed') || L[0] || null; };
+    const IST = [['open','حالات مفتوحة'],['watch','تحت المتابعة'],['closed','حالات مغلقة'],['handled','حالات عولجت']];
+    /* بيت واحد لكل ملف: الإحالة الواردة تبقى في «الإحالات الواردة» حتى يحدد الموجه مسارها، ثم تنتقل إلى تبويب واحد فقط */
+    const DEST = [
+      ['cm','لجنة التوجيه والإرشاد','يظهر في: الإحالات الواردة ← المحالون إلى لجنة التوجيه والإرشاد'],
+      ['hr','الحالات عالية الخطورة','يظهر في: الإحالات الواردة ← الحالات عالية الخطورة'],
+      ['cases','دراسة الحالات الفردية','يظهر في: دراسة الحالات الفردية ← الحالات'],
+      ['indiv','الإرشاد الفردي','يظهر في: الإرشاد الفردي والجمعي ← التوجيه الفردي']];
+    const KEYHOME = k=>/^(c_|a5_|cc_)/.test(k) ? 'cm' : (/^h_/.test(k) ? 'hr' : 'cases');
+    const caseHome = c=> c.route || (c.cm ? 'cm' : (c.srcKey ? KEYHOME(c.srcKey) : 'cases'));
+    const homeCases = h=>CS.filter(c=>caseHome(c)===h);
+    const caseIst = c=>{ const hd = (c.handledAt||0) > 0 && (c.handledAt||0) >= (c.reopenedAt||0); return hd ? 'handled' : (c.st==='closed' ? 'closed' : (c.st==='watch' ? 'watch' : 'open')); };
+    const caseLbl = c=>(c.routed || c.srcKey) ? 'محوّلة من الوارد' : 'مفتوحة من التبويب';
+    function itemHome(it){
+      if(it.grp==='e') return 'pool';
+      const d = inboxDoc(it.key), c = it.seat ? caseOfSeat(it.seat) : null;
+      if(c && (c.st!=='closed' || (d && d.caseId===c.id))) return caseHome(c);
+      if(d && d.route) return d.route;
+      return 'pool';
+    }
+    const inPool = it=>itemHome(it)==='pool' && !(done(it) || it.trDone);
+    const stDest = it=>{ const x = itemStatus(it); return x==='new' ? 'open' : x; };
+    function istBlock(key, L, stOf, card, wrap){
+      CUR.ist = CUR.ist || {}; const cur = CUR.ist[key] || 'open', by = {}, w = wrap || 'ul';
+      L.forEach(x=>{ const k = stOf(x); (by[k] = by[k] || []).push(x); });
+      const tabs = '<div class="seg subs ist" id="ist">'+IST.map(t=>'<button type="button" class="'+(t[0]===cur?'on':'')+'" data-it="'+t[0]+'" data-ik="'+esc(key)+'">'+t[1]+' ('+A((by[t[0]]||[]).length)+')</button>').join('')+'</div>';
+      return tabs + '<'+w+' class="lst">'+((by[cur]||[]).map(card).join('') || (w==='ul' ? '<li class="muted">لا حالات في هذا القسم.</li>' : '<div class="muted">لا حالات في هذا القسم.</div>'))+'</'+w+'>';
+    }
+    async function routeItem(it, dest){
+      const sib = inboxItems().filter(i=>i.grp!=='e' && String(i.seat)===String(it.seat) && itemHome(i)==='pool');
+      let c = openCaseOfSeat(it.seat);
+      if(!c) c = await newCase({seat:it.seat, name:it.name, cls:it.cls, type:it.type, src:it.title, srcKey:it.key});
+      for(const i of sib) await put('inbox', i.key, {route:dest, caseId:c.id});
+      if(dest==='cm' && !refSeats().has(String(it.seat))) await referCase(c);
+      await put('cases', c.id, {route:dest, routed:true, routedAt:Date.now()});
+      if(dest==='cm') syncCm();
+      return c;
+    }
+    function routeDlg(it){
+      if(!canEdit) return;
+      const ov = overlay('<h3 style="margin:0">تحديد مسار ملف الحالة — '+esc(it.name)+'</h3><div class="muted">يُنقل الملف من «الإحالات الواردة» إلى التبويب الذي تختاره، ويُدرس فيه كاملًا ولا يظهر في غيره.</div><div class="resl">'
+        +DEST.map(d=>'<button type="button" class="btn" data-d="'+d[0]+'">تحويل إلى '+d[1]+'<span class="muted" style="display:block;font-weight:400">'+d[2]+'</span></button>').join('')+'</div><div class="row"><button type="button" class="btn" id="x">إلغاء</button></div>');
+      ov.querySelector('#x').onclick = ()=>ov.close();
+      ov.addEventListener('click', async e=>{ const b = e.target.closest('[data-d]'); if(!b || b.disabled) return; b.disabled = true;
+        try{ await routeItem(it, b.dataset.d); toast('حُوِّل الملف إلى: '+DEST.find(d=>d[0]===b.dataset.d)[1]); ov.close(); render(); }catch(er){ fail(er); b.disabled = false; } });
+    }
+    function itemStatus(it){
+      const c = it.seat ? caseOfSeat(it.seat) : null;
+      const fin = done(it) || it.trDone;
+      if(fin && !(c && c.reopenedAt && c.reopenedAt > (c.handledAt||0))) return 'handled';
+      if(!c) return 'new';
+      return c.st==='closed' ? 'closed' : (c.st==='watch' ? 'watch' : 'open');
+    }
+    const cmMembers = ()=> (CMT && CMT.pres) ? [{id:CMT.pres.id, name:CMT.pres.name, role:'رئيس اللجنة'}, {id:(CMT.edu||{}).id, name:(CMT.edu||{}).name, role:'عضو'}, {id:(CMT.cn||{}).id, name:(CMT.cn||{}).name, role:'مقرر'}].concat((CMT.t||[]).map(x=>({id:x.id, name:x.name, role:'عضو'}))).filter(m=>m.id) : [];
+    const execField = ()=>{ const o = cmMembers().filter(m=>m.id!==env.me.id).map(m=>[m.id, m.name+' — '+m.role]); return o.length ? [{k:'exec', l:'المنفِّذ (اختياري: عضو من لجنة التوجيه والإرشاد)', t:'select', opt0:'الموجه نفسه', o}] : []; };
+    const taskOf = x=>x && x.taskId ? TASKS.find(t=>t.id===x.taskId) : null;
+    const effF = x=>{ const t = taskOf(x); return t && t.st==='done' ? Object.assign({}, x, {res:t.res||x.res}) : x; };
+    const effS = x=>{ const t = taskOf(x); return t && t.st==='done' ? Object.assign({}, x, {proc:t.proc||x.proc, result:t.result||x.result, recs:t.recs||x.recs}) : x; };
+    const execTag = x=>{ if(!x || !x.execName) return ''; const t = taskOf(x); return ' <span class="tag '+(t&&t.st==='done'?'ok':'warn')+'">المنفِّذ: '+esc(x.execName)+' — '+(t&&t.st==='done'?'سُجِّلت':'بانتظار التسجيل')+'</span>'; };
+    async function assignTask(kind, c, out){
+      const m = cmMembers().find(x=>x.id===out.exec); if(!m) return {};
+      const tref = sa.collection('committeeTasks').doc();
+      const rec = {period, memberId:m.id, memberName:m.name, seat:c.seat||'', name:c.name, className:c.className||'', caseId:c.id||'', kind, date:out.date||dk, time:out.time||'', topic:out.topic||out.text||'', goal:out.goal||'', st:'pending', createdAt:Date.now(), createdBy:env.me.id, createdByName:env.me.name};
+      await tref.set(rec); TASKS.push(Object.assign({id:tref.id}, rec));
+      try{
+        await db.collection('notes').add({schoolId:sid, period, fromUserId:env.me.id, fromName:env.me.name, fromRole:'counselor', recipients:[m.id], recipientsInfo:[{userId:m.id, name:m.name, role:''}], scope:'task',
+          studentSeat:'', studentName:'', classCode:'', className:'', text:'أسند إليك الموجه الطلابي '+(kind==='indiv'?'جلسة توجيه فردي':(kind==='group'?'جلسة إرشاد جمعي':'متابعة سريعة'))+(kind==='group'?' للفئة: ':' مع الطالب: ')+c.name+(c.className?' ('+c.className+')':'')+'. تجدها في «لوحتي ← لجنة التوجيه والإرشاد».',
+          referralReason:'إسناد مهمة من لجنة التوجيه والإرشاد', createdAt:Date.now(), replies:[], readAt:{}, closed:false});
+      }catch(e){ console.warn(e); }
+      return {taskId:tref.id, execId:m.id, execName:m.name};
+    }
+    async function printCommitteeLetter(it){
+      const body = '<div class="ln">سعادة رئيس لجنة التوجيه والإرشاد، وفقه الله</div><div class="ln" style="text-align:center">السلام عليكم ورحمة الله وبركاته</div>'
+        +'<div class="ln">أحيل إليكم الطالب/ة: '+dots(it.name,260)+' بالصف: '+dots(it.cls,150)+'</div>'
+        +'<div class="ln">سبب الإحالة: '+dots(it.title,420)+'</div><div class="ln">'+esc(it.detail||'')+'</div>'
+        +'<div class="ln">وذلك لدراسة حالته واتخاذ ما ترونه مناسبًا حيال ذلك وفق الدليل التنظيمي، وأنا على استعداد لتزويدكم بما يلزم من بيانات.</div>'
+        +'<div class="ln">وتقبلوا تحياتي،،،</div>'+sigC();
+      await printHtml('إحالة طالب إلى لجنة التوجيه والإرشاد', body, {});
+    }
+    async function printProtection(it){
+      const h = it.hr || {};
+      const ctx = await FormHdr.resolve({db, session:env.session, period});
+      const body = '<div class="ln">إلى: الجهة المختصة بحماية الطفل (مركز البلاغات ١١٦١١١)</div><div class="ln" style="text-align:center">السلام عليكم ورحمة الله وبركاته</div>'
+        +'<div class="ln">الموضوع: بلاغ حالة عالية الخطورة</div>'
+        +'<div class="ln">نفيدكم بأنه رُصدت في المدرسة حالة للطالب/ة: '+dots(it.name,240)+' بالصف: '+dots(it.cls,150)+'</div>'
+        +'<div class="ln">نوع الحالة: '+dots(h.type||'',240)+'</div><div class="ln">وصف الحالة: '+esc(h.desc||'')+'</div>'
+        +'<div class="ln">راصد الحالة: '+dots(h.observer||'',200)+' بتاريخ '+dots(dshow(h.obsDate),130)+' الساعة '+dots(A(h.obsTime||''),80)+'</div>'
+        +'<div class="ln">وقد اعتمد مدير المدرسة رفع الحالة، لذا نأمل التكرم بالاطلاع واتخاذ ما يلزم وفق الإجراءات المتبعة.</div>'
+        +'<div class="ln">وتقبلوا تحياتي،،،</div>'+sigM(ctx);
+      await printHtml('خطاب بلاغ حماية', body, {});
+    }
+    function openPdf(id){
+      const w = window.open('', '_blank');
+      db.collection('notePdfs').doc(id).get().then(s=>{ const d=s.data()||{}; if(!d.pdfB64){ if(w) w.close(); toast('تعذّر فتح الملف'); return; }
+        const bin = atob(d.pdfB64.replace(/^data:.*?;base64,/,'')), u8 = new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u8[i]=bin.charCodeAt(i);
+        const url = URL.createObjectURL(new Blob([u8],{type:'application/pdf'})); if(w) w.location = url; else location.href = url;
+      }).catch(e=>{ if(w) w.close(); fail(e); });
+    }
+    function itemHtml(it){
+      const pool = itemHome(it)==='pool', st = itemStatus(it);
+      const btns = [];
+      const ex = it.seat ? caseOfSeat(it.seat) : null;
+      if(canEdit && it.seat){
+        if(pool) btns.push('<button type="button" class="btn solid" data-rt="'+esc(it.key)+'">تحديد مسار الملف</button>');
+        else btns.push('<button type="button" class="btn solid" data-oc="'+esc(it.key)+'">'+(ex?'متابعة دراسة الحالة':'إجراءات دراسة الحالة')+'</button>');
+      }
+      if(it.letter) btns.push('<button type="button" class="btn" data-lt="'+esc(it.key)+'">خطاب الإحالة إلى اللجنة</button>');
+      if(it.hr) btns.push('<button type="button" class="btn" data-pr="'+esc(it.key)+'">خطاب بلاغ الحماية</button>');
+      if(it.pdf) btns.push('<button type="button" class="btn" data-pdf="'+esc(it.note.id)+'">فتح التقرير</button>');
+      const det = it.lines ? '<ul class="dl">'+it.lines.map(l=>'<li>'+esc(l)+'</li>').join('')+'</ul>' : '<div class="muted">'+esc(it.detail||'')+'</div>';
+      const stTag = pool ? '<span class="tag bad">جديد</span>' : {new:'<span class="tag bad">جديد</span>', open:'<span class="tag warn">مفتوحة</span>', watch:'<span class="tag warn">تحت المتابعة</span>', closed:'<span class="tag">مغلقة</span>', handled:'<span class="tag ok">عولج</span>'}[st];
+      const orig = (pool || it.grp==='e') ? '' : '<span class="tag cnr">'+(/^cc_/.test(it.key)?'أحالها الموجه':'محوّلة من الوارد')+'</span>';
+      return '<li class="srow"><div class="row" style="align-items:center"><b>'+esc(it.name||'تقرير')+'</b> <span class="muted">'+esc(it.cls||'')+'</span> '+stTag+orig
+        +(it.cnt>1?'<span class="tag cnr">'+A(it.cnt)+' تحويلات</span>':'')+'</div><div>'+esc(it.title)+'</div>'+det
+        +'<div class="row">'+btns.join('')+'</div></li>';
+    }
+    function recsList(){
+      const out = [];
+      MN.filter(m=>m.st==='approved').sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).forEach(m=>{ ((m.content||{}).recs||[]).forEach((r,i)=>out.push({id:'m_'+m.id+'_'+i, m, r, i})); });
+      return out;
+    }
+    const seenRep = it=>{ const d = inboxDoc(it.key); return !!(d && d.seen); };
+    const shortRep = it=>{ let t = String(it.title||''); [' الفصول:', 'عدد الطلاب'].forEach(w=>{ const i = t.indexOf(w); if(i>0) t = t.slice(0,i); }); return t.replace(/[|\s:]+$/,'').slice(0,150); };
+    function reportsPane(){
+      const L = inboxItems().filter(i=>i.grp==='e');
+      if(!L.length) return '<ul class="lst"><li class="muted">لا تقارير واردة.</li></ul>';
+      const by = {}; L.forEach(i=>{ const k = i.note.fromUserId || i.note.fromName || '—'; (by[k] = by[k] || {name:i.note.fromName||'معلم', list:[]}).list.push(i); });
+      const G = Object.values(by); G.forEach(g=>g.list.sort((a,b)=>(b.at||0)-(a.at||0))); G.sort((a,b)=>(b.list[0].at||0)-(a.list[0].at||0));
+      return '<div class="muted">لكل معلم بطاقة، والتقرير الجديد في أعلاها.</div><div class="lst">'+G.map(g=>{ const nw = g.list.filter(i=>!seenRep(i)).length;
+        return '<details class="trow vc" open><summary><div class="nm">'+esc(g.name)+'<small>'+A(g.list.length)+' تقارير</small></div><div class="row">'+(nw?'<span class="tag bad">'+A(nw)+' جديد</span>':'')+'</div></summary><div class="vcb"><ul class="lst">'
+          + g.list.map(i=>'<li class="srow"><div class="row" style="align-items:center"><b>'+esc(i.cls||'')+'</b>'+(seenRep(i)?'':'<span class="tag bad">جديد</span>')+'</div><div class="muted">'+esc(shortRep(i))+'</div><div class="row"><button type="button" class="btn solid" data-rv="'+esc(i.key)+'">معاينة التحليل</button></div></li>').join('')
+          +'</ul></div></details>'; }).join('')+'</div>';
+    }
+    async function showRep(it){
+      const ov = overlay('<div class="cnh"><h3 style="margin:0">'+esc(it.cls||'تحليل النتائج')+'</h3><span class="muted">من المعلم '+esc((it.note||{}).fromName||'')+'</span></div><div class="nt">'+esc(it.title||'').split(' | ').join('<br>')+'</div>'
+        +'<div class="row">'+(it.pdf?'<button type="button" class="btn solid" data-p="1">فتح ملف PDF</button>':'')+'<button type="button" class="btn" data-x="1">إغلاق</button></div>', true);
+      ov.addEventListener('click', e=>{ const b = e.target.closest('button'); if(!b) return; if(b.dataset.x){ ov.close(); return; } if(b.dataset.p) openPdf(it.note.id); });
+      if(canEdit && !seenRep(it)){ try{ await put('inbox', it.key, {seen:true}); render(); }catch(er){ console.warn(er); } }
+    }
+    function inboxPane(sub){
+      if(sub==='c'){
+        const L = recsList();
+        return '<div class="muted">التوصيات الواردة من محاضر لجنة التوجيه والإرشاد المعتمدة من المدير. يسجل الموجه حالة تنفيذ كل توصية.</div><ul class="lst">'+(L.map(x=>{
+          const d = D.recs.find(y=>y.id===x.id)||{}; const c = x.m.content||{};
+          return '<li class="srow"><div><b>'+esc(x.m.name)+'</b> <span class="muted">'+esc(x.m.className||'')+' · اجتماع '+esc(dshow(c.dateG))+'</span></div><div>'+esc(x.r)+'</div>'
+            +'<div class="row">'+(canEdit?'<select data-rs="'+esc(x.id)+'"><option value="">لم تُسجَّل حالة</option><option value="ongoing"'+(d.st==='ongoing'?' selected':'')+'>جارية</option><option value="done"'+(d.st==='done'?' selected':'')+'>نُفذت</option></select>':'<span class="tag">'+(d.st==='done'?'نُفذت':d.st==='ongoing'?'جارية':'لم تُسجَّل حالة')+'</span>')+'</div></li>'; }).join('') || '<li class="muted">لا توصيات معتمدة بعد.</li>')+'</ul>';
+      }
+      if(sub==='e') return reportsPane();
+      const hm = {a:'pool', b:'cm', d:'hr'}[sub];
+      const L = inboxItems().filter(i=>i.grp!=='e' && (hm==='pool' ? inPool(i) : itemHome(i)===hm));
+      if(hm==='pool') return '<div class="muted">كل إحالة جديدة تصل هنا ببياناتها. حدّد مسار ملف الحالة لينتقل إلى تبويبه ويُدرس فيه ويختفي من هنا.</div><ul class="lst">'+(L.map(itemHtml).join('') || '<li class="muted">لا إحالات جديدة.</li>')+'</ul>';
+      return '<div class="muted">'+(hm==='cm'?'ملفات حُوّلت إلى لجنة التوجيه والإرشاد، وتُدرس هنا كاملة.':'ملفات الحالات عالية الخطورة، وتُدرس هنا كاملة.')+'</div>'+istBlock('inbox:'+sub, L, stDest, itemHtml);
+    }
+    async function inboxClick(e){
+      const g = a=>e.target.closest('['+a+']'); let b;
+      const find = k=>inboxItems().find(i=>i.key===k);
+      if(b=g('data-rt')){ const it=find(b.dataset.rt); if(it) routeDlg(it); return true; }
+      if(b=g('data-rv')){ const it=find(b.dataset.rv); if(it) showRep(it); return true; }
+      if(b=g('data-oc')){ if(!canEdit) return; const it=find(b.dataset.oc); if(!it) return;
+        try{
+          const ex = caseOfSeat(it.seat);
+          if(ex && (ex.st!=='closed' || ['handled','closed'].includes(itemStatus(it)))){ openCase(ex.id); return true; }
+          const c = await newCase({seat:it.seat, name:it.name, cls:it.cls, type:it.type, src:it.title, srcKey:it.key}); render(); openCase(c.id);
+        }catch(er){ fail(er); } return true; }
+      if(b=g('data-lt')){ const it=find(b.dataset.lt); if(it) printCommitteeLetter(it); return true; }
+      if(b=g('data-pr')){ const it=find(b.dataset.pr); if(it) printProtection(it); return true; }
+      if(b=g('data-pdf')){ openPdf(b.dataset.pdf); return true; }
+    }
+    document.addEventListener('change', async e=>{
+      const s = e.target.closest('[data-rs]'); if(!s || !canEdit) return;
+      try{ await put('recs', s.dataset.rs, {st:s.value}); toast('سُجلت حالة التوصية'); }catch(er){ fail(er); }
+    });
+
+    /* ===== الخطط والسجلات العامة (جداول) ===== */
+    function crudPane(col, kind, title, extra){
+      const sp = specOf(col, kind), L = D[col].filter(x=>x.kind===kind).sort((a,b)=>String(b.date||b.since||'').localeCompare(String(a.date||a.since||'')) || (b.at||0)-(a.at||0));
+      const showSym = col==='hasr' && kind==='fu';
+      const cols = sp.cols;
+      return '<div class="cnh"><h3 style="margin:0">'+esc(title)+'</h3><div class="row">'+(canEdit?'<button type="button" class="btn solid" data-add="'+col+'|'+kind+'">+ إضافة</button>':'')+(extra||'')
+        +'<button type="button" class="btn" data-prt="'+col+'|'+kind+'">طباعة</button>'+(showSym?'<button type="button" class="btn" data-prt="'+col+'|'+kind+'|sym">طباعة بالرموز</button>':'')+'</div></div>'
+        +'<div class="tw2"><table class="tbl"><thead><tr>'+cols.map(c=>'<th>'+esc(c[0])+'</th>').join('')+'<th></th></tr></thead><tbody>'
+        +(L.map(x=>isDel(x)
+          ? '<tr class="gone">'+cols.map(c=>'<td><del>'+esc(cv(c[1](x)))+'</del></td>').join('')+'<td>'+delNote(x)+'</td></tr>'
+          : '<tr>'+cols.map(c=>'<td>'+esc(cv(c[1](x)))+'</td>').join('')+'<td style="white-space:nowrap">'+(canEdit?'<button type="button" class="btn" data-ed="'+col+'|'+x.id+'">تعديل</button> <button type="button" class="btn danger" data-dl="'+col+'|'+x.id+'">حذف</button>':'')+'</td></tr>').join('') || '<tr><td colspan="'+(cols.length+1)+'" class="muted">لا سجلات.</td></tr>')+'</tbody></table></div>';
+    }
+    /* ===== الحالات الصحية: استيراد القديم + رفع التقرير للمدير ===== */
+    const hLive = ()=>live(D.hasr).filter(x=>x.kind==='health');
+    const hOld = ()=>RO.filter(s=>s.health && !hLive().some(x=>String(x.seat)===s.seat));
+    const HST = {pending:['بانتظار اعتماد المدير','warn'], approved:['اعتمد المدير','ok'], rejected:['رفضه المدير','bad'], returned:['أعاده المدير للتعديل','bad']};
+    const hLast = ()=>HREP.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))[0];
+    function healthExtra(){
+      const o = hOld().length, last = hLast(), st = last && (HST[last.st]||HST.pending);
+      return (canEdit && o ? '<button type="button" class="btn" data-hmig="1">استيراد '+A(o)+' حالة قديمة من قائمة الطلاب</button>' : '')
+        +(canEdit && hLive().length ? '<button type="button" class="btn solid" data-hsend="1">رفع التقرير للمدير للاعتماد</button>' : '')
+        +(st ? '<span class="tag '+st[1]+'">آخر تقرير مرفوع: '+st[0]+'</span>' : '')
+        +(last && (last.st==='returned'||last.st==='rejected') && last.note ? '<span class="muted">ملاحظة المدير: '+esc(last.note)+'</span>' : '');
+    }
+    async function healthMigrate(){
+      const L = hOld(); if(!L.length) return;
+      for(const s of L){ const row = await put('hasr', null, {kind:'health', seat:s.seat, name:s.name, className:s.cls, cond:s.health, proc:'', phone:''}); void row; }
+      toast('استُورد '+A(L.length)+' حالة، أكمل إجراءات المتابعة ورقم ولي الأمر لكل طالب'); render();
+    }
+    async function healthSend(){
+      const L = hLive(); if(!L.length){ toast('لا حالات صحية لرفعها'); return; }
+      const last = hLast(); if(last && last.st==='pending'){ toast('يوجد تقرير سابق بانتظار اعتماد المدير'); return; }
+      const rows = L.slice().sort((a,b)=>String(a.className||'').localeCompare(String(b.className||''),'ar')||String(a.name||'').localeCompare(String(b.name||''),'ar'))
+        .map(x=>({name:x.name||'', id:String(x.seat||''), cls:x.className||'', cond:x.cond||'', proc:x.proc||'', phone:x.phone||''}));
+      const ref = db.collection('healthReports').doc(sid).collection('items').doc();
+      const rec = {period, st:'pending', rows, count:rows.length, createdAt:Date.now(), createdBy:env.me.id, createdByName:env.me.name};
+      await ref.set(rec); HREP.push(Object.assign({id:ref.id}, rec)); toast('رُفع تقرير الحالات الصحية إلى المدير للاعتماد'); render();
+    }
+    function nextSym(){ const L2 = {'٠':0,'١':1,'٢':2,'٣':3,'٤':4,'٥':5,'٦':6,'٧':7,'٨':8,'٩':9}; let mx = 0;
+      D.hasr.filter(x=>x.kind==='fu').forEach(x=>{ const m = String(x.sym||'').match(/[0-9٠-٩]+/); if(m){ const n = parseInt(m[0].replace(/[٠-٩]/g,d=>L2[d]),10); if(n>mx) mx=n; } });
+      return 'ح-'+A(String(Math.max(mx, D.hasr.filter(x=>x.kind==='fu').length)+1).padStart(3,'0')); }
+    const symFields = (fields,kind)=>fields.filter(f=>!(f.k==='sym' && !(kind==='fu'))).map(f=>f.k==='sym'?Object.assign({}, f, {l:'الرمز (يُولَّد آليًا ولا يُعدَّل)', ro:1}):f);
+    function crudAdd(col, kind, title){
+      const sp = specOf(col, kind); const data = {kind};
+      if(col==='hasr' && kind==='fu') data.sym = nextSym();
+      if(sp.fields.some(f=>f.k==='date')) data.date = dk;
+      formModal(title, symFields(sp.fields,kind), data, async out=>{ await put(col, null, Object.assign({kind}, out)); toast('حُفظ'); render(); }, true);
+    }
+    function crudEdit(col, id){
+      const x = D[col].find(y=>y.id===id); if(!x) return; const sp = specOf(col, x.kind);
+      formModal('تعديل السجل', symFields(sp.fields,x.kind), x, async out=>{ if(x.sym) out.sym = x.sym; await put(col, id, out); toast('حُفظ'); render(); }, true);
+    }
+    function crudPrint(col, kind, sym){
+      const sp = specOf(col, kind), L = live(D[col]).filter(x=>x.kind===kind).sort((a,b)=>String(a.date||a.since||'').localeCompare(String(b.date||b.since||'')));
+      const subs = (SUBS[CUR.tab]||[]).find(s=>s[0]===CUR.sub[CUR.tab]); const title = subs ? subs[1] : 'سجل';
+      let cols = sp.cols;
+      if(sym) cols = cols.filter(c=>c[0]!=='الطالب' && c[0]!=='الصف');
+      printTable(title, cols, L, {top:sym?'<div class="cnf">سري — يُحفظ في ملف خاص مغلق لدى الموجه الطلابي (بالرموز)</div>':(col==='hasr'?'<div class="cnf">سري — يُحفظ في ملف خاص مغلق لدى الموجه الطلابي</div>':'')});
+    }
+
+    /* ===== الإعانة والمكافأة: السجل المشترك مع الوكيل (studentAffairs/aid) ===== */
+    function aidPane(){
+      const on = !!AIDCFG.on, own = AIDCFG.owner || 'agent', mine = canEdit && own==='counselor';
+      if(!on) return '<div class="hud"><strong>الإعانة والمكافأة مغلقة</strong><div class="muted">يفتحها وكيل شؤون الطلاب من صفحته، وهي مغلقة افتراضيًا.</div></div>';
+      const L = AIDS.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+      return '<div class="cnh"><h3 style="margin:0">الإعانة والمكافأة</h3><div class="row">'+(mine?'<button type="button" class="btn solid" data-aadd="1">+ إضافة مستحق</button>':'')+'<button type="button" class="btn" data-aprt="1">طباعة الكشف</button></div></div>'
+        +(mine?'':'<div class="nt">صاحب التسجيل حاليًا: '+(own==='agent'?'وكيل شؤون الطلاب':'الموجه الطلابي')+' — الاطلاع فقط.</div>')
+        +'<div class="tw2"><table class="tbl"><thead><tr><th>الطالب</th><th>الصف</th><th>النوع</th><th>التاريخ</th><th></th></tr></thead><tbody>'
+        +(L.map(x=>isDel(x)?'<tr class="gone"><td><del>'+esc(x.name)+'</del></td><td><del>'+esc(x.className)+'</del></td><td><del>'+esc(x.type)+'</del></td><td><del>'+A(esc(x.dateH||''))+'</del></td><td>'+delNote(x)+'</td></tr>':'<tr><td>'+esc(x.name)+'</td><td>'+esc(x.className)+'</td><td><span class="tag '+(x.type==='إعانة'?'warn':'ok')+'">'+esc(x.type)+'</span>'+(x.byName?'<div class="muted">سجّله: '+esc(x.byName)+' ('+esc(x.byRole||'الوكيل')+')</div>':'')+'</td><td>'+A(esc(x.dateH||''))+'</td><td>'+(mine?'<button type="button" class="btn danger" data-adl="'+x.id+'">حذف</button>':'')+'</td></tr>').join('') || '<tr><td colspan="5" class="muted">لا مستحقين.</td></tr>')+'</tbody></table></div>';
+    }
+    function aidAdd(){
+      formModal('إضافة مستحق', [{k:'stu',l:'الطالب',t:'student',req:true},{k:'type',l:'النوع',t:'select',o:['إعانة','مكافأة']},{k:'dateG',l:'التاريخ',t:'date'}], {dateG:dk}, async out=>{
+        const dg = out.dateG || dk, ref = sa.collection('aid').doc(), rec = {seat:out.seat, name:out.name, className:out.className, type:out.type, dateG:dg, dateH:hij(dg), createdAt:Date.now(), createdBy:env.me.id, byName:env.me.name, byRole:'الموجه الطلابي'};
+        await ref.set(rec); AIDS.push(Object.assign({id:ref.id}, rec)); toast('أُضيف المستحق'); render(); });
+    }
+
+    /* ===== الجلسات ===== */
+    const sfOf = kind=>{ CUR.sf = CUR.sf || {}; return CUR.sf[kind] = CUR.sf[kind] || {q:'', from:'', to:''}; };
+    function sessRows(kind){
+      const f = sfOf(kind), q = f.q.trim();
+      return D.sessions.filter(x=>x.kind===kind && !(kind==='indiv' && x.caseId && csOf(x.caseId))).map(effS)
+        .filter(s=>!q || String(kind==='indiv'?(s.name||''):(s.groupName||'')).includes(q) || String(s.topic||'').includes(q))
+        .filter(s=>(!f.from || String(s.date||'')>=f.from) && (!f.to || String(s.date||'')<=f.to))
+        .sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')) || (b.at||0)-(a.at||0));
+    }
+    function sessListHtml(kind){
+      const L = sessRows(kind);
+      return '<ul class="lst" id="sessList">'+(L.map(s=>{
+        const nm = esc(kind==='indiv'?s.name:(s.groupName||'جلسة جماعية')), meta = esc(dshow(s.date))+(s.time?' · '+esc(A(s.time)):'')+(kind==='group'?' · '+A((s.students||[]).length)+' طلاب':'');
+        if(isDel(s)) return '<li class="srow gone"><div><del><b>'+nm+'</b> <span class="muted">'+meta+'</span></del></div><div><del>'+esc(s.topic||'')+'</del></div>'+delNote(s)+'</li>';
+        return '<li class="srow"><div><b>'+nm+'</b> <span class="muted">'+meta+'</span>'+(kind==='indiv'?' <span class="tag cnr">جلسة مفتوحة من التبويب</span>':'')+execTag(s)+'</div><div>'+esc(s.topic||'')+'</div>'
+          +'<div class="row"><button type="button" class="btn" data-sp="'+s.id+'">طباعة الاستمارة</button>'+(kind==='group'?'<button type="button" class="btn" data-sat="'+s.id+'">كشف الحضور</button>':'')+(canEdit?'<button type="button" class="btn" data-sed="'+s.id+'">تعديل</button><button type="button" class="btn danger" data-sdl="'+s.id+'">حذف</button>':'')+'</div></li>'; }).join('') || '<li class="muted">لا جلسات مسجلة.</li>')+'</ul>';
+    }
+    function sessPane(kind){
+      const f = sfOf(kind);
+      const files = kind==='indiv' ? '<h4 class="grph">ملفات الحالات المحوّلة إلى الإرشاد الفردي</h4><div class="muted">تُدرس هذه الملفات كاملة هنا، وتُسجَّل جلساتها داخل ملف كل حالة.</div>'
+        + istBlock('sess:indiv', homeCases('indiv').slice().sort((a,b)=>String(a.name).localeCompare(String(b.name),'ar')), caseIst, c=>caseCard(c,'محوّلة من الوارد'), 'div')
+        + '<h4 class="grph">الجلسات المفتوحة من هذا التبويب</h4>' : '';
+      return '<div class="cnh"><h3 style="margin:0">'+(kind==='indiv'?'التوجيه الفردي':'الإرشاد الجمعي')+'</h3><div class="row">'+(canEdit?'<button type="button" class="btn solid" data-sadd="'+kind+'">+ جلسة جديدة</button>':'')+'</div></div>'
+        + files
+        + '<div class="fgrid"><div class="fld"><label for="sfq">'+(kind==='indiv'?'بحث باسم الطالب أو الموضوع':'بحث باسم المجموعة أو الموضوع')+'</label><input type="text" id="sfq" value="'+esc(f.q)+'"></div>'
+        + '<div class="fld"><label for="sff">من تاريخ</label><input type="date" id="sff" value="'+esc(f.from)+'"></div><div class="fld"><label for="sft">إلى تاريخ</label><input type="date" id="sft" value="'+esc(f.to)+'"></div></div>'
+        + sessListHtml(kind);
+    }
+    function sessFields(kind, withExec){
+      return [F.date, F.time]
+        .concat(kind==='indiv'
+          ? [{k:'stu',l:'الطالب',t:'student',req:true}]
+          : [{k:'groupName',l:'الفئة المستهدفة أو اسم المجموعة',t:'text',req:true},{k:'students',l:'الطلاب المشاركون',t:'students',req:true}])
+        .concat([{k:'topic',l:'موضوع الجلسة',t:'text',req:true},{k:'goal',l:'أهداف الجلسة',t:'textarea',w:1},{k:'proc',l:'ما تم في الجلسة',t:'textarea',w:1},{k:'result',l:'النتائج',t:'textarea',w:1},{k:'recs',l:'التوصيات',t:'textarea',w:1},{k:'next',l:'موعد الجلسة التالية',t:'date'}])
+        .concat(withExec ? execField() : []);
+    }
+    function sessAdd(kind){
+      formModal(kind==='indiv'?'جلسة توجيه فردي':'جلسة إرشاد جمعي', sessFields(kind, true), {date:dk}, async out=>{
+        const ex = out.exec ? await assignTask(kind==='group'?'group':'indiv', kind==='group' ? {name:out.groupName, seat:'', className:'', id:''} : {name:out.name, seat:out.seat, className:out.className, id:''}, out) : {};
+        delete out.exec;
+        await put('sessions', null, Object.assign({kind}, out, ex));
+        toast(ex.execName?'حُفظت الجلسة وأُرسل إشعار للمنفِّذ':'حُفظت الجلسة'); render(); }, true);
+    }
+    function sessEdit(id){
+      const s = D.sessions.find(x=>x.id===id); if(!s) return;
+      formModal('تعديل الجلسة', sessFields(s.kind, false), s, async out=>{ await put('sessions', id, out); toast('حُفظ'); render(); }, true);
+    }
+    function sessPrint(s0){
+      const s = effS(s0), ind = s.kind==='indiv';
+      const body = '<div class="ln">التاريخ: '+dots(dshow(s.date),150)+' الوقت: '+dots(A(s.time||''),80)+'</div>'
+        +(ind ? '<div class="ln">اسم الطالب: '+dots(s.name,260)+' الصف: '+dots(s.className,150)+'</div>' : '<div class="ln">الفئة المستهدفة: '+dots(s.groupName,300)+' عدد المشاركين: '+dots(A((s.students||[]).length),60)+'</div>')
+        +'<div class="ln">موضوع الجلسة: '+dots(s.topic,420)+'</div>'+(s.execName?'<div class="ln">المنفِّذ: '+dots(s.execName,260)+'</div>':'')
+        +['goal:أهداف الجلسة','proc:ما تم في الجلسة','result:النتائج','recs:التوصيات'].map(p=>{ const q=p.split(':'); return '<div class="sec">'+q[1]+'</div><div class="ln" style="min-height:44px">'+esc(s[q[0]]||'')+'</div>'; }).join('')
+        +'<div class="ln">موعد الجلسة التالية: '+dots(dshow(s.next),150)+'</div>'
+        +(ind?'':'<div class="sec">المشاركون</div><div class="ln">'+(s.students||[]).map(x=>esc(x.name)+' ('+esc(x.className||'')+')').join('، ')+'</div>')+sigC();
+      printHtml(ind?'استمارة جلسة توجيه فردي':'استمارة جلسة إرشاد جمعي', '<div class="cnf">سري</div>'+body, {});
+    }
+    function attPrint(s){
+      printTable('كشف حضور جلسة إرشاد جمعي', [['اسم الطالب',x=>x.name],['الصف',x=>x.className],['التوقيع',x=>'']], s.students||[], {top:'<div class="ln">الفئة المستهدفة: '+dots(s.groupName,260)+' التاريخ: '+dots(dshow(s.date),140)+' الموضوع: '+dots(s.topic,260)+'</div>', land:false});
+    }
+
+    /* ===== دراسة الحالات ===== */
+    const CASE_GROUPS = {
+      study:{t:'دراسة الحالة', fields:[{k:'reason',l:'سبب الدراسة',t:'textarea',w:1},{k:'family',l:'الجانب الأسري',t:'textarea',w:1},{k:'academic',l:'الجانب الدراسي',t:'textarea',w:1},{k:'health',l:'الجانب الصحي',t:'textarea',w:1},{k:'social',l:'الجانب الاجتماعي',t:'textarea',w:1},{k:'behavior',l:'الجانب السلوكي',t:'textarea',w:1},{k:'strengths',l:'جوانب القوة',t:'textarea',w:1},{k:'causes',l:'أسباب المشكلة',t:'textarea',w:1},{k:'diagnosis',l:'التشخيص',t:'textarea',w:1},{k:'recs',l:'التوصيات والخطة العلاجية',t:'textarea',w:1}]},
+      comp:{t:'السجل الشامل', fields:[{k:'guardian',l:'ولي الأمر',t:'text'},{k:'phone',l:'هاتف التواصل',t:'text'},{k:'address',l:'السكن',t:'text'},{k:'siblings',l:'عدد الإخوة وترتيب الطالب',t:'text'},{k:'level',l:'المستوى الدراسي العام',t:'text'},{k:'interests',l:'الميول والهوايات',t:'textarea',w:1},{k:'hnotes',l:'ملاحظات صحية',t:'textarea',w:1},{k:'snotes',l:'ملاحظات اجتماعية',t:'textarea',w:1},{k:'tnotes',l:'ملاحظات المعلمين',t:'textarea',w:1}]},
+      plan:{t:'خطة تعديل السلوك', fields:[{k:'target',l:'السلوك المراد تعديله',t:'textarea',w:1},{k:'base',l:'مستوى السلوك الحالي',t:'textarea',w:1},{k:'goal',l:'الهدف',t:'textarea',w:1},{k:'strat',l:'الأساليب والإجراءات',t:'textarea',w:1},{k:'reinf',l:'التعزيز',t:'textarea',w:1},{k:'from',l:'من تاريخ',t:'date'},{k:'to',l:'إلى تاريخ',t:'date'},{k:'resp',l:'المسؤول عن التنفيذ',t:'text'},{k:'eval',l:'التقويم',t:'textarea',w:1}]},
+      close:{t:'تقرير الإغلاق', fields:[{k:'date',l:'تاريخ الإغلاق',t:'date'},{k:'res',l:'نتيجة الحالة',t:'select',o:['تم حل المشكلة','تحسن ملحوظ','إحالة إلى جهة مختصة','استمرار المتابعة']},{k:'text',l:'تقرير الإغلاق',t:'textarea',w:1}]}
+    };
+    const gv = (c,g)=> g==='comp' ? (((D.stRec||[]).find(x=>x.id===String(c.seat))||{}).comp || {}) : (fileOf(c.id)[g]||{});
+    function caseCard(c, tag){
+      const hd = caseIst(c)==='handled', st = hd ? ['عولجت','ok'] : (CASE_ST[c.st]||CASE_ST.open), n = live(D.sessions).filter(s=>s.caseId===c.id).length;
+      const due = c.st!=='closed' && !hd && c.nextFollow && c.nextFollow<=dk;
+      const inner = '<div class="kv"><b>نوع الحالة</b><span>'+esc(c.type||'')+'</span><b>المصدر</b><span>'+esc(c.src||'')+'</span><b>تاريخ الفتح</b><span>'+esc(dshow(c.openedAt?new Date(c.openedAt).toISOString().slice(0,10):''))+'</span><b>المتابعة القادمة</b><span>'+esc(dshow(c.nextFollow)||'غير محددة')+'</span></div>'
+        +(mgrOnly?'':'<div class="row"><button type="button" class="btn solid" data-oc2="'+c.id+'">فتح ملف الحالة</button></div>');
+      return '<details class="trow vc"><summary><div class="nm">'+esc(c.name)+'<small>'+esc(c.className||'')+'</small></div><div class="row">'+(tag?'<span class="tag cnr">'+tag+'</span>':'')+'<span class="tag cnr">'+A(n)+' جلسات</span><span class="tag '+st[1]+'">'+st[0]+'</span>'+(due?'<span class="tag bad">متابعة مستحقة</span>':'')+'</div></summary><div class="vcb">'+inner+'</div></details>';
+    }
+    function caseCards(filter){
+      const L = CS.filter(filter||(()=>true)).sort((a,b)=>({open:0,watch:1,closed:2}[a.st]-{open:0,watch:1,closed:2}[b.st]) || a.name.localeCompare(b.name,'ar'));
+      return L.map(c=>caseCard(c)).join('') || '<div class="muted">لا حالات.</div>';
+    }
+    function casesPane(sub){
+      if(sub==='list'){
+        const L = homeCases('cases').slice().sort((a,b)=>String(a.name).localeCompare(String(b.name),'ar'));
+        return '<div class="cnh"><h3 style="margin:0">حالات الطلاب</h3><div class="row">'+(canEdit?'<button type="button" class="btn solid" data-nc="1">+ فتح دراسة حالة</button>':'')+'<button type="button" class="btn" data-cl="1">طباعة كشف الحالات</button></div></div>'
+          +'<div class="muted">تشمل الملفات المحوّلة من «الإحالات الواردة» والملفات المفتوحة من هذا التبويب، وتُدرس كاملة هنا.</div>'
+          + istBlock('cases:list', L, caseIst, c=>caseCard(c, caseLbl(c)), 'div');
+      }
+      if(sub==='contacts') return ['parent','teacher','ext'].map(k=>'<div class="card">'+crudPane('contacts',k,{parent:'التواصل مع أولياء الأمور',teacher:'التواصل مع المعلمين',ext:'التواصل مع الجهات الخارجية'}[k])+'</div>').join('');
+      return crudPane('incidents','day','سجل المواقف اليومية الطارئة');
+    }
+    /* ===== جماعة التوجيه والإرشاد (جماعة واحدة، حتى ١٠ طلاب) ===== */
+    const GMAX = 10;
+    function groupPane(){
+      const g = D.plans.find(x=>x.id==='group_members') || {}, M = g.members || [];
+      return '<div class="cnh"><h3 style="margin:0">جماعة التوجيه والإرشاد</h3><div class="row">'+(canEdit?'<button type="button" class="btn solid" data-gm="1">تحديد الأعضاء</button>':'')+'<button type="button" class="btn" data-gmp="1">طباعة كشف الأعضاء</button></div></div>'
+        +'<div class="muted">أعضاء الجماعة من طلاب المدرسة بحد أقصى '+A(GMAX)+' طلاب (الحاليون: '+A(M.length)+').</div>'
+        +'<div class="chips">'+(M.map(x=>'<span class="chip">'+esc(x.name)+' · '+esc(x.className||'')+'</span>').join('') || '<span class="muted">لم يُحدَّد أعضاء الجماعة بعد.</span>')+'</div>'
+        +'<div class="card">'+crudPane('plans','group','سجل اجتماعات الجماعة وأنشطتها')+'</div>';
+    }
+    function groupMembers(){
+      const g = D.plans.find(x=>x.id==='group_members') || {};
+      formModal('أعضاء جماعة التوجيه والإرشاد (حتى '+A(GMAX)+' طلاب)', [{k:'members',l:'الأعضاء',t:'students',max:GMAX,noCls:true}], {members:g.members||[]}, async out=>{
+        if((out.members||[]).length>GMAX){ toast('الحد الأقصى '+A(GMAX)+' طلاب'); throw new Error('الحد الأقصى '+GMAX+' طلاب'); }
+        await put('plans', 'group_members', {kind:'gmem', members:out.members||[]}); toast('حُفظ أعضاء الجماعة'); render(); }, true);
+    }
+    async function copyAnnual(){
+      try{
+        const src = (await get(base.collection('plans').where('period','==','first'))).filter(x=>x.kind==='annual');
+        if(!src.length){ toast('لا توجد خطة سنوية في الفصل الأول'); return; }
+        const have = new Set(D.plans.filter(x=>x.kind==='annual' && x.copiedFrom).map(x=>x.copiedFrom));
+        const todo = src.filter(x=>!have.has(x.id));
+        if(!todo.length){ toast('نُسخت خطة الفصل الأول سابقًا'); return; }
+        if(!confirm('نسخ '+A(todo.length)+' بندًا من الخطة السنوية للفصل الأول إلى الفصل الثاني؟')) return;
+        for(const x of todo){ const d = Object.assign({}, x); ['id','period','by','byName','at'].forEach(k=>delete d[k]); await put('plans', null, Object.assign(d, {st:'مخطط', copiedFrom:x.id})); }
+        toast('نُسخت الخطة'); render();
+      }catch(er){ fail(er); }
+    }
+    function groupEdit(g, id, back){
+      const c = csOf(id), G = CASE_GROUPS[g];
+      formModal(G.t+' — '+c.name, G.fields, gv(c,g), async out=>{
+        const stamp = Object.assign({}, gv(c,g), out, {_:1, at:Date.now(), byName:env.me.name});
+        if(g==='comp') await put('stRec', String(c.seat), {seat:c.seat, name:c.name, comp:stamp});
+        else await put('caseFiles', id, Object.assign({seat:c.seat, name:c.name}, {[g]:stamp}));
+        toast('حُفظ: '+G.t); render(); if(back) openCase(id); }, true);
+    }
+    function groupPrint(g, id){
+      const c = csOf(id), G = CASE_GROUPS[g], v = gv(c,g);
+      const body = '<div class="cnf">سري</div><div class="ln">اسم الطالب: '+dots(c.name,260)+' الصف: '+dots(c.className,150)+' نوع الحالة: '+dots(c.type,120)+'</div>'
+        +G.fields.map(f=>'<div class="sec">'+f.l+'</div><div class="ln" style="min-height:'+(f.t==='textarea'?'40px':'20px')+'">'+esc(f.t==='date'?dshow(v[f.k]):(v[f.k]||''))+'</div>').join('')+sigC();
+      printHtml(G.t, body, {});
+    }
+    function followPrint(id){
+      const c = csOf(id), F2 = (fileOf(id).follow||[]).map(effF);
+      const S = live(D.sessions).filter(s=>s.caseId===id).map(effS).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+      printTable('متابعة حالة فردية', [['التاريخ',x=>dshow(x.date)],['النوع',x=>x.kind+(x.exec?' (المنفِّذ: '+x.exec+')':'')],['الموضوع / الإجراء',x=>x.text],['النتيجة',x=>x.res]],
+        S.map(s=>({date:s.date, kind:'جلسة توجيه فردي', exec:s.execName, text:s.topic, res:s.result})).concat(F2.map(f=>({date:f.date, kind:'متابعة سريعة', exec:f.execName, text:f.text, res:f.res}))).sort((a,b)=>String(a.date).localeCompare(String(b.date))),
+        {top:'<div class="cnf">سري</div><div class="ln">اسم الطالب: '+dots(c.name,260)+' الصف: '+dots(c.className,150)+' نوع الحالة: '+dots(c.type,120)+'</div>', land:false});
+    }
+    function groupBlock(c, g){
+      const G = CASE_GROUPS[g], v = gv(c,g);
+      return '<div class="sec" style="font-size:16px">'+G.t+'</div>'+G.fields.map(f=>'<div class="sec">'+f.l+'</div><div class="ln" style="min-height:'+(f.t==='textarea'?'40px':'20px')+'">'+esc(f.t==='date'?dshow(v[f.k]):(v[f.k]||''))+'</div>').join('');
+    }
+    function printStudentFile(id){
+      const c = csOf(id);
+      const head = '<div class="cnf">سري</div><div class="ln">اسم الطالب: '+dots(c.name,260)+' الصف: '+dots(c.className,150)+' نوع الحالة: '+dots(c.type,120)+'</div>';
+      const sep = '<div style="page-break-before:always"></div>';
+      printHtml('ملف الطالب — '+c.name, head+groupBlock(c,'study')+sep+head+groupBlock(c,'comp')+sep+head+groupBlock(c,'plan')+sigC(), {});
+    }
+    async function handleSeat(c){
+      const L = inboxItems().filter(i=>String(i.seat)===String(c.seat) && !(done(i)||i.trDone));
+      for(const it of L){
+        for(const nid of (it.trIds||[])){ await db.collection('notes').doc(nid).update({trSt:'done', closedAt:Date.now(), closedBy:env.me.id, closedByName:env.me.name}); const t=TR.find(x=>x.id===nid); if(t) t.st='done'; }
+        if(it.hr && it.hr.id){ try{ const hd = {handledAt:Date.now(), handledBy:env.me.id, handledByName:env.me.name}; await sa.collection('highRisk').doc(it.hr.id).update(hd); Object.assign(it.hr, hd); }catch(er){ console.warn(er); } }
+        await put('inbox', it.key, {st:'handled'});
+      }
+      await put('cases', c.id, {handledAt:Date.now()});
+    }
+    async function referCase(c){
+      const rec = {period, seat:String(c.seat), name:c.name, className:c.className||'', why:c.src||c.type||'', at:Date.now(), by:env.me.id, byName:env.me.name, from:'counselor'};
+      await sa.collection('cmRefs').doc(period+'__'+c.seat).set(rec);
+      await put('cases', c.id, {cm:true, cmAt:Date.now(), route:'cm'});
+      await base.collection('cases').doc(c.id).set({cmRef:true}, {merge:true}); c.cmRef = true; CMRS.push(rec);
+      for(const col of ['caseFiles','sessions','stRec']){ for(const x of D[col].filter(y=>String(y.seat)===String(c.seat) && !y.cmRef)){ try{ await base.collection(col).doc(x.id).set({cmRef:true}, {merge:true}); x.cmRef = true; }catch(e){ console.warn(e); } } }
+    }
+    function openCase(id){
+      const c = csOf(id); if(!c) return;
+      const f = fileOf(id), F2 = (f.follow||[]).map(effF).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+      const S = live(D.sessions).filter(s=>s.caseId===id).map(effS).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+      const CT = live(D.contacts).filter(x=>x.seat && String(x.seat)===String(c.seat)).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+      const seatIt = inboxItems().filter(i=>String(i.seat)===String(c.seat));
+      const handled = (c.handledAt||0) > 0 && (c.handledAt||0) >= (c.reopenedAt||0);
+      const frozen = c.st==='closed' || handled, canAct = canEdit && !frozen;
+      const pending = seatIt.some(i=>(i.trIds||[]).length>0 && !(done(i)||i.trDone));
+      const B = (a,t,cl)=>'<button type="button" class="btn'+(cl?' '+cl:'')+'" '+a+'>'+t+'</button>';
+      const grp = ['study','comp','plan'].map(g=>'<button type="button" class="btn gbtn '+(Object.keys(gv(c,g)).length>1?'green':'red')+'" data-g="'+g+'"'+((frozen&&canEdit)?' disabled':'')+'>'+CASE_GROUPS[g].t+'</button>').join('');
+      let grid = '';
+      if(canAct){
+        grid += B('data-fu="1"','+ تسجيل متابعة سريعة','solid') + B('data-ns="1"','+ جلسة توجيه فردي') + B('data-w="1"', c.st==='watch'?'إرجاع للمفتوحة':'نقل لتحت المتابعة');
+        if(seatIt.length) grid += B('data-hd="1"','تمت المعالجة');
+        if(!refSeats().has(String(c.seat))) grid += B('data-cm="1"','إحالة إلى اللجنة');
+        grid += B('data-cs="1"','إغلاق الحالة','danger');
+      }
+      if(canEdit && frozen) grid += B('data-ro="1"','إعادة فتح');
+      grid += B('data-fp="1"','طباعة المتابعة') + B('data-pf="1"','طباعة ملف الطالب','solid');
+      if(Object.keys(gv(c,'close')).length>1) grid += B('data-gpc="1"','طباعة تقرير الإغلاق');
+      grid += B('data-x="1"','إغلاق النافذة');
+      const ov = overlay('<div class="cnh"><h3 style="margin:0">'+esc(c.name)+' <span class="muted">'+esc(c.className||'')+'</span></h3><span class="tag '+(CASE_ST[c.st]||CASE_ST.open)[1]+'">'+(CASE_ST[c.st]||CASE_ST.open)[0]+'</span></div>'
+        +'<div class="kv"><b>نوع الحالة</b><span>'+esc(c.type)+'</span><b>المصدر</b><span>'+esc(c.src||'')+'</span><b>المتابعة القادمة</b><span>'+esc(dshow(c.nextFollow)||'غير محددة')+'</span></div>'
+        +(frozen&&canEdit?'<div class="frz">'+(c.st==='closed'?'الحالة مغلقة':'تمت معالجة الحالة')+': الأزرار مجمّدة عدا الطباعة وإغلاق النافذة'+(canEdit?' وإعادة الفتح':'')+'.</div>':'')
+        +'<div class="g3">'+grp+'</div>'
+        +'<div class="sumg">'+['study','comp','plan','close'].map(g=>{ const v = gv(c,g); return Object.keys(v).length>1 ? '<div class="muted">✔ '+CASE_GROUPS[g].t+' — محفوظ'+(v.at?' بتاريخ '+esc(dshow(new Date(v.at).toISOString().slice(0,10))):'')+(v.byName?' بواسطة '+esc(v.byName):'')+'</div>' : ''; }).join('')+'</div>'
+        +'<div class="sec2"><b>المتابعات والجلسات</b></div>'
+        +'<ul class="lst">'+(F2.map(x=>'<li class="srow"><div class="muted">'+esc(dshow(x.date))+' · متابعة سريعة'+execTag(x)+'</div><div>'+esc(x.text)+'</div><div class="muted">'+esc(x.res||'')+'</div></li>').join('')
+          + S.map(s=>'<li class="srow"><div class="muted">'+esc(dshow(s.date))+' · جلسة توجيه فردي'+execTag(s)+'</div><div>'+esc(s.topic||'')+'</div></li>').join('') || '<li class="muted">لا متابعات بعد.</li>')+'</ul>'
+        +'<div class="sec2"><b>سجل التواصل مع الطالب</b></div><ul class="lst">'+(CT.map(x=>'<li class="srow"><div class="muted">'+esc(dshow(x.date))+' · '+({parent:'ولي الأمر',teacher:'معلم',ext:'جهة خارجية'}[x.kind]||'تواصل')+(x.who?' · '+esc(x.who):'')+(x.mean?' · '+esc(x.mean):'')+'</div><div>'+esc(x.topic||'')+'</div><div class="muted">'+esc(x.result||'')+'</div></li>').join('') || '<li class="muted">لا سجلات تواصل.</li>')+'</ul>'
+        +(canAct && pending ? '<div class="muted">«تمت المعالجة» تُنهي ملف الطالب عند الوكيل والمعلم أيضًا.</div>' : '')
+        +'<div class="bgrid">'+grid+'</div>', true);
+      ov.addEventListener('click', async e=>{
+        const b = e.target.closest('button'); if(!b || b.disabled) return;
+        if(b.dataset.x){ ov.close(); return; }
+        if(b.dataset.g){ if(canEdit){ if(frozen) return; ov.close(); groupEdit(b.dataset.g, id, true); } else groupPrint(b.dataset.g, id); return; }
+        if(b.dataset.fp){ followPrint(id); return; }
+        if(b.dataset.pf){ printStudentFile(id); return; }
+        if(b.dataset.gpc){ groupPrint('close', id); return; }
+        if(!canEdit) return;
+        try{
+          if(b.dataset.ro){ await put('cases', id, {st:'open', reopenedAt:Date.now()}); ov.close(); render(); openCase(id); return; }
+          if(frozen) return;
+          if(b.dataset.fu){ ov.close(); formModal('تسجيل متابعة سريعة — '+c.name, [F.date,{k:'text',l:'الإجراء أو الملاحظة',t:'textarea',req:true,w:1},{k:'res',l:'النتيجة',t:'textarea',w:1},{k:'next',l:'موعد المتابعة القادمة',t:'date'}].concat(execField()), {date:dk}, async out=>{
+              const ex = out.exec ? await assignTask('follow', c, out) : {}; delete out.exec;
+              const nf = (fileOf(id).follow||[]).concat([Object.assign({date:out.date||dk, text:out.text, res:out.res}, ex)]);
+              await put('caseFiles', id, {seat:c.seat, name:c.name, follow:nf}); await put('cases', id, {nextFollow:out.next||''}); toast(ex.execName?'سُجلت المتابعة وأُرسل إشعار للمنفِّذ':'سُجلت المتابعة'); render(); openCase(id); }); }
+          else if(b.dataset.ns){ ov.close(); const fl = sessFields('indiv').filter(x=>x.k!=='stu'&&x.k!=='caseId').concat(execField());
+            formModal('جلسة توجيه فردي — '+c.name, fl, {date:dk}, async out=>{ const ex = out.exec ? await assignTask('indiv', c, out) : {}; delete out.exec;
+              const row = await put('sessions', null, Object.assign({kind:'indiv', seat:c.seat, name:c.name, className:c.className, caseId:id}, out, ex)); await put('cases', id, {lastSession:row.date||dk, nextFollow:row.next||c.nextFollow||''}); toast(ex.execName?'حُفظت الجلسة وأُرسل إشعار للمنفِّذ':'حُفظت الجلسة'); render(); openCase(id); }, true); }
+          else if(b.dataset.w){ await put('cases', id, {st:c.st==='watch'?'open':'watch'}); ov.close(); render(); openCase(id); }
+          else if(b.dataset.hd){ if(!confirm('تأكيد «تمت المعالجة»؟ ستُجمَّد أزرار الملف'+(pending?' ويُنهى ملف الطالب عند الوكيل والمعلم':'')+'.')) return; await handleSeat(c); toast(pending?'أُنهي الملف وعاد للوكيل منتهيًا':'سُجلت المعالجة'); ov.close(); render(); openCase(id); }
+          else if(b.dataset.cm){ if(!confirm('إحالة الطالب إلى لجنة التوجيه والإرشاد؟ سينتقل الملف إلى تبويب «المحالون إلى لجنة التوجيه والإرشاد» ويُدرس فيه.')) return; await referCase(c); toast('أُحيل الطالب إلى اللجنة'); ov.close(); render(); openCase(id); }
+          else if(b.dataset.cs){ ov.close(); formModal('إغلاق الحالة — '+c.name, CASE_GROUPS.close.fields, {date:dk}, async out=>{
+              await put('caseFiles', id, {seat:c.seat, name:c.name, close:Object.assign({}, out, {_:1})}); await put('cases', id, {st:'closed', closedAt:Date.now(), nextFollow:''}); toast('أُغلقت الحالة'); render(); openCase(id); }, true); }
+        }catch(er){ fail(er); }
+      });
+    }
+
+    /* ===== التقارير ===== */
+    function stats(){
+      const cnt = (a,f)=>a.filter(f).length;
+      const rec = recsList();
+      return [
+        ['الحالات الفردية المفتوحة خلال الفصل', CS.length],['الحالات المغلقة', cnt(CS,c=>c.st==='closed')],['الحالات تحت المتابعة', cnt(CS,c=>c.st==='watch')],
+        ['جلسات التوجيه الفردي', cnt(live(D.sessions),s=>s.kind==='indiv')],['جلسات الإرشاد الجمعي', cnt(live(D.sessions),s=>s.kind==='group')],
+        ['الإحالات الواردة من وكيل شؤون الطلاب', inboxItems().filter(i=>i.grp==='a').length],['المحالون إلى لجنة التوجيه والإرشاد', inboxItems().filter(i=>i.grp==='b').length],
+        ['الحالات عالية الخطورة المعتمدة', inboxItems().filter(i=>i.grp==='d').length],
+        ['توصيات اللجنة المعتمدة', rec.length],['التوصيات المنفذة', cnt(rec,x=>(D.recs.find(y=>y.id===x.id)||{}).st==='done')],['التوصيات الجارية', cnt(rec,x=>(D.recs.find(y=>y.id===x.id)||{}).st==='ongoing')],
+        ['برامج إرشادية', cnt(D.plans,p=>p.kind==='prog')],['لقاءات أولياء الأمور ومجالس الآباء', cnt(D.plans,p=>p.kind==='parents')],
+        ['سجلات التواصل', D.contacts.length],['المواقف الطارئة', D.incidents.length],['الطلاب في سجل الحصر', live(D.hasr).length],['الطلاب في برامج رعاية الفئات', cnt(live(D.care),x=>x.kind!=='honor')],['المكرمون', cnt(live(D.care),x=>x.kind==='honor')]
+      ];
+    }
+    const otherPer = ()=>period==='first'?'second':'first';
+    async function loadOther(){
+      if(OTHER || OTHERLOADING) return; OTHERLOADING = true;
+      const per2 = otherPer(), byP2 = c=>get(base.collection(c).where('period','==',per2));
+      try{
+        const r = await Promise.all([byP2('cases'), ...COLS.map(byP2),
+          get(sa.collection('violations').where('period','==',per2)), get(sa.collection('absence').where('period','==',per2)),
+          get(sa.collection('minutes').where('period','==',per2)), get(sa.collection('highRisk').where('period','==',per2))]);
+        const d2 = {}; COLS.forEach((c,i)=>d2[c]=r[1+i]); const k = COLS.length;
+        OTHER = {CS:r[0], D:d2, VL:r[k+1], AB:r[k+2], MN:r[k+3], HR:r[k+4], TR:mapTR(RAWN, per2), RP:mapRP(RAWR, per2)};
+      }catch(e){ console.error(e); OTHER = {CS:[], D:(()=>{const d2={}; COLS.forEach(c=>d2[c]=[]); return d2;})(), VL:[], AB:[], MN:[], HR:[], TR:[], RP:[]}; }
+      OTHER.D.stRec = D.stRec; OTHERLOADING = false; render();
+    }
+    function withData(o, fn){
+      const sv = {CS,D,VL,AB,MN,HR,TR,RP};
+      ({CS,D,VL,AB,MN,HR,TR,RP} = o);
+      try{ return fn(); } finally{ ({CS,D,VL,AB,MN,HR,TR,RP} = sv); }
+    }
+    function yearStats(){
+      const cur = stats().concat([['حالات أُغلقت بحل المشكلة أو تحسن ملحوظ', D.caseFiles.filter(x=>x.close && ['تم حل المشكلة','تحسن ملحوظ'].includes(x.close.res)).length]]);
+      const oth = withData(OTHER, ()=>stats().concat([['حالات أُغلقت بحل المشكلة أو تحسن ملحوظ', D.caseFiles.filter(x=>x.close && ['تم حل المشكلة','تحسن ملحوظ'].includes(x.close.res)).length]]));
+      const f = period==='first' ? cur : oth, sc = period==='first' ? oth : cur;
+      return f.map((x,i)=>({l:x[0], a:x[1], b:(sc[i]||[])[1]||0, t:(+x[1]||0)+(+((sc[i]||[])[1])||0)}));
+    }
+    const sumTbl = L=>'<table class="tbl"><tbody>'+L.map(x=>'<tr><td>'+esc(x[0])+'</td><td class="num"><b>'+A(x[1])+'</b></td></tr>').join('')+'</tbody></table>';
+    function symMap(){
+      const m = {}, L = live(D.hasr).slice().sort((a,b)=>(a.at||0)-(b.at||0));
+      L.filter(x=>x.kind==='fu' && x.sym && x.seat).forEach(x=>{ m[String(x.seat)] = x.sym; });
+      let n = 0; const need = x=>{ const k = String(x.seat||''); if(k && !m[k]) m[k] = 'ر-'+A(String(++n).padStart(3,'0')); };
+      L.forEach(need); live(AIDS).slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)).forEach(need);
+      return m;
+    }
+    const byDt = (a,b)=>String(a.date||a.since||'').localeCompare(String(b.date||b.since||'')) || (a.at||0)-(b.at||0);
+    function repData(kind){
+      const R = REP[kind], cnt = (a,f)=>a.filter(f).length, uq = (a,f)=>new Set(a.map(f).filter(Boolean)).size;
+      if(kind==='indiv'){
+        const L = live(D.sessions).filter(s=>s.kind==='indiv').map(effS).sort(byDt);
+        return {rows:L, land:true, sum:[['جلسات التوجيه الفردي',L.length],['عدد الطلاب المستفيدين',uq(L,x=>x.seat||x.name)],['جلسات ضمن ملفات الحالات',cnt(L,x=>x.caseId)],['جلسات لها موعد جلسة تالية',cnt(L,x=>x.next)],['الحالات الفردية المفتوحة',cnt(CS,c=>c.st!=='closed')]],
+          cols:[['التاريخ',x=>x.date],['الطالب',x=>x.name],['الصف',x=>x.className],['موضوع الجلسة',x=>x.topic],['النتائج',x=>x.result],['التوصيات',x=>x.recs]]};
+      }
+      if(kind==='group'){
+        const L = live(D.sessions).filter(s=>s.kind==='group').map(effS).sort(byDt);
+        return {rows:L, land:true, sum:[['جلسات الإرشاد الجمعي',L.length],['إجمالي المشاركين',L.reduce((n,x)=>n+(x.students||[]).length,0)],['الفئات أو المجموعات المستهدفة',uq(L,x=>x.groupName)],['جلسات لها موعد جلسة تالية',cnt(L,x=>x.next)]],
+          cols:[['التاريخ',x=>x.date],['الفئة أو المجموعة',x=>x.groupName],['عدد المشاركين',x=>A((x.students||[]).length)],['موضوع الجلسة',x=>x.topic],['النتائج',x=>x.result],['التوصيات',x=>x.recs]]};
+      }
+      if(R.col==='aid'){
+        const SY = symMap(), L = live(AIDS).slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+        return {rows:L, land:false, secret:'سري — يُحفظ في ملف خاص مغلق لدى الموجه الطلابي (بالرموز)', sum:[['إجمالي المستحقين',L.length],['الإعانة',cnt(L,x=>x.type==='إعانة')],['المكافأة',cnt(L,x=>x.type==='مكافأة')]],
+          cols:[['الرمز',x=>SY[String(x.seat)]||'—'],['النوع',x=>x.type],['التاريخ',x=>x.dateH]]};
+      }
+      if(R.col==='hasr' && R.k==='health'){
+        const L = live(D.hasr).filter(x=>x.kind==='health').sort((a,b)=>String(a.className||'').localeCompare(String(b.className||''),'ar')||String(a.name||'').localeCompare(String(b.name||''),'ar'));
+        return {rows:L, land:true, secret:'بيانات صحية سرية — تُتداول مع الإدارة فقط', sum:[['عدد الحالات',L.length]],
+          cols:[['اسم الطالب رباعيًا',x=>x.name],['رقم الهوية',x=>x.seat],['الصف/الفصل',x=>x.className],['الحالة الصحية',x=>x.cond],['إجراءات المتابعة',x=>x.proc],['جوال ولي الأمر',x=>x.phone]]};
+      }
+      if(R.col==='hasr'){
+        const SY = symMap(), L = live(D.hasr).filter(x=>x.kind===R.k).sort(byDt);
+        return {rows:L, land:false, secret:'سري — يُحفظ في ملف خاص مغلق لدى الموجه الطلابي (بالرموز)', sum:[['عدد الحالات',L.length],['حالات اتُّخذ فيها إجراء',cnt(L,x=>x.action)],['حالات لم يُسجَّل فيها إجراء',cnt(L,x=>!x.action)]],
+          cols:[['الرمز',x=>(R.k==='fu'&&x.sym)||SY[String(x.seat)]||'—'],['وصف الحالة',x=>x.detail],['تاريخ الرصد',x=>x.since],['الإجراء المتخذ',x=>x.action],['ملاحظات',x=>x.note]]};
+      }
+      const L = live(D.care).filter(x=>x.kind===R.k).sort(byDt);
+      if(R.k==='honor'){
+        const T = ['تفوق دراسي','تميز سلوكي','مواظبة','موهبة','مشاركة'];
+        return {rows:L, land:true, sum:[['عدد المكرمين',L.length]].concat(T.map(t=>['المكرمون في «'+t+'»',cnt(L,x=>x.htype===t)])),
+          cols:[['الطالب',x=>x.name],['الصف',x=>x.className],['نوع التكريم',x=>x.htype],['سبب التكريم',x=>x.detail],['التاريخ',x=>x.date]]};
+      }
+      return {rows:L, land:true, sum:[['عدد الطلاب',L.length],['لهم خطة أو برنامج',cnt(L,x=>x.plan)],['سُجلت نتيجة متابعتهم',cnt(L,x=>x.result)],['بانتظار النتيجة',cnt(L,x=>!x.result)]],
+        cols:[['الطالب',x=>x.name],['الصف',x=>x.className],['التفاصيل',x=>x.detail],['الخطة أو البرنامج',x=>x.plan],['التاريخ',x=>x.date],['النتيجة والمتابعة',x=>x.result]]};
+    }
+    const recTbl = (cols,rows,pr)=>(pr?'<table>':'<div class="tw2"><table class="tbl">')+'<thead><tr><th>م</th>'+cols.map(c=>'<th>'+esc(c[0])+'</th>').join('')+'</tr></thead><tbody>'
+      +(rows.map((r,i)=>'<tr><td>'+A(i+1)+'</td>'+cols.map(c=>'<td>'+esc(cv(c[1](r)))+'</td>').join('')+'</tr>').join('') || '<tr><td colspan="'+(cols.length+1)+'" class="muted">لا سجلات.</td></tr>')+'</tbody></table>'+(pr?'':'</div>');
+    function repListPane(){
+      return '<div class="cnh"><h3 style="margin:0">التقارير</h3></div><div class="muted">لكل بند تقريره: اضغط «تحميل PDF» ثم احفظه من نافذة الطباعة. يُختم كل تقرير بتوقيع الموجه الطلابي واعتماد مدير المدرسة.</div>'
+        +REPG.map(g=>'<div class="rg">'+esc(g[0])+'</div><div class="rl">'+g[1].map(k=>'<div class="rr"><span>'+esc(REP[k].t)+'</span><button type="button" class="btn solid" data-rp="'+k+'">PDF</button></div>').join('')+'</div>').join('');
+    }
+    function repPrint(kind){
+      const title = REP[kind].t;
+      if(kind==='final' && !OTHER){ toast('جارٍ تحميل بيانات الفصلين، أعد المحاولة بعد لحظة'); loadOther(); return; }
+      if(kind!=='term' && kind!=='final'){
+        const d = repData(kind);
+        printHtml(title, ctx=>(d.secret?'<div class="cnf">'+d.secret+'</div>':'')+'<div class="ln">'+SP[period]+'</div>'+recTbl(d.cols,d.rows,true)+sigBox(ctx), {land:d.land});
+        return;
+      }
+      const tbody = kind==='final'
+        ? '<table><thead><tr><th>م</th><th>البند</th><th>'+SP.first+'</th><th>'+SP.second+'</th><th>المجموع</th></tr></thead><tbody>'+yearStats().map((x,i)=>'<tr><td>'+A(i+1)+'</td><td>'+esc(x.l)+'</td><td>'+A(x.a)+'</td><td>'+A(x.b)+'</td><td>'+A(x.t)+'</td></tr>').join('')+'</tbody></table>'
+        : '<table><thead><tr><th>م</th><th>البند</th><th>العدد</th></tr></thead><tbody>'+stats().map((x,i)=>'<tr><td>'+A(i+1)+'</td><td>'+esc(x[0])+'</td><td>'+A(x[1])+'</td></tr>').join('')+'</tbody></table>';
+      printHtml(title, ctx=>'<div class="ln">'+(kind==='final'?'العام الدراسي كاملًا (الفصلان الدراسيان)':SP[period])+'</div>'+tbody+sigBox(ctx), {});
+    }
+
+    /* ===== لوحة المعلومات ===== */
+    function homePane(){
+      const items = inboxItems(), fresh = items.filter(i=>i.grp!=='e' && inPool(i));
+      const due = CS.filter(c=>c.st!=='closed' && c.nextFollow && c.nextFollow<=dk);
+      const rec = recsList().filter(x=>(D.recs.find(y=>y.id===x.id)||{}).st!=='done');
+      const all = items.filter(i=>i.grp!=='e'), rp = items.filter(i=>i.grp==='e');
+      const hm = h=>all.filter(i=>itemHome(i)===h), isOpen = i=>stDest(i)==='open';
+      const pool = all.filter(inPool).length + rp.length;
+      const ann = live(D.plans).filter(x=>x.kind==='annual');
+      const ic = homeCases('indiv').filter(c=>caseIst(c)==='open').length;
+      const hs = live(D.hasr), cr = live(D.care);
+      const Z = n=>n?A(n):'٠';
+      const CARDS = [
+        ['الخطة السنوية', ann.length, ann.filter(x=>x.st==='مخطط').length, 'var(--brand)', 'plan', SUBS.plan],
+        ['إحالات جديدة', all.length+rp.length, pool, 'var(--bad)', 'inbox', [['a','إحالات وكيل شؤون الطلاب'],['e','تحليل نتائج الطلاب']]],
+        ['لجنة التوجيه والإرشاد', hm('cm').length, hm('cm').filter(isOpen).length, 'var(--warn)', 'inbox', [['b','المحالون إلى اللجنة'],['c','القرارات والتوصيات']]],
+        ['الحالات عالية الخطورة', hm('hr').length, hm('hr').filter(isOpen).length, 'var(--bad)', 'inbox', [['d','الحالات عالية الخطورة']]],
+        ['الحالات الفردية', homeCases('cases').length, homeCases('cases').filter(c=>caseIst(c)==='open').length, 'var(--brand)', 'cases', [['list','الحالات'],['contacts','سجل التواصل'],['inc','المواقف اليومية الطارئة']]],
+        ['الإرشاد الفردي والجمعي', live(D.sessions).length, ic, 'var(--brand)', 'sess', SUBS.sess],
+        ['الحالات الخاصة والسرية', hs.length, hs.filter(x=>!x.action).length, 'var(--bad)', 'hasr', SUBS.hasr],
+        ['رعاية فئات الطلاب', cr.length, cr.filter(x=>!x.result).length, 'var(--brand)', 'care', SUBS.care],
+        ['التقارير', Object.keys(REP).length, null, 'var(--brand)', 'rep', [['l','تقارير البنود']]]
+      ];
+      return '<section class="qa">'+CARDS.map(c=>'<div class="qc" style="--k:'+c[3]+'"><div class="top"><b>'+A(c[1])+'</b><div><span class="t">'+c[0]+'</span><small>'+(c[2]==null?'جاهزة للطباعة':Z(c[2])+' مفتوحة')+'</small></div></div><div class="tb">'+c[5].map(t=>'<button type="button" data-go="'+c[4]+'|'+t[0]+'">'+t[1]+'</button>').join('')+'</div></div>').join('')+'</section>'
+        +'<section class="card"><div class="hd"><h2>متابعات مستحقة</h2></div><div class="lst">'+caseCards(c=>c.st!=='closed' && c.nextFollow && c.nextFollow<=dk)+'</div></section>';
+    }
+
+    /* ===== العرض ===== */
+    const CUR = {tab:'home', sub:{}, ist:{}, sf:{}, rk:{}};
+    function render(){
+      const t = CUR.tab, subs = SUBS[t]; if(subs && !CUR.sub[t]) CUR.sub[t] = subs[0][0];
+      const sub = CUR.sub[t];
+      let h;
+      if(mgrOnly){
+        h = '<section class="card"><div class="hd"><h2>الحالات (رؤوس فقط)</h2></div><div class="nt">يطّلع المدير على وجود الحالة ونوعها وحالتها فقط، وتفاصيل الجلسات والدراسة خاصة بالموجه الطلابي.</div><div class="lst">'+caseCards()+'</div></section>';
+      } else {
+        const seg = subs ? '<div class="seg subs" id="subs">'+subs.map(s=>'<button type="button" class="'+(s[0]===sub?'on':'')+'" data-s="'+s[0]+'">'+s[1]+'</button>').join('')+'</div>' : '';
+        let inner = '';
+        if(t==='home') inner = homePane();
+        else if(t==='inbox') inner = inboxPane(sub);
+        else if(t==='plan') inner = sub==='group' ? groupPane() : crudPane('plans',sub,subs.find(s=>s[0]===sub)[1], (sub==='annual' && period==='second' && canEdit) ? '<button type="button" class="btn" data-cp="1">نسخ الخطة من الفصل الأول</button>' : '');
+        else if(t==='cases') inner = casesPane(sub);
+        else if(t==='sess') inner = sessPane(sub);
+        else if(t==='hasr') inner = sub==='aid' ? aidPane() : crudPane('hasr',sub,subs.find(s=>s[0]===sub)[1], sub==='health' ? healthExtra() : '');
+        else if(t==='care') inner = crudPane('care',sub,subs.find(s=>s[0]===sub)[1]);
+        else if(t==='rep') inner = repListPane();
+        h = (t==='home' ? inner : '<section class="card">'+(canEdit?'':'<div class="nt">اطلاع فقط: لا تعديل في هذه الصفحة.</div>')+seg+inner+'</section>');
+      }
+      const keep = {}; ['tabs','subs','ist','rks'].forEach(k=>{ const el = document.getElementById(k); if(el) keep[k] = el.scrollLeft; });
+      $('#body').innerHTML = h;
+      ['tabs','subs','ist','rks'].forEach(k=>{ const el = document.getElementById(k); if(!el) return; if(keep[k]!=null) el.scrollLeft = keep[k]; const on = el.querySelector('.on,.active'); if(on){ const r = on.getBoundingClientRect(), q = el.getBoundingClientRect(); if(r.left<q.left || r.right>q.right) el.scrollLeft += (r.left + r.right)/2 - (q.left + q.right)/2; } });
+    }
+    const tabsFor = mgrOnly ? [['cases','الحالات']] : TABS;
+    if(mgrOnly) CUR.tab = 'cases';
+    $('#tabs').innerHTML = tabsFor.map((t,i)=>'<button type="button" data-t="'+t[0]+'" class="'+(t[0]===CUR.tab?'active':'')+'">'+t[1]+'</button>').join('');
+    $('#tabs').addEventListener('click', e=>{ const b=e.target.closest('button'); if(!b) return; CUR.tab=b.dataset.t; document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('active',x===b)); render(); });
+    $('#body').addEventListener('click', async e=>{
+      const g = a=>e.target.closest('['+a+']'); let b;
+      if(b=g('data-s')){ CUR.sub[CUR.tab]=b.dataset.s; render(); return; }
+      if(b=g('data-it')){ CUR.ist = CUR.ist || {}; CUR.ist[b.dataset.ik || ('inbox:'+(CUR.sub.inbox||'a'))] = b.dataset.it; render(); return; }
+      if(b=g('data-cp')){ copyAnnual(); return; }
+      if(b=g('data-gm')){ if(canEdit) groupMembers(); return; }
+      if(b=g('data-gmp')){ const g2 = D.plans.find(x=>x.id==='group_members') || {}; printTable('كشف أعضاء جماعة التوجيه والإرشاد', [['اسم الطالب',x=>x.name],['الصف',x=>x.className]], g2.members||[], {land:false}); return; }
+      if(b=g('data-go')){ const p=b.dataset.go.split('|'); CUR.tab=p[0]; if(p[1]) CUR.sub[p[0]]=p[1]; document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('active',x.dataset.t===CUR.tab)); render(); return; }
+      if(CUR.tab==='inbox' || CUR.tab==='home'){ if(await inboxClick(e)) return; }
+      if(b=g('data-oc2')){ openCase(b.dataset.oc2); return; }
+      if(b=g('data-nc')){ if(!canEdit) return; formModal('فتح دراسة حالة', [{k:'stu',l:'الطالب',t:'student',req:true},{k:'type',l:'نوع الحالة',t:'select',o:CASE_TYPES},{k:'src',l:'سبب الفتح',t:'text'}], {type:CASE_TYPES[0]}, async out=>{ const c = await newCase({seat:out.seat, name:out.name, cls:out.className, type:out.type, src:out.src||'فتح مباشر'}); render(); openCase(c.id); }); return; }
+      if(b=g('data-cl')){ printTable('كشف الحالات الفردية', [['الطالب',x=>x.name],['الصف',x=>x.className],['النوع',x=>x.type],['الحالة',x=>(CASE_ST[x.st]||[''])[0]],['المصدر',x=>x.src],['المتابعة القادمة',x=>dshow(x.nextFollow)]], homeCases('cases'), {top:'<div class="cnf">سري</div>'}); return; }
+      if(b=g('data-add')){ const p=b.dataset.add.split('|'); crudAdd(p[0],p[1],(SUBS[CUR.tab].find(s=>s[0]===CUR.sub[CUR.tab])||[0,'سجل جديد'])[1]); return; }
+      if(b=g('data-ed')){ const p=b.dataset.ed.split('|'); crudEdit(p[0],p[1]); return; }
+      if(b=g('data-dl')){ const p=b.dataset.dl.split('|'); const soft = SOFT.includes(p[0]); if(!canEdit || !confirm(soft?'حذف هذا السجل؟ سيبقى ظاهرًا مشطوبًا مع بيان من حذفه.':'حذف هذا السجل نهائيًا؟')) return; try{ if(soft) await softDel(p[0],p[1]); else await del(p[0],p[1]); toast('حُذف السجل'); render(); }catch(er){ fail(er); } return; }
+      if(b=g('data-prt')){ const p=b.dataset.prt.split('|'); crudPrint(p[0],p[1],p[2]==='sym'); return; }
+      if(b=g('data-hmig')){ if(canEdit){ b.disabled=true; try{ await healthMigrate(); }catch(er){ fail(er); b.disabled=false; } } return; }
+      if(b=g('data-hsend')){ if(canEdit){ b.disabled=true; try{ await healthSend(); }catch(er){ fail(er); b.disabled=false; } } return; }
+      if(b=g('data-aadd')){ if(canEdit) aidAdd(); return; }
+      if(b=g('data-adl')){ if(!canEdit || !confirm('حذف المستحق؟ سيبقى ظاهرًا مشطوبًا مع بيان من حذفه.')) return; try{ const dd = {deleted:true, deletedAt:Date.now(), deletedBy:env.me.id, deletedByName:env.me.name}; await sa.collection('aid').doc(b.dataset.adl).set(dd, {merge:true}); const ax = AIDS.find(x=>x.id===b.dataset.adl); if(ax) Object.assign(ax, dd); toast('حُذف'); render(); }catch(er){ fail(er); } return; }
+      if(b=g('data-aprt')){ printTable('كشف الإعانة والمكافأة', [['الطالب',x=>x.name],['الصف',x=>x.className],['النوع',x=>x.type],['التاريخ',x=>x.dateH]], live(AIDS).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)), {land:false}); return; }
+      if(b=g('data-sadd')){ sessAdd(b.dataset.sadd); return; }
+      if(b=g('data-sed')){ sessEdit(b.dataset.sed); return; }
+      if(b=g('data-sdl')){ if(!canEdit || !confirm('حذف الجلسة؟ ستبقى ظاهرة مشطوبة مع بيان من حذفها وتخرج من الإحصاءات.')) return; try{ await softDel('sessions', b.dataset.sdl); toast('حُذفت الجلسة'); render(); }catch(er){ fail(er); } return; }
+      if(b=g('data-sp')){ const s=D.sessions.find(x=>x.id===b.dataset.sp); if(s) sessPrint(s); return; }
+      if(b=g('data-sat')){ const s=D.sessions.find(x=>x.id===b.dataset.sat); if(s) attPrint(s); return; }
+      if(b=g('data-rp')){ repPrint(b.dataset.rp); return; }
+    });
+
+    $('#body').addEventListener('input', e=>{
+      if(!['sfq','sff','sft'].includes(e.target.id)) return;
+      const kind = CUR.sub.sess || 'indiv', f = sfOf(kind);
+      f.q = $('#sfq').value; f.from = $('#sff').value; f.to = $('#sft').value;
+      const el = $('#sessList'); if(el) el.outerHTML = sessListHtml(kind);
+    });
+    try{ await loadAll(); }catch(e){ console.error(e); toast('تعذّر تحميل بعض البيانات'); }
+    render();
+    /* مزامنة اطلاع أعضاء اللجنة: قائمة المحالين (cmRefs) ووسم cmRef على ملفات المحالين */
+    async function syncCm(){
+      if(!canEdit || mgrOnly) return;
+      const items = inboxItems().filter(i=>i.grp==='b' && i.seat);
+      for(const it of items){
+        const seat = String(it.seat);
+        try{
+          if(!CMRS.some(x=>String(x.seat)===seat)){ const rec = {period, seat, name:it.name, className:it.cls||'', why:it.title||'', at:it.at||Date.now(), by:env.me.id, byName:env.me.name, from:'agent'}; await sa.collection('cmRefs').doc(period+'__'+seat).set(rec, {merge:true}); CMRS.push(rec); }
+          for(const col of ['caseFiles','sessions','stRec']){ for(const x of D[col].filter(y=>String(y.seat)===seat && !y.cmRef)){ await base.collection(col).doc(x.id).set({cmRef:true}, {merge:true}); x.cmRef = true; } }
+          for(const c of CS.filter(y=>String(y.seat)===seat && !y.cmRef)){ await base.collection('cases').doc(c.id).set({cmRef:true}, {merge:true}); c.cmRef = true; }
+        }catch(e){ console.warn(e); }
+      }
+    }
+    syncCm();
+  }
+});
+</script>
+</body>
+</html>

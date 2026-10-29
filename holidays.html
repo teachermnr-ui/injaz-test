@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<!-- إصدار: 2026-10-29.1 · الاختبار -->
+<!-- [ADMIN-TOOLS] صفحة مستقلة بالكامل — تُحذف عند إزالة الأدوات الإدارية (انظر ADMIN-TOOLS-LOG.md) -->
+<html lang="ar" dir="rtl">
+<head>
+<script src="fb-config.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>الإجازات</title>
+<meta name="theme-color" content="#3f6659">
+<link rel="stylesheet" href="theme.css?v=2026-10-05.1">
+<script src="mn-dialog.js?v=2026-10-06.1"></script>
+<script>/* احتياط: لو لم يُحمَّل mn-dialog.js (لم يُرفع/كاش قديم) تبقى التأكيدات تعمل بنافذة المتصفح بدل أن تتوقف الأزرار */
+if(typeof window.mnConfirm!=="function"){ window.mnConfirm=function(m){ return Promise.resolve(window.confirm(m)); }; window.mnPrompt=function(m,d){ return Promise.resolve(window.prompt(m,d)); }; window.mnAlert=function(m){ window.alert(m); return Promise.resolve(); }; }</script>
+<script src="theme.js?v=2026-10-05.1"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f7f6; --surface:#ffffff; --surface-2:#eef4f3;
+  --brand:#0f766e; --brand-2:#0b5a54; --brand-l:#d5ece9;
+  --ink:#15242b; --muted:#5b6f76; --line:#d8e2e0;
+  --r:14px; --shadow:0 1px 2px rgba(16,40,40,.06),0 8px 24px rgba(16,40,40,.06);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:'Tajawal',"Segoe UI",Tahoma,system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14.5px;line-height:1.55;min-height:100vh}
+button{font-family:inherit;cursor:pointer;border:none}
+input,select{font-family:inherit;font-size:14px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);color:var(--ink);background:var(--bg-ffffff,#fff)}
+.hidden{display:none !important}
+.boot{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:var(--muted);text-align:center;padding:20px}
+.spin{display:inline-block;width:22px;height:22px;border:3px solid var(--line);border-top-color:var(--brand);border-radius:50%;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.topbar{position:sticky;top:0;z-index:40;background:var(--brand);color:var(--fg-ffffff,#fff);padding:10px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.topbar h1{margin:0;font-size:17px;font-weight:800;white-space:nowrap}
+.tb-badge{background:rgba(255,255,255,.15);padding:5px 12px;border-radius:20px;font-size:13px;font-weight:600;white-space:nowrap}
+.tb-btn{background:rgba(255,255,255,.17);color:var(--fg-ffffff,#fff);padding:7px 14px;border-radius:10px;font-weight:700;font-size:13px;white-space:nowrap}
+main{max-width:1240px;margin:0 auto;padding:16px 16px 60px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:14px;box-shadow:var(--shadow)}
+.card h3{margin:0 0 8px;font-size:15.5px}
+.sub{color:var(--muted);font-size:12.5px}
+.btn{font-weight:700;font-size:13.5px;padding:8px 14px;border-radius:10px;border:1.5px solid var(--brand);background:var(--bg-ffffff,#fff);color:var(--brand);min-height:38px;white-space:nowrap}
+.btn.pri{background:var(--brand);color:var(--fg-ffffff,#fff)}
+.btn.blue{border-color:var(--bd-1e5aaa,#1e5aaa);color:var(--fg-1e5aaa,#1e5aaa)}
+.btn.ghost{border-color:var(--line);color:var(--muted)}
+.btn.sm{min-height:32px;padding:4px 10px;font-size:12.5px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.pill{font-weight:700;font-size:13.5px;padding:6px 14px;border-radius:20px;border:1.5px solid var(--brand);background:var(--bg-ffffff,#fff);color:var(--brand);min-height:36px}
+.pill.on{background:var(--brand);color:var(--fg-ffffff,#fff)}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--line);margin-bottom:14px}
+.tabs button{font-weight:700;font-size:14px;padding:10px 16px;background:transparent;color:var(--muted);border-bottom:3px solid transparent;min-height:44px}
+.tabs button.on{color:var(--brand);border-bottom-color:var(--brand)}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.grid2{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start}
+.grid2>*{flex:1 1 360px;min-width:0}
+.field{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:700;color:var(--muted)}
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table.t{border-collapse:collapse;width:100%;font-size:13px}
+table.t th,table.t td{border:1px solid var(--bd-cfdcd9,#cfdcd9);padding:7px 6px;text-align:center;vertical-align:middle}
+table.t thead th{background:var(--bg-0d9488,#0d9488);color:var(--fg-ffffff,#fff);font-weight:700}
+table.t thead tr.s th{background:var(--bg-2f6fb3,#2f6fb3)}
+table.t td.cl{cursor:pointer}
+table.t td.cl:hover{background:var(--bg-e6f3f1,#e6f3f1)}
+table.t td.miss{background:var(--bg-fdecec,#fdecec)}
+.ppl label{display:flex;align-items:center;gap:10px;padding:7px 4px;border-top:1px solid var(--bd-eef2f1,#eef2f1);font-size:14px;min-height:40px}
+.ppl input{width:18px;height:18px}
+.warn{background:var(--bg-fff7e6,#fff7e6);color:var(--fg-8a4a00,#8a4a00);border-radius:10px;padding:9px 12px;font-size:13px;margin-bottom:10px}
+.overlay{position:fixed;inset:0;background:rgba(10,30,30,.45);z-index:80;display:flex;align-items:flex-start;justify-content:center;padding:24px 12px;overflow-y:auto}
+.modal{background:var(--bg-ffffff,#fff);border-radius:16px;width:100%;max-width:520px;padding:18px;box-shadow:0 20px 50px rgba(0,0,0,.2)}
+.modal h2{margin:0 0 6px;font-size:18px}
+.alert{padding:9px 12px;border-radius:10px;font-size:13px;margin:8px 0;background:var(--bg-fdecec,#fdecec);color:var(--fg-a32020,#a32020)}
+.empty{color:var(--muted);text-align:center;padding:40px 10px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--bg-15242b,#15242b);color:var(--fg-ffffff,#fff);padding:10px 18px;border-radius:12px;z-index:99;font-size:14px}
+.hl{display:flex;align-items:center;gap:10px;padding:10px 4px;border-top:1px solid var(--bd-eef2f1,#eef2f1);flex-wrap:wrap}
+.hl:first-child{border-top:none}
+.hl .t{flex:1 1 220px;min-width:0}
+.hl .t b{display:block;font-size:14.5px}
+.hl.past{opacity:.6}
+</style>
+<script src="nav-back.js?v=2026-10-28.1" defer></script>
+</head>
+<body>
+<div id="bootView" class="boot"><span class="spin"></span><div>جارٍ التحميل…</div></div>
+<div id="app" class="hidden">
+  <div class="topbar">
+    <h1>🏖️ الإجازات</h1>
+    <span class="tb-badge" id="tbSchool">—</span>
+    <span style="flex:1"></span>
+    <button class="tb-btn" id="tbBack">→ الرئيسية</button>
+  </div>
+  <main id="main" style="max-width:820px"></main>
+</div>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-auth-compat.js"></script>
+<script>
+'use strict';
+/* =========================================================================
+   الإجازات وساعات هدوء الإشعارات — بند في «أدوات إدارية» لمدير المدرسة والوكيل (بالدور) فقط (ص-١٢).
+   مصدر واحد للمدرسة: schoolCalendar/{sid} = { holidays:[{id,from,to,label}], quiet:{on,from,to} }
+   - يقرؤه التذكير الصباحي (لا يُرسل في أيام الإجازة) وأداة «المناوبة والإشراف» (تستبعد أيامه تلقائيًا) و«يومي».
+   - ساعات الهدوء: ما يقع فيها من إشعارات يُؤجَّل حتى انتهائها (دوال Firebase).
+   ========================================================================= */
+const firebaseConfig = window.FB_CONFIG;
+let db = null;
+const WEEKDAYS = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+const $ = s=>document.querySelector(s);
+const esc = s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const arN = n=>String(n).replace(/\d/g, d=>'٠١٢٣٤٥٦٧٨٩'[d]);
+function toast(m){ const t=document.createElement('div'); t.className='toast'; t.textContent=m; document.body.appendChild(t); setTimeout(()=>t.remove(),2200); }
+function fatal(msg){
+  $('#bootView').innerHTML = `<div class="card" style="max-width:460px;text-align:center"><h3>${esc(msg)}</h3>
+    <button class="tb-btn" style="background:var(--brand);color:var(--fg-ffffff,#fff)" onclick="location.href='index.html'">العودة للرئيسية</button></div>`;
+}
+const dk = d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const wdOf = k=>new Date(k+'T12:00:00').getDay();
+function hijri(k){
+  if(!k) return '';
+  try{
+    const parts = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura-nu-arab',{year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date(k+'T12:00:00'));
+    const g = t=>((parts.find(x=>x.type===t)||{}).value||'').replace(/[^٠-٩\d]/g,'');
+    return g('year')+'/'+g('month')+'/'+g('day')+'هـ';
+  }catch(e){ return k; }
+}
+// أيام الدوام (الأحد–الخميس) داخل المدى
+function schoolDays(from, to){
+  const out = []; if(!from) return out; const end = to && to>=from ? to : from; const d = new Date(from+'T12:00:00'); let g=0;
+  while(dk(d) <= end && g++ < 400){ if(d.getDay()<=4) out.push(dk(d)); d.setDate(d.getDate()+1); }
+  return out;
+}
+const fmtTime = t=>{ if(!t) return ''; const [h,m]=t.split(':').map(Number); const pm=h>=12; const hh=((h+11)%12)+1; return arN(hh)+':'+arN(String(m).padStart(2,'0'))+' '+(pm?'م':'ص'); };
+
+const HS = { sid:null, me:null, cal:{ holidays:[], quiet:{ on:false, from:'21:00', to:'06:00' } }, mode:'one' };
+(function start(){
+  let s=null; try{ s = JSON.parse(localStorage.getItem('cls_session')||'null'); }catch(e){}
+  if(!s || !s.userId){ location.replace('index.html'); return; }
+  if(s.role==='soloTeacher' || s.role==='admin'){ fatal('هذا البند خاص بإدارة المدرسة.'); return; }
+  if(!s.schoolId){ fatal('لا يمكن تحديد المدرسة.'); return; }
+  HS.sid = s.schoolId; HS.session = s;
+  try{ firebase.initializeApp(firebaseConfig); db = firebase.firestore(); }
+  catch(e){ fatal('تعذّر الاتصال بقاعدة البيانات.'); return; }
+  firebase.auth().onAuthStateChanged(async au=>{
+    if(!au){ try{ localStorage.removeItem('cls_session'); }catch(e){} location.replace('index.html'); return; }
+    try{ await boot(au); }catch(e){ console.error(e); fatal('تعذّر التحميل: '+(e.message||e)); }
+  });
+})();
+async function boot(au){
+  const us = await db.collection('users').doc(HS.session.userId).get();
+  if(!us.exists || us.data().authUid !== au.uid){ await firebase.auth().signOut(); location.replace('index.html'); return; }
+  const u = us.data();
+  if(u.active===false){ fatal('حسابك موقوف.'); return; }
+  HS.me = { id:us.id, name:u.username||'' };
+  if(u.role==='schoolAdmin'){
+    if(!(u.adminSchools||[]).includes(HS.sid)){ fatal('لا يمكن الوصول لهذه المدرسة.'); return; }
+  } else {
+    const ctx = (u.schools||{})[HS.sid];
+    if(!ctx || ctx.active===false || ctx.role!=='agent'){ fatal('هذا البند لمدير المدرسة والوكيل فقط.'); return; }
+  }
+  $('#tbBack').onclick = ()=>location.href='index.html';
+  try{ const sd = await db.collection('schoolData').doc(HS.sid).get(); $('#tbSchool').textContent = sd.exists ? (sd.data().name||HS.sid) : HS.sid; }catch(e){ $('#tbSchool').textContent = HS.sid; }
+  try{
+    const cs = await db.collection('schoolCalendar').doc(HS.sid).get();
+    if(cs.exists){ const v = cs.data(); HS.cal.holidays = v.holidays||[]; HS.cal.quiet = Object.assign(HS.cal.quiet, v.quiet||{}); }
+  }catch(e){}
+  $('#bootView').classList.add('hidden'); $('#app').classList.remove('hidden');
+  render();
+}
+async function save(msg){
+  const doc = { schoolId:HS.sid, holidays:HS.cal.holidays, quiet:HS.cal.quiet, updatedAt:Date.now(), updatedBy:HS.me.id, updatedByName:HS.me.name };
+  try{ await db.collection('schoolCalendar').doc(HS.sid).set(doc, { merge:true }); toast(msg||'حُفظ'); return true; }
+  catch(e){ toast('خطأ في الحفظ: '+(e.message||e)); return false; }
+}
+function render(){
+  const today = dk(new Date());
+  const list = HS.cal.holidays.slice().sort((a,b)=>String(a.from).localeCompare(String(b.from)));
+  const rows = list.map(h=>{
+    const n = schoolDays(h.from, h.to).length; const past = (h.to||h.from) < today; const one = !h.to || h.to===h.from;
+    return `<div class="hl${past?' past':''}"><div class="t"><b>${esc(h.label||'إجازة')}</b>
+      <span class="sub">${one ? esc(WEEKDAYS[wdOf(h.from)])+' '+esc(hijri(h.from)) : 'من '+esc(WEEKDAYS[wdOf(h.from)])+' '+esc(hijri(h.from))+' إلى '+esc(WEEKDAYS[wdOf(h.to)])+' '+esc(hijri(h.to))}
+      · ${arN(n)} ${n===1?'يوم دراسي':'أيام دراسية'}${past?' · مضت':''}</span></div>
+      <button class="btn ghost sm" data-del="${esc(h.id)}">حذف</button></div>`;
+  }).join('');
+  const q = HS.cal.quiet;
+  $('#main').innerHTML = `
+    <section class="card">
+      <h3>الإجازات</h3>
+      <div class="sub" style="margin-bottom:10px">مصدر واحد للمدرسة: لا يُرسل التذكير الصباحي في أيام الإجازة، وتستبعدها أداة «المناوبة والإشراف» تلقائيًا. تُحسب أيام الدوام فقط (الأحد–الخميس).</div>
+      ${rows || '<div class="sub" style="padding:8px 0">لا توجد إجازات مسجَّلة.</div>'}
+    </section>
+    <section class="card">
+      <h3>إضافة إجازة</h3>
+      <div class="row" style="margin-bottom:10px">
+        <button class="pill ${HS.mode==='one'?'on':''}" data-hmode="one">يوم واحد</button>
+        <button class="pill ${HS.mode==='range'?'on':''}" data-hmode="range">من – إلى</button>
+      </div>
+      <div class="row">
+        <label class="field" style="flex:1 1 150px">${HS.mode==='one'?'التاريخ':'من تاريخ'}<input type="date" id="hFrom"></label>
+        ${HS.mode==='range'?'<label class="field" style="flex:1 1 150px">إلى تاريخ<input type="date" id="hTo"></label>':''}
+        <label class="field" style="flex:2 1 220px">الوصف (اختياري)<input id="hLabel" maxlength="60" placeholder="مثال: إجازة اليوم الوطني"></label>
+      </div>
+      <div id="hMsg" class="sub" style="margin-top:6px"></div>
+      <button class="btn pri" id="hAdd" style="margin-top:10px">+ إضافة</button>
+    </section>
+    <section class="card">
+      <h3>🔕 ساعات هدوء الإشعارات</h3>
+      <div class="sub" style="margin-bottom:10px">ما يقع خلالها من إشعارات للمدرسة كلها يُؤجَّل حتى انتهائها. التذكير الصباحي يُرسل الساعة ٦:٥٠ صباحًا من الأحد إلى الخميس.</div>
+      <label class="row" style="font-weight:700;margin-bottom:10px;gap:8px"><input type="checkbox" id="qOn" style="width:18px;height:18px" ${q.on?'checked':''}> تفعيل ساعات الهدوء</label>
+      <div class="row">
+        <label class="field" style="flex:1 1 140px">من الساعة<input type="time" id="qFrom" value="${esc(q.from||'21:00')}"></label>
+        <label class="field" style="flex:1 1 140px">إلى الساعة<input type="time" id="qTo" value="${esc(q.to||'06:00')}"></label>
+      </div>
+      <div class="sub" id="qSum" style="margin-top:6px">${q.on?'مفعّلة: من '+esc(fmtTime(q.from))+' إلى '+esc(fmtTime(q.to)):'غير مفعّلة — تصل الإشعارات فور حدوثها.'}</div>
+      <button class="btn pri" id="qSave" style="margin-top:10px">حفظ</button>
+    </section>`;
+  document.querySelectorAll('[data-hmode]').forEach(b=>b.onclick=()=>{ HS.mode=b.dataset.hmode; render(); });
+  document.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{
+    const h = HS.cal.holidays.find(x=>x.id===b.dataset.del); if(!h) return;
+    if(!await mnConfirm('حذف «'+(h.label||'إجازة')+'»؟')) return;
+    const prev = HS.cal.holidays; HS.cal.holidays = prev.filter(x=>x.id!==h.id);
+    if(!(await save('حُذفت'))) HS.cal.holidays = prev;
+    render();
+  });
+  $('#hAdd').onclick = async()=>{
+    const from = $('#hFrom').value, to = HS.mode==='range' ? $('#hTo').value : from, label = ($('#hLabel').value||'').trim();
+    const msg = t=>{ $('#hMsg').textContent = t; $('#hMsg').style.color = '#a32020'; };
+    if(!from){ msg('حدّد التاريخ.'); return; }
+    if(HS.mode==='range' && !to){ msg('حدّد تاريخ النهاية.'); return; }
+    if(to < from){ msg('تاريخ النهاية قبل البداية.'); return; }
+    const days = schoolDays(from, to);
+    if(!days.length){ msg('المدى لا يتضمن أي يوم دراسي (الأحد–الخميس).'); return; }
+    if(days.length > 120){ msg('المدى طويل جدًا.'); return; }
+    const taken = new Set(); HS.cal.holidays.forEach(h=>schoolDays(h.from,h.to).forEach(x=>taken.add(x)));
+    if(days.every(x=>taken.has(x))){ msg('هذه الأيام مسجّلة إجازةً مسبقًا.'); return; }
+    const prev = HS.cal.holidays;
+    HS.cal.holidays = prev.concat([{ id:'h'+Date.now().toString(36), from, to:to||from, label }]);
+    if(!(await save('أُضيفت الإجازة'))) HS.cal.holidays = prev;
+    render();
+  };
+  $('#qSave').onclick = async()=>{
+    const on = $('#qOn').checked, from = $('#qFrom').value, to = $('#qTo').value;
+    if(on && (!from || !to)){ toast('حدّد وقت البداية والنهاية'); return; }
+    if(on && from===to){ toast('وقت البداية يساوي النهاية'); return; }
+    const prev = HS.cal.quiet; HS.cal.quiet = { on, from: from||'21:00', to: to||'06:00' };
+    if(!(await save('حُفظت ساعات الهدوء'))) HS.cal.quiet = prev;
+    render();
+  };
+}
+</script>
+</body>
+</html>

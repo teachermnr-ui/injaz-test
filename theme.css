@@ -1,0 +1,764 @@
+/* إصدار: 2026-10-06.1 · الاختبار */
+/* =====================================================================
+   theme.css — الهوية البصرية الموحّدة لنظام إنجاز
+   المظهران: الياسمين (افتراضي) والأساسي — ولكل منهما فاتح وداكن.
+   يُفعَّل بأصناف يضعها theme.js على <html>:  t-jasmine | t-base  ،  dark
+   - الفاتح في «الأساسي» يبقى كما كان حرفيًا؛ هذا الملف يضيف عليه فقط.
+   - كل قواعد الداكن داخل @media screen، فالطباعة تبقى فاتحة دائمًا.
+   - لا منطق ولا بيانات هنا — شكل فقط.
+   ===================================================================== */
+
+/* ---------- الخط الموحّد ---------- */
+html body{ font-family:'Tajawal',"Segoe UI",Tahoma,system-ui,sans-serif; }
+
+/* ---------- أسماء موحّدة فوق أسماء الصفحات (بعضها يسمّي اللون --brand وبعضها --teal) ---------- */
+html{
+  --ij-brand:var(--brand, var(--teal, #0f766e));
+  --ij-brand-2:var(--brand-2, var(--teal-d, #0b5a54));
+  --ij-brand-l:var(--brand-l, var(--teal-l, #e6f2f0));
+  --ij-surface:var(--surface, var(--white, #ffffff));
+  --ij-surface-2:var(--surface-2, var(--teal-l, #eef4f3));
+}
+
+/* ---------- رموز مشتركة للمظهرين (فاتح) ---------- */
+html.t-base{
+  --head:#0f766e; --head-2:#0b5a54; --head-ink:#0b5a54;
+  --gold:#c8a24a; --gold-l:#f6eedb; --gold-ink:#7a5c14;
+  --on-brand:#ffffff; --track:#e7eeec; --scrim:rgba(10,30,30,.38);
+}
+html.t-jasmine{
+  --bg:#f7f9f4; --paper:#f7f9f4; --surface:#ffffff; --white:#ffffff; --card:#ffffff;
+  --surface-2:#eff3e9; --surface-3:#e4ebdc;
+  --brand:#3f6659; --brand-2:#325145; --brand-l:#e8efe0;
+  --accent:#3f6659; --accent-d:#325145;
+  --teal:#3f6659; --teal-d:#325145; --teal-l:#eff3e9;
+  --ink:#23312b; --muted:#5f6e63; --line:#e1e9da; --ink-soft:#5f6e63;
+  --head:#3f6659; --head-2:#325145; --head-ink:#325145;
+  --gold:#c99a3b; --gold-l:#f6eedb; --gold-ink:#7a5c14;
+  --on-brand:#ffffff; --track:#eef2ea; --scrim:rgba(20,30,24,.38);
+  --shadow:0 1px 2px rgba(40,60,50,.05),0 10px 22px rgba(63,102,89,.08);
+}
+
+/* ---------- الداكن ---------- */
+@media screen{
+  html.dark{ color-scheme:dark; }
+  html.t-base.dark{
+    --bg:#0b1416; --paper:#0b1416; --surface:#13201f; --white:#13201f; --card:#13201f;
+    --surface-2:#1a2b2a; --surface-3:#22302e;
+    --brand:#1a8478; --brand-2:#7fd8cc; --brand-l:#173a37;
+    --accent:#1a8478; --accent-d:#7fd8cc;
+    --teal:#1a8478; --teal-d:#7fd8cc; --teal-l:#173a37;
+    --ink:#e6eeed; --muted:#97aaa8; --line:#26383a; --ink-soft:#97aaa8; --blank:#5d6d70;
+    --danger:#f07a6c; --danger-d:#f4998e; --bad:#f07a6c; --ok:#4cc38a; --warn:#c9870a; --info:#7aa7f5;
+    --warn-l:#2a2013; --blue:#8ab4f0; --blue-l:#172536; --vio:#c3a6ee; --vio-l:#251d33;
+    --green-bg:#15301f; --green-bd:#3f9e6b; --red-bg:#3a1d1c; --red-bd:#c0574c; --orange-bg:#33260f; --orange-bd:#c98a2e;
+    --coral-light:#3a1d1c;
+    --head:#0d2a28; --head-2:#0b2321; --head-ink:#0d2a28;
+    --gold:#d9b45e; --gold-l:#2c2514; --gold-ink:#e6c67c;
+    --on-brand:#ffffff; --track:#1a2827; --scrim:rgba(0,0,0,.55);
+    --shadow:0 1px 0 rgba(255,255,255,.02),0 10px 26px rgba(0,0,0,.35);
+  }
+  html.t-jasmine.dark{
+    --bg:#0f1411; --paper:#0f1411; --surface:#161d18; --white:#161d18; --card:#161d18;
+    --surface-2:#1d2620; --surface-3:#252f28;
+    --brand:#4a7d6b; --brand-2:#b9d5c7; --brand-l:#22322b;
+    --accent:#4a7d6b; --accent-d:#b9d5c7;
+    --teal:#4a7d6b; --teal-d:#b9d5c7; --teal-l:#22322b;
+    --ink:#e7ede5; --muted:#9aa79d; --line:#2a352e; --ink-soft:#9aa79d; --blank:#5e6b62;
+    --danger:#f07a6c; --danger-d:#f4998e; --bad:#f07a6c; --ok:#4cc38a; --warn:#c9870a; --info:#7aa7f5;
+    --warn-l:#2a2013; --blue:#8ab4f0; --blue-l:#172536; --vio:#c3a6ee; --vio-l:#251d33;
+    --green-bg:#15301f; --green-bd:#3f9e6b; --red-bg:#3a1d1c; --red-bd:#c0574c; --orange-bg:#33260f; --orange-bd:#c98a2e;
+    --coral-light:#3a1d1c;
+    --head:#1f2e27; --head-2:#18241e; --head-ink:#1f2e27;
+    --gold:#d8af57; --gold-l:#2c2514; --gold-ink:#e6c67c;
+    --on-brand:#ffffff; --track:#1d2620; --scrim:rgba(0,0,0,.55);
+    --shadow:0 1px 0 rgba(255,255,255,.02),0 10px 26px rgba(0,0,0,.4);
+  }
+  html.dark body{ background-color:var(--bg); color:var(--ink); }
+  html.dark input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=file]),
+  html.dark select, html.dark textarea{
+    background-color:var(--surface-2); color:var(--ink); border-color:var(--line);
+  }
+  html.dark ::placeholder{ color:var(--muted); opacity:1; }
+  html.dark option{ background:var(--surface); color:var(--ink); }
+  html.dark hr{ border-color:var(--line); }
+  html.dark table{ border-color:var(--line); }
+  html.dark th, html.dark td{ border-color:var(--line); }
+  :where(html.dark) a:not([class]){ color:var(--brand-2); }
+}
+
+/* ---------- لمسات الياسمين (أشكال) ---------- */
+html.t-jasmine .card{ border-radius:22px 22px 8px 8px; box-shadow:var(--shadow); }
+html.t-jasmine .tab{ border-radius:999px; }
+html.t-jasmine .btn{ border-radius:14px; }
+html.t-jasmine .secicon{ border-radius:16px; }
+html.t-jasmine nav.tabs button{ border-radius:999px; }
+html.t-jasmine .primary{ border-radius:14px; }
+html.t-jasmine .collapseBtn{ border-radius:999px; }
+
+/* ---------- شريط التبويبات في إدارة الصف والأنشطة الرقمية ---------- */
+html header.app{
+  background:var(--ij-surface); color:var(--ink); border-bottom:1px solid var(--line);
+  box-shadow:0 1px 0 rgba(0,0,0,.02); padding:8px 10px;
+}
+html nav.tabs button{ background:transparent; color:var(--muted); font-weight:700; }
+html nav.tabs button:hover{ background:var(--ij-surface-2); }
+html nav.tabs button.active{ background:var(--ij-brand); color:var(--on-brand); }
+@media (min-width:768px){ html header.app{ padding:10px 18px; } }
+
+/* ---------- هوية «منجز المدرسي»: شاشة البداية والشعار ---------- */
+.ijs{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+  background:var(--bg,#f7f9f4);color:var(--ink,#23312b);text-align:center;padding:24px;overflow:hidden}
+.ijs .ijs-logo{height:min(32vh,230px);width:auto;max-width:70vw;object-fit:contain;animation:ijsIn .55s ease both}
+.ijs .ijs-name{font-size:18px;font-weight:800;line-height:1.3;color:var(--ij-brand,#3f6659);animation:ijsIn .55s .08s ease both}
+.ijs .ijs-tag{font-size:13px;font-weight:500;line-height:1.7;color:var(--muted,#5f6e63);max-width:300px;animation:ijsIn .55s .14s ease both}
+.ijs .ijs-bar{margin-top:14px;width:96px;height:3px;border-radius:999px;background:rgba(127,150,135,.28);overflow:hidden}
+.ijs .ijs-bar i{display:block;width:40%;height:100%;border-radius:999px;background:#d9b25a;animation:ijsLoad 1.1s ease-in-out infinite}
+.ijs .ijs-foot{position:absolute;bottom:calc(30px + env(safe-area-inset-bottom,0px));font-size:12px;color:var(--muted,#5f6e63)}
+.ijs.out{animation:ijsOut .28s ease forwards}
+.ijs.err{background:var(--bg);color:var(--ink)}
+@keyframes ijsIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes ijsLoad{0%{transform:translateX(160%)}100%{transform:translateX(-260%)}}
+@keyframes ijsOut{to{opacity:0;visibility:hidden}}
+@media (prefers-reduced-motion:reduce){ .ijs *{animation:none !important} }
+@media print{ .ijs{display:none !important} }
+@media screen{
+  html.dark .ijs{ background:radial-gradient(120% 80% at 50% 25%,#2a3d34,#1f2e27 70%); color:#e7ede5; }
+  html.dark .ijs .ijs-name{ color:#d9b25a; }
+  html.dark .ijs .ijs-tag, html.dark .ijs .ijs-foot{ color:#c3d0c2; }
+  html.dark .ijs.err{ background:var(--bg); }
+}
+/* شعار صغير فوق بطاقات الدخول */
+.brand-logo{display:block;height:84px;width:auto;margin:0 auto 10px}
+.brand-logo.sm{height:62px;margin-bottom:8px}
+.brand-name{margin:0;text-align:center;font-size:18px;font-weight:800;color:var(--ij-brand,#3f6659)}
+.brand-tag{margin:2px 0 18px;text-align:center;font-size:13px;color:var(--muted,#5f6e63)}
+@media screen{ html.dark .brand-name{ color:#d9b25a; } }
+
+/* ---------- ترويسات صفحات الأدوات وصفحات الطالب بلون الهوية ---------- */
+html .topbar, html .app-header, html body > header:not(.ijh):not(.hero):not(.app){ background:var(--head); }
+html.t-jasmine .topbar, html.t-jasmine .app-header, html.t-jasmine body > header:not(.ijh):not(.hero):not(.app){ border-top:3px solid var(--gold); }
+@media screen{
+  html.dark .btn:hover{ background:var(--ij-brand); filter:brightness(1.1); }
+  html.dark .brand-mark, html.dark .m-av{ background:var(--ij-brand); }
+  /* إدارة الصف: البطاقة العائمة (المظهر الأساسي) */
+  html.dark body:not(.alt-theme) .flcard{ background:rgba(10,20,20,.55); border-color:var(--line); }
+  html.dark body:not(.alt-theme) .flcard button.fl-nav{ background:var(--ij-surface); border-color:var(--line); color:var(--ij-brand-2); }
+  html.dark body:not(.alt-theme) .flcard button.fl-nav.active{ background:var(--ij-brand); color:#fff; border-color:transparent; }
+}
+
+/* =====================================================================
+   الترويسة الموحّدة (الرئيسية / إدارة الصف / الأنشطة الرقمية)
+   ===================================================================== */
+.ijh{
+  position:relative; z-index:40; background:var(--head); color:#fff;
+  padding:14px 16px; padding-top:calc(14px + env(safe-area-inset-top));
+}
+html.t-jasmine .ijh{ border-top:3px solid var(--gold); }
+.ijh-row1, .ijh-row2{ max-width:1100px; margin:0 auto; display:flex; align-items:center; }
+.ijh-row1{ gap:12px; }
+.ijh-row2{ gap:10px; margin-top:14px; flex-wrap:wrap; row-gap:8px; }
+.ijh-ava{
+  width:42px; height:42px; border-radius:13px; flex:0 0 auto;
+  background:rgba(255,255,255,.14); display:flex; align-items:center; justify-content:center;
+  font-weight:700; font-size:14px; letter-spacing:0;
+}
+.ijh-id{ flex:1; min-width:0; }
+.ijh-name{ font-weight:800; font-size:16.5px; line-height:1.35; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ijh-date{ font-size:12.5px; opacity:.85; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.4; }
+.ijh-date br{ display:none; }
+.ijh-date .d-g{ display:none; }
+.ijh-date span + span::before{ content:" · "; }
+@media (min-width:768px){ .ijh-date .d-g{ display:inline; } }
+.ijh-acc{
+  flex:0 0 auto; height:44px; padding:0 10px 0 8px; border-radius:13px; border:none; cursor:pointer;
+  background:rgba(255,255,255,.16); color:#fff; display:flex; align-items:center; gap:4px; font:inherit;
+}
+.ijh-acc:active, .ijh-acc[aria-expanded="true"]{ background:rgba(255,255,255,.26); }
+.ijh-seg{ display:flex; padding:3px; gap:2px; border-radius:13px; background:rgba(255,255,255,.14); }
+.ijh-seg > a, .ijh-seg > button{
+  display:flex; align-items:center; gap:6px; min-height:38px; padding:0 14px; border-radius:10px; border:none;
+  background:transparent; color:rgba(255,255,255,.92); font:inherit; font-size:13.5px; font-weight:700;
+  text-decoration:none; cursor:pointer; white-space:nowrap; width:auto; height:auto;
+}
+.ijh-seg > .on{ background:#fff; color:var(--head-ink); }
+.ijh-spacer{ flex:1; min-width:4px; }
+.ijh-period{
+  display:inline-flex; align-items:center; gap:6px; white-space:nowrap;
+  font-size:12.5px; font-weight:700; padding:6px 11px; border-radius:999px;
+  border:1px solid rgba(255,255,255,.35); background:transparent; color:#fff;
+}
+.ijh-period::before{ content:""; width:7px; height:7px; border-radius:50%; background:var(--gold); }
+.ijh-period:empty{ display:none; }
+.ijh select{
+  background:rgba(255,255,255,.14) !important; color:#fff !important; border:1px solid rgba(255,255,255,.3) !important;
+  border-radius:999px !important; padding:6px 10px !important; font:inherit !important; font-size:12.5px !important;
+  max-width:170px !important; min-height:34px;
+}
+.ijh select option{ color:#15242b; background:#fff; }
+.ijh .ijh-extra{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.ijh .ijh-extra > *{ font-size:12px; }
+
+/* قائمة الحساب */
+.ijh-scrim{ position:fixed; inset:0; background:var(--scrim); z-index:150; animation:ijFade .15s ease; }
+.ijh-menu{
+  position:absolute; left:12px; top:calc(64px + env(safe-area-inset-top)); z-index:200;
+  width:280px; max-width:calc(100vw - 24px);
+  background:var(--ij-surface); color:var(--ink); border:1px solid var(--line); border-radius:20px;
+  box-shadow:0 18px 50px rgba(0,0,0,.24); overflow:hidden; animation:ijPop .16s ease;
+}
+@media (min-width:1124px){ .ijh-menu{ left:calc((100vw - 1100px)/2); } }
+.ijh-menu[hidden]{ display:none; }
+.ijh-mhead{ padding:16px; border-bottom:1px solid var(--line); }
+.ijh-mhead b{ display:block; font-size:15.5px; font-weight:800; }
+.ijh-mhead span{ display:block; font-size:12.5px; color:var(--muted); margin-top:1px; }
+.ijh-mlist{ padding:6px; }
+.ijh-mitem{
+  display:flex; align-items:center; gap:12px; width:100%; min-height:46px; padding:0 12px; border-radius:12px;
+  border:none; background:transparent; color:var(--ink); font:inherit; font-size:14.5px; font-weight:500;
+  text-align:right; text-decoration:none; cursor:pointer;
+}
+.ijh-mitem:hover, .ijh-mitem:focus-visible{ background:var(--ij-surface-2); outline:none; }
+.ijh-mitem svg{ flex:0 0 auto; color:var(--ij-brand-2); }
+.ijh-mitem.danger{ color:var(--danger, #b42318); font-weight:700; }
+.ijh-mitem.danger svg{ color:currentColor; }
+.ijh-mmode{ padding:10px 14px 12px; border-top:1px solid var(--line); }
+.ijh-mlabel{ font-size:12.5px; color:var(--muted); margin-bottom:8px; }
+.ijh-mfoot{ padding:6px; border-top:1px solid var(--line); }
+
+/* اختيار الوضع: تلقائي / فاتح / داكن */
+.ij-mode{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:4px; padding:3px; border-radius:12px; background:var(--track); }
+.ij-mode button{
+  min-height:38px; border:none; border-radius:10px; background:transparent; color:var(--muted);
+  font:inherit; font-size:13px; font-weight:500; cursor:pointer;
+}
+.ij-mode button.on{ background:var(--ij-surface); color:var(--ij-brand-2); font-weight:700; box-shadow:0 1px 3px rgba(0,0,0,.14); }
+
+/* عناصر إضافية تُلحقها الصفحات بالترويسة (شارة مدرسة الأدمن، زر تنظيف ملف المعلم المستقل) */
+.ijh > #adminSchoolBadge, .ijh > #soloWipeBtn{ max-width:1100px; margin:12px auto 0 !important; }
+.ijh > #soloWipeBtn{ display:block; }
+@media (min-width:1124px){ .ijh > #soloWipeBtn{ margin-inline-start:calc((100% - 1100px)/2) !important; } }
+
+@keyframes ijPop{ from{ opacity:0; transform:translateY(-6px) scale(.98); } to{ opacity:1; transform:none; } }
+@keyframes ijFade{ from{ opacity:0; } to{ opacity:1; } }
+@media (prefers-reduced-motion:reduce){ .ijh-menu, .ijh-scrim{ animation:none; } }
+@media print{ .ijh, .ijh-menu, .ijh-scrim{ display:none !important; } }
+
+/* ===== [GENERATED] ألوان الصفحات المحوَّلة — يولّدها tools/theme_build.py ولا تُعدَّل يدويًا ===== */
+html.t-jasmine{
+  --bd-0b5a54:#325145;
+  --bd-0f766e:#3f6659;
+  --bd-c3d2cf:#c8cdcb;
+  --bd-cfdcd9:#d3ddcb;
+  --bd-eef2f1:#eef2ea;
+  --bg-0b7a63:#3f6659;
+  --bg-0d9488:#4a7a69;
+  --bg-0f766e:#3f6659;
+  --bg-15242b:#23312b;
+  --bg-197a44:#3f6659;
+  --bg-1fc3a6:#6f9a88;
+  --bg-3f6659:#4b5a53;
+  --bg-e2eeec:#e5ebe8;
+  --bg-e5f6f3:#edf2e6;
+  --bg-e6f3f1:#edf2e6;
+  --bg-e6f6f2:#ebf1ee;
+  --bg-e7eeec:#e8edeb;
+  --bg-e7f6f3:#ecf1ef;
+  --bg-e9efee:#eaeeec;
+  --bg-eef2f1:#eef2ea;
+  --bg-eef4f3:#eff3e9;
+  --bg-eef6f4:#f1f5ec;
+  --bg-eef6f5:#f0f4ec;
+  --bg-effaf8:#f2f7f5;
+  --bg-f0f5f4:#f1f4f3;
+  --bg-f2f9f8:#f4f7f6;
+  --bg-f3f8f7:#f4f7f6;
+  --bg-f4f8f7:#f6f8f2;
+  --bg-f4faf8:#f6f8f7;
+  --bg-f6f8f8:#f6f8f7;
+  --bg-f7faf9:#f8faf5;
+  --bg-f7fbfa:#f8faf5;
+  --bg-fcfdfd:#fcfdfa;
+  --fg-065f46:#224334;
+  --fg-0b5a54:#325145;
+  --fg-0f766e:#3f6659;
+  --fg-15242b:#23312b;
+  --fg-197a44:#3f6659;
+  --fg-5b6f76:#5f6e63;
+}
+@media screen{
+html.t-base.dark{
+  --bd-222222:#55666a;
+  --bd-333333:#55666a;
+  --bd-b9e3c9:#335741;
+  --bd-c3d2cf:#26383a;
+  --bd-c3d4fa:#303d5a;
+  --bd-cbd5d3:#26383a;
+  --bd-cfdcd9:#26383a;
+  --bd-cfe8d6:#36533e;
+  --bd-d7dede:#26383a;
+  --bd-dccef3:#40305a;
+  --bd-dddddd:#26383a;
+  --bd-e5eaea:#26383a;
+  --bd-eeeeee:#26383a;
+  --bd-eef2f1:#26383a;
+  --bd-f0dfae:#5a4f30;
+  --bd-f2c1bb:#5a3530;
+  --bd-f2d4d0:#5a3530;
+  --bd-f3d6d4:#5a3330;
+  --bd-f3d9a8:#5a4b30;
+  --bd-f6d6d2:#5a3530;
+  --bd-ffffff:#26383a;
+  --bg-0d1416:#1a2b2a;
+  --bg-cfe3ff:#1e2938;
+  --bg-dddddd:#22302e;
+  --bg-e0f4e8:#203729;
+  --bg-e1f5ee:#1f372f;
+  --bg-e2eeec:#25322f;
+  --bg-e3ecfd:#1e2738;
+  --bg-e5f6f3:#203733;
+  --bg-e6e9e8:#1a2b2a;
+  --bg-e6f3f1:#233431;
+  --bg-e6f6ee:#20372b;
+  --bg-e6f6f2:#203731;
+  --bg-e7eeec:#272f2d;
+  --bg-e7eefb:#1e2738;
+  --bg-e7f6ee:#21362b;
+  --bg-e7f6f3:#213632;
+  --bg-e7f7ee:#1f372a;
+  --bg-e8eef8:#1f2838;
+  --bg-e8f0fd:#1e2838;
+  --bg-e9e9e9:#1a2b2a;
+  --bg-e9efee:#282f2e;
+  --bg-e9f1fd:#1e2938;
+  --bg-eaf6ee:#223528;
+  --bg-eaf6f1:#22352d;
+  --bg-eeeeee:#1a2b2a;
+  --bg-eef0ff:#1e2138;
+  --bg-eef2f1:#1a2b2a;
+  --bg-eef2f7:#232a34;
+  --bg-eef4f3:#26302f;
+  --bg-eef4fb:#1e2a38;
+  --bg-eef6f4:#24332f;
+  --bg-eef6f5:#243331;
+  --bg-efe3e8:#32252a;
+  --bg-effaf8:#1f3833;
+  --bg-f0f5f4:#27302e;
+  --bg-f1f1f1:#1a2b2a;
+  --bg-f2f9f8:#233432;
+  --bg-f3ecfd:#291e38;
+  --bg-f3f3f3:#1a2b2a;
+  --bg-f3f6f5:#282f2c;
+  --bg-f3f8f7:#25322f;
+  --bg-f4f8f7:#26312e;
+  --bg-f4faf8:#22342e;
+  --bg-f5f5f5:#1a2b2a;
+  --bg-f6eedb:#38311e;
+  --bg-f6eef1:#33242a;
+  --bg-f6f1fd:#291e38;
+  --bg-f6f8f8:#1a2b2a;
+  --bg-f7faf9:#26312d;
+  --bg-f7fbfa:#23332f;
+  --bg-fafafa:#13201f;
+  --bg-fafcfb:#25312b;
+  --bg-fbdcdc:#381e1e;
+  --bg-fbe4e1:#38211e;
+  --bg-fcecea:#38211e;
+  --bg-fcf2e2:#382e1e;
+  --bg-fcfdfd:#13201f;
+  --bg-fcfdfe:#13201f;
+  --bg-fdeceb:#38201e;
+  --bg-fdecec:#381e1e;
+  --bg-fdf1d8:#38301e;
+  --bg-fdf1dc:#382f1e;
+  --bg-fdf1ef:#38221e;
+  --bg-fdf3e1:#382f1e;
+  --bg-fdf6e6:#38301e;
+  --bg-fff4e0:#382f1e;
+  --bg-fff4e5:#382d1e;
+  --bg-fff7e6:#38301e;
+  --bg-fff8e6:#38311e;
+  --bg-fff8f7:#38221e;
+  --bg-fffef7:#38351e;
+  --bg-ffffff:#13201f;
+  --fg-065f46:#7ff0d0;
+  --fg-0b5a54:#85eae2;
+  --fg-0c2d48:#8abce6;
+  --fg-0f766e:#86e9e2;
+  --fg-111111:#e6eeed;
+  --fg-13343b:#97cdd9;
+  --fg-15242b:#a2c0ce;
+  --fg-17693b:#8ee1b3;
+  --fg-197a44:#8de2b3;
+  --fg-1a7a4f:#8ee1bc;
+  --fg-1b1405:#e4c88b;
+  --fg-1e40af:#8a9fe5;
+  --fg-1e5aaa:#8bb1e5;
+  --fg-1f5fb0:#8bb2e5;
+  --fg-222222:#e6eeed;
+  --fg-2e73cc:#8fb2e0;
+  --fg-333333:#e6eeed;
+  --fg-444444:#e6eeed;
+  --fg-555555:#97aaa8;
+  --fg-5b6f76:#97aaa8;
+  --fg-666666:#97aaa8;
+  --fg-666677:#97aaa8;
+  --fg-6d3fc0:#ae97d8;
+  --fg-777777:#97aaa8;
+  --fg-7a1f3d:#de91ab;
+  --fg-7a5c14:#e6cb89;
+  --fg-888888:#97aaa8;
+  --fg-8a4a00:#f8bc77;
+  --fg-8a5a00:#f8cb77;
+  --fg-8a5a0c:#eec482;
+  --fg-8a6d1a:#e3cd8c;
+  --fg-97650b:#efc780;
+  --fg-9a6212:#eac185;
+  --fg-9b2c21:#e1958e;
+  --fg-a32020:#e38c8c;
+  --fg-b42318:#e98d86;
+  --fg-b45309:#f2b07d;
+  --fg-b5332e:#de9491;
+  --fg-b7791f:#e5c08a;
+  --fg-b97400:#f8c877;
+  --fg-c0392b:#e0978f;
+  --fg-c07a00:#f8c977;
+  --fg-d32f2f:#e18e8e;
+}
+html.t-jasmine.dark{
+  --bd-0b5a54:#325145;
+  --bd-0f766e:#3f6659;
+  --bd-222222:#56635a;
+  --bd-333333:#56635a;
+  --bd-b9e3c9:#335741;
+  --bd-c3d2cf:#2a352e;
+  --bd-c3d4fa:#303d5a;
+  --bd-cbd5d3:#2a352e;
+  --bd-cfdcd9:#444d3c;
+  --bd-cfe8d6:#36533e;
+  --bd-d7dede:#2a352e;
+  --bd-dccef3:#40305a;
+  --bd-dddddd:#2a352e;
+  --bd-e5eaea:#2a352e;
+  --bd-eeeeee:#2a352e;
+  --bd-eef2f1:#454f3b;
+  --bd-f0dfae:#5a4f30;
+  --bd-f2c1bb:#5a3530;
+  --bd-f2d4d0:#5a3530;
+  --bd-f3d6d4:#5a3330;
+  --bd-f3d9a8:#5a4b30;
+  --bd-f6d6d2:#5a3530;
+  --bd-ffffff:#2a352e;
+  --bg-0b7a63:#3f6659;
+  --bg-0d1416:#1d2620;
+  --bg-0d9488:#4a7a69;
+  --bg-0f766e:#3f6659;
+  --bg-15242b:#23312b;
+  --bg-197a44:#3f6659;
+  --bg-1fc3a6:#6f9a88;
+  --bg-3f6659:#4b5a53;
+  --bg-cfe3ff:#1e2938;
+  --bg-dddddd:#252f28;
+  --bg-e0f4e8:#203729;
+  --bg-e1f5ee:#1f372f;
+  --bg-e2eeec:#1d2620;
+  --bg-e3ecfd:#1e2738;
+  --bg-e5f6f3:#2d3324;
+  --bg-e6e9e8:#1d2620;
+  --bg-e6f3f1:#2d3324;
+  --bg-e6f6ee:#20372b;
+  --bg-e6f6f2:#27302b;
+  --bg-e7eeec:#1d2620;
+  --bg-e7eefb:#1e2738;
+  --bg-e7f6ee:#21362b;
+  --bg-e7f6f3:#282f2c;
+  --bg-e7f7ee:#1f372a;
+  --bg-e8eef8:#1f2838;
+  --bg-e8f0fd:#1e2838;
+  --bg-e9e9e9:#1d2620;
+  --bg-e9efee:#1d2620;
+  --bg-e9f1fd:#1e2938;
+  --bg-eaf6ee:#223528;
+  --bg-eaf6f1:#22352d;
+  --bg-eeeeee:#1d2620;
+  --bg-eef0ff:#1e2138;
+  --bg-eef2f1:#2b3126;
+  --bg-eef2f7:#232a34;
+  --bg-eef4f3:#2d3224;
+  --bg-eef4fb:#1e2a38;
+  --bg-eef6f4:#2c3324;
+  --bg-eef6f5:#2b3225;
+  --bg-efe3e8:#32252a;
+  --bg-effaf8:#26312c;
+  --bg-f0f5f4:#1d2620;
+  --bg-f1f1f1:#1d2620;
+  --bg-f2f9f8:#282f2d;
+  --bg-f3ecfd:#291e38;
+  --bg-f3f3f3:#1d2620;
+  --bg-f3f6f5:#282f2c;
+  --bg-f3f8f7:#282f2d;
+  --bg-f4f8f7:#2e3324;
+  --bg-f4faf8:#1d2620;
+  --bg-f5f5f5:#1d2620;
+  --bg-f6eedb:#38311e;
+  --bg-f6eef1:#33242a;
+  --bg-f6f1fd:#291e38;
+  --bg-f6f8f8:#1d2620;
+  --bg-f7faf9:#2d3323;
+  --bg-f7fbfa:#2d3323;
+  --bg-fafafa:#161d18;
+  --bg-fafcfb:#25312b;
+  --bg-fbdcdc:#381e1e;
+  --bg-fbe4e1:#38211e;
+  --bg-fcecea:#38211e;
+  --bg-fcf2e2:#382e1e;
+  --bg-fcfdfd:#161d18;
+  --bg-fcfdfe:#161d18;
+  --bg-fdeceb:#38201e;
+  --bg-fdecec:#381e1e;
+  --bg-fdf1d8:#38301e;
+  --bg-fdf1dc:#382f1e;
+  --bg-fdf1ef:#38221e;
+  --bg-fdf3e1:#382f1e;
+  --bg-fdf6e6:#38301e;
+  --bg-fff4e0:#382f1e;
+  --bg-fff4e5:#382d1e;
+  --bg-fff7e6:#38301e;
+  --bg-fff8e6:#38311e;
+  --bg-fff8f7:#38221e;
+  --bg-fffef7:#38351e;
+  --bg-ffffff:#161d18;
+  --fg-065f46:#a3cdba;
+  --fg-0b5a54:#a8c7bb;
+  --fg-0c2d48:#8abce6;
+  --fg-0f766e:#a8c7bd;
+  --fg-111111:#e7ede5;
+  --fg-13343b:#97cdd9;
+  --fg-15242b:#adc2b9;
+  --fg-17693b:#8ee1b3;
+  --fg-197a44:#a8c7bd;
+  --fg-1a7a4f:#8ee1bc;
+  --fg-1b1405:#e4c88b;
+  --fg-1e40af:#8a9fe5;
+  --fg-1e5aaa:#8bb1e5;
+  --fg-1f5fb0:#8bb2e5;
+  --fg-222222:#e7ede5;
+  --fg-2e73cc:#8fb2e0;
+  --fg-333333:#e7ede5;
+  --fg-444444:#e7ede5;
+  --fg-555555:#9aa79d;
+  --fg-5b6f76:#9aa79d;
+  --fg-666666:#9aa79d;
+  --fg-666677:#9aa79d;
+  --fg-6d3fc0:#ae97d8;
+  --fg-777777:#9aa79d;
+  --fg-7a1f3d:#de91ab;
+  --fg-7a5c14:#e6cb89;
+  --fg-888888:#9aa79d;
+  --fg-8a4a00:#f8bc77;
+  --fg-8a5a00:#f8cb77;
+  --fg-8a5a0c:#eec482;
+  --fg-8a6d1a:#e3cd8c;
+  --fg-97650b:#efc780;
+  --fg-9a6212:#eac185;
+  --fg-9b2c21:#e1958e;
+  --fg-a32020:#e38c8c;
+  --fg-b42318:#e98d86;
+  --fg-b45309:#f2b07d;
+  --fg-b5332e:#de9491;
+  --fg-b7791f:#e5c08a;
+  --fg-b97400:#f8c877;
+  --fg-c0392b:#e0978f;
+  --fg-c07a00:#f8c977;
+  --fg-d32f2f:#e18e8e;
+}
+html.dark :is(#sheetHost, .ij-paper, .pagewrap, img, canvas){
+  --bd-0b5a54:initial;
+  --bd-0f766e:initial;
+  --bd-1a7a4f:initial;
+  --bd-1e5aaa:initial;
+  --bd-222222:initial;
+  --bd-333333:initial;
+  --bd-6d3fc0:initial;
+  --bd-7c3aed:initial;
+  --bd-999999:initial;
+  --bd-aaaaaa:initial;
+  --bd-b42318:initial;
+  --bd-b9e3c9:initial;
+  --bd-c0392b:initial;
+  --bd-c07a00:initial;
+  --bd-c3d2cf:initial;
+  --bd-c3d4fa:initial;
+  --bd-c99a3b:initial;
+  --bd-cbd5d3:initial;
+  --bd-cfdcd9:initial;
+  --bd-cfe8d6:initial;
+  --bd-d43d8f:initial;
+  --bd-d7dede:initial;
+  --bd-dccef3:initial;
+  --bd-dddddd:initial;
+  --bd-e0a716:initial;
+  --bd-e5eaea:initial;
+  --bd-eeeeee:initial;
+  --bd-eef2f1:initial;
+  --bd-f0c08a:initial;
+  --bd-f0c36d:initial;
+  --bd-f0d58c:initial;
+  --bd-f0dfae:initial;
+  --bd-f2c1bb:initial;
+  --bd-f2d4d0:initial;
+  --bd-f3d6d4:initial;
+  --bd-f3d9a8:initial;
+  --bd-f6d6d2:initial;
+  --bd-ffffff:initial;
+  --bg-0b7a63:initial;
+  --bg-0d1416:initial;
+  --bg-0d9488:initial;
+  --bg-0f766e:initial;
+  --bg-15242b:initial;
+  --bg-197a44:initial;
+  --bg-1c2b30:initial;
+  --bg-1fc3a6:initial;
+  --bg-2f5aa8:initial;
+  --bg-2f6fb3:initial;
+  --bg-3f6659:initial;
+  --bg-6b7280:initial;
+  --bg-7c3aed:initial;
+  --bg-99aaaa:initial;
+  --bg-b42318:initial;
+  --bg-c0392b:initial;
+  --bg-c8a24a:initial;
+  --bg-c99a3b:initial;
+  --bg-cfe3ff:initial;
+  --bg-dddddd:initial;
+  --bg-e0a716:initial;
+  --bg-e0f4e8:initial;
+  --bg-e1f5ee:initial;
+  --bg-e2eeec:initial;
+  --bg-e3ecfd:initial;
+  --bg-e5f6f3:initial;
+  --bg-e6e9e8:initial;
+  --bg-e6f3f1:initial;
+  --bg-e6f6ee:initial;
+  --bg-e6f6f2:initial;
+  --bg-e7eeec:initial;
+  --bg-e7eefb:initial;
+  --bg-e7f6ee:initial;
+  --bg-e7f6f3:initial;
+  --bg-e7f7ee:initial;
+  --bg-e8eef8:initial;
+  --bg-e8f0fd:initial;
+  --bg-e9e9e9:initial;
+  --bg-e9efee:initial;
+  --bg-e9f1fd:initial;
+  --bg-eaf6ee:initial;
+  --bg-eaf6f1:initial;
+  --bg-eeeeee:initial;
+  --bg-eef0ff:initial;
+  --bg-eef2f1:initial;
+  --bg-eef2f7:initial;
+  --bg-eef4f3:initial;
+  --bg-eef4fb:initial;
+  --bg-eef6f4:initial;
+  --bg-eef6f5:initial;
+  --bg-efe3e8:initial;
+  --bg-effaf8:initial;
+  --bg-f0f5f4:initial;
+  --bg-f1f1f1:initial;
+  --bg-f2f9f8:initial;
+  --bg-f3ecfd:initial;
+  --bg-f3f3f3:initial;
+  --bg-f3f6f5:initial;
+  --bg-f3f8f7:initial;
+  --bg-f4f8f7:initial;
+  --bg-f4faf8:initial;
+  --bg-f5f5f5:initial;
+  --bg-f6eedb:initial;
+  --bg-f6eef1:initial;
+  --bg-f6f1fd:initial;
+  --bg-f6f8f8:initial;
+  --bg-f7faf9:initial;
+  --bg-f7fbfa:initial;
+  --bg-fafafa:initial;
+  --bg-fafcfb:initial;
+  --bg-fbdcdc:initial;
+  --bg-fbe4e1:initial;
+  --bg-fcecea:initial;
+  --bg-fcf2e2:initial;
+  --bg-fcfdfd:initial;
+  --bg-fcfdfe:initial;
+  --bg-fdeceb:initial;
+  --bg-fdecec:initial;
+  --bg-fdf1d8:initial;
+  --bg-fdf1dc:initial;
+  --bg-fdf1ef:initial;
+  --bg-fdf3e1:initial;
+  --bg-fdf6e6:initial;
+  --bg-fff4e0:initial;
+  --bg-fff4e5:initial;
+  --bg-fff7e6:initial;
+  --bg-fff8e6:initial;
+  --bg-fff8f7:initial;
+  --bg-fffef7:initial;
+  --bg-ffffff:initial;
+  --fg-065f46:initial;
+  --fg-0b5a54:initial;
+  --fg-0c2d48:initial;
+  --fg-0f766e:initial;
+  --fg-111111:initial;
+  --fg-13343b:initial;
+  --fg-15242b:initial;
+  --fg-17693b:initial;
+  --fg-197a44:initial;
+  --fg-1a7a4f:initial;
+  --fg-1b1405:initial;
+  --fg-1e40af:initial;
+  --fg-1e5aaa:initial;
+  --fg-1f5fb0:initial;
+  --fg-222222:initial;
+  --fg-2e73cc:initial;
+  --fg-333333:initial;
+  --fg-444444:initial;
+  --fg-555555:initial;
+  --fg-5b6f76:initial;
+  --fg-666666:initial;
+  --fg-666677:initial;
+  --fg-6d3fc0:initial;
+  --fg-777777:initial;
+  --fg-7a1f3d:initial;
+  --fg-7a5c14:initial;
+  --fg-888888:initial;
+  --fg-8a4a00:initial;
+  --fg-8a5a00:initial;
+  --fg-8a5a0c:initial;
+  --fg-8a6d1a:initial;
+  --fg-8a9aa0:initial;
+  --fg-97650b:initial;
+  --fg-999999:initial;
+  --fg-9a6212:initial;
+  --fg-9b2c21:initial;
+  --fg-a32020:initial;
+  --fg-a7b4b1:initial;
+  --fg-aaaaaa:initial;
+  --fg-b42318:initial;
+  --fg-b45309:initial;
+  --fg-b5332e:initial;
+  --fg-b7791f:initial;
+  --fg-b97400:initial;
+  --fg-bbbbbb:initial;
+  --fg-c0392b:initial;
+  --fg-c07a00:initial;
+  --fg-d32f2f:initial;
+  --fg-ffffff:initial;
+  --surface:#fff;
+  --white:#fff;
+  --ink:#15242b;
+  --muted:#5b6f76;
+  --line:#d8e2e0;
+  --surface-2:#eef4f3;
+  --paper:#fff;
+  --bg:#fff;
+  color-scheme:light;
+}
+}
+/* ===== [/GENERATED] ===== */

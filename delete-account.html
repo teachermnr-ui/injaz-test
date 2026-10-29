@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<!-- إصدار: 2026-10-29.1 · الاختبار -->
+<html lang="ar" dir="rtl">
+<head>
+<script src="fb-config.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>حذف الحساب — منجز المدرسي</title>
+<meta name="description" content="كيفية حذف حسابك في منجز المدرسي">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f8f7;--surface:#fff;--brand:#0f766e;--brand-d:#0b5a54;--ink:#15242b;--muted:#5b6f76;--line:#d8e2e0;--danger:#d64545;--danger-d:#b5332e;--ok:#1f9d55}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1a1c;--surface:#16262a;--ink:#e6efee;--muted:#9bb0b3;--line:#27403f;--brand:#2bb3a6;--brand-d:#1f8f85}}
+*{box-sizing:border-box}html,body{margin:0}
+body{font-family:'Tajawal',"Segoe UI",Tahoma,system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.9;padding:20px 16px 48px}
+.wrap{max-width:760px;margin:0 auto}
+header{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.logo{width:46px;height:46px;border-radius:12px;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;flex:none}
+h1{font-size:22px;margin:0;font-weight:800}
+.sub{color:var(--muted);font-size:13px;margin:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px 20px;margin-bottom:14px}
+h2{font-size:17px;margin:0 0 8px;font-weight:800;color:var(--brand)}
+p{margin:0 0 10px}ul{margin:0 0 10px;padding-inline-start:22px}li{margin-bottom:4px}
+a{color:var(--brand)}
+.btn{display:inline-block;padding:12px 18px;border-radius:11px;font-weight:700;font-size:15px;background:var(--brand);color:#fff;border:none;cursor:pointer;font-family:inherit;text-decoration:none}
+.btn.danger{background:var(--danger)}.btn.danger:hover{background:var(--danger-d)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+input[type=text]{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;margin:6px 0 12px}
+.note{font-size:13px;color:var(--muted)}
+.msg{padding:12px 14px;border-radius:10px;margin-top:12px;font-size:14px}
+.msg.ok{background:rgba(31,157,85,.12);color:var(--ok)}.msg.err{background:rgba(214,69,69,.12);color:var(--danger)}
+footer{text-align:center;color:var(--muted);font-size:13px;margin-top:20px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div class="logo">م</div><div><h1>حذف الحساب</h1><p class="sub">منجز المدرسي</p></div></header>
+
+<div class="card"><h2>كيف تحذف حسابك</h2>
+<ul>
+<li><b>المعلم الفردي:</b> يُحذف حسابه وكل بياناته فورًا من هذه الصفحة بعد تسجيل الدخول.</li>
+<li><b>موظف المدرسة:</b> يرسل طلب الحذف من هذه الصفحة بعد تسجيل الدخول، فيُعطَّل دخوله وتُنفَّذ العملية بعد مراجعتها. تبقى سجلاته المدرسية (كالحضور والتعاميم) لأنها تخص المدرسة، ويمكن إعادة تفعيل حسابه لاحقًا بنفس رقم الهوية.</li>
+<li><b>الطالب:</b> يتم الحذف عبر إدارة مدرسته، أو بمراسلة <a href="mailto:info@awraqai.com">info@awraqai.com</a> من بريد مرتبط بالحساب مع ذكر الاسم والرقم التعريفي.</li>
+<li><b>مدير المدرسة:</b> يراسل <a href="mailto:info@awraqai.com">info@awraqai.com</a>.</li>
+</ul>
+<p>لا تستطيع تسجيل الدخول؟ راسلنا على <a href="mailto:info@awraqai.com">info@awraqai.com</a> مع ذكر الاسم ورقم الهوية وسنتحقق منك قبل الحذف.</p></div>
+
+<div class="card"><h2>ما الذي يُحذف</h2>
+<p>للمعلم الفردي: حسابه، وفصوله وطلابه، وسجلاته، والأنشطة الرقمية وبنك الأسئلة، ورموز الإشعارات. الحذف نهائي ولا يمكن التراجع عنه.</p></div>
+
+<div class="card" id="actionCard">
+<h2>طلب الحذف</h2>
+<div id="stOut"><p>جارٍ التحقق من تسجيل الدخول…</p></div>
+<div id="stIn" style="display:none">
+<p class="note" id="who"></p>
+<p>للمتابعة اكتب كلمة <b>حذف</b> في الخانة ثم اضغط الزر.</p>
+<input type="text" id="confirmTxt" autocomplete="off" placeholder="اكتب: حذف">
+<button class="btn danger" id="goBtn" disabled>حذف حسابي</button>
+<div id="res"></div>
+</div></div>
+
+<footer><a href="privacy.html">سياسة الخصوصية</a> · <a href="index.html">العودة إلى منجز المدرسي</a></footer>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-functions-compat.js"></script>
+<script>
+const firebaseConfig = window.FB_CONFIG;
+const $ = s => document.querySelector(s);
+function show(kind, text){ $('#res').innerHTML = '<div class="msg '+kind+'"></div>'; $('#res .msg').textContent = text; }
+try{
+  firebase.initializeApp(firebaseConfig);
+  firebase.auth().onAuthStateChanged(user=>{
+    if(!user){
+      $('#stIn').style.display='none';
+      $('#stOut').innerHTML = '<p>سجّل الدخول أولًا لتتمكن من طلب الحذف.</p><a class="btn" href="index.html">تسجيل الدخول</a>';
+      return;
+    }
+    $('#stOut').style.display='none'; $('#stIn').style.display='';
+    $('#who').textContent = 'الحساب الحالي: ' + (user.email || 'مستخدم');
+  });
+  $('#confirmTxt').addEventListener('input', e=>{ $('#goBtn').disabled = e.target.value.trim() !== 'حذف'; });
+  $('#goBtn').addEventListener('click', async ()=>{
+    const btn = $('#goBtn'); btn.disabled = true; btn.textContent = 'جارٍ التنفيذ…';
+    try{
+      const r = await firebase.functions().httpsCallable('deleteMyAccount')({ confirm: 'حذف' });
+      const d = r.data || {};
+      if(d.mode === 'deleted'){
+        show('ok','تم حذف حسابك وبياناتك نهائيًا.');
+        try{ await firebase.auth().signOut(); }catch(e){}
+        $('#confirmTxt').style.display='none'; btn.style.display='none';
+      } else {
+        show('ok','تم استلام طلب الحذف، وسنعطّل الدخول وننفّذه خلال مدة معقولة، وسنراسلك عند الحاجة.');
+        btn.style.display='none'; $('#confirmTxt').style.display='none';
+      }
+    }catch(e){
+      show('err', (e && e.message) ? e.message : 'تعذّر تنفيذ الطلب. حاول لاحقًا أو راسل info@awraqai.com');
+      btn.disabled = false; btn.textContent = 'حذف حسابي';
+    }
+  });
+}catch(e){ $('#stOut').innerHTML = '<p>تعذّر تحميل الصفحة. راسل info@awraqai.com لطلب الحذف.</p>'; }
+</script>
+</body>
+</html>

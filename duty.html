@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<!-- إصدار: 2026-10-29.1 · الاختبار -->
+<!-- [ADMIN-TOOLS] صفحة مستقلة بالكامل — تُحذف عند إزالة الأدوات الإدارية (انظر ADMIN-TOOLS-LOG.md) -->
+<html lang="ar" dir="rtl">
+<head>
+<script src="fb-config.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>المناوبة والإشراف</title>
+<meta name="theme-color" content="#3f6659">
+<link rel="stylesheet" href="theme.css?v=2026-10-05.1">
+<script src="mn-dialog.js?v=2026-10-06.1"></script>
+<script>/* احتياط: لو لم يُحمَّل mn-dialog.js (لم يُرفع/كاش قديم) تبقى التأكيدات تعمل بنافذة المتصفح بدل أن تتوقف الأزرار */
+if(typeof window.mnConfirm!=="function"){ window.mnConfirm=function(m){ return Promise.resolve(window.confirm(m)); }; window.mnPrompt=function(m,d){ return Promise.resolve(window.prompt(m,d)); }; window.mnAlert=function(m){ window.alert(m); return Promise.resolve(); }; }</script>
+<script src="theme.js?v=2026-10-05.1"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f7f6; --surface:#ffffff; --surface-2:#eef4f3;
+  --brand:#0f766e; --brand-2:#0b5a54; --brand-l:#d5ece9;
+  --ink:#15242b; --muted:#5b6f76; --line:#d8e2e0;
+  --r:14px; --shadow:0 1px 2px rgba(16,40,40,.06),0 8px 24px rgba(16,40,40,.06);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:'Tajawal',"Segoe UI",Tahoma,system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14.5px;line-height:1.55;min-height:100vh}
+button{font-family:inherit;cursor:pointer;border:none}
+input,select{font-family:inherit;font-size:14px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);color:var(--ink);background:var(--bg-ffffff,#fff)}
+.hidden{display:none !important}
+.boot{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:var(--muted);text-align:center;padding:20px}
+.spin{display:inline-block;width:22px;height:22px;border:3px solid var(--line);border-top-color:var(--brand);border-radius:50%;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.topbar{position:sticky;top:0;z-index:40;background:var(--brand);color:var(--fg-ffffff,#fff);padding:10px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.topbar h1{margin:0;font-size:17px;font-weight:800;white-space:nowrap}
+.tb-badge{background:rgba(255,255,255,.15);padding:5px 12px;border-radius:20px;font-size:13px;font-weight:600;white-space:nowrap}
+.tb-btn{background:rgba(255,255,255,.17);color:var(--fg-ffffff,#fff);padding:7px 14px;border-radius:10px;font-weight:700;font-size:13px;white-space:nowrap}
+main{max-width:1240px;margin:0 auto;padding:16px 16px 60px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:14px;box-shadow:var(--shadow)}
+.card h3{margin:0 0 8px;font-size:15.5px}
+.sub{color:var(--muted);font-size:12.5px}
+.btn{font-weight:700;font-size:13.5px;padding:8px 14px;border-radius:10px;border:1.5px solid var(--brand);background:var(--bg-ffffff,#fff);color:var(--brand);min-height:38px;white-space:nowrap}
+.btn.pri{background:var(--brand);color:var(--fg-ffffff,#fff)}
+.btn.blue{border-color:var(--bd-1e5aaa,#1e5aaa);color:var(--fg-1e5aaa,#1e5aaa)}
+.btn.ghost{border-color:var(--line);color:var(--muted)}
+.btn.sm{min-height:32px;padding:4px 10px;font-size:12.5px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.pill{font-weight:700;font-size:13.5px;padding:6px 14px;border-radius:20px;border:1.5px solid var(--brand);background:var(--bg-ffffff,#fff);color:var(--brand);min-height:36px}
+.pill.on{background:var(--brand);color:var(--fg-ffffff,#fff)}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--line);margin-bottom:14px}
+.tabs button{font-weight:700;font-size:14px;padding:10px 16px;background:transparent;color:var(--muted);border-bottom:3px solid transparent;min-height:44px}
+.tabs button.on{color:var(--brand);border-bottom-color:var(--brand)}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.grid2{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start}
+.grid2>*{flex:1 1 360px;min-width:0}
+.field{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:700;color:var(--muted)}
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table.t{border-collapse:collapse;width:100%;font-size:13px}
+table.t th,table.t td{border:1px solid var(--bd-cfdcd9,#cfdcd9);padding:7px 6px;text-align:center;vertical-align:middle}
+table.t thead th{background:var(--bg-0d9488,#0d9488);color:var(--fg-ffffff,#fff);font-weight:700}
+table.t thead tr.s th{background:var(--bg-2f6fb3,#2f6fb3)}
+table.t td.cl{cursor:pointer}
+table.t td.cl:hover{background:var(--bg-e6f3f1,#e6f3f1)}
+table.t td.miss{background:var(--bg-fdecec,#fdecec)}
+.ppl label{display:flex;align-items:center;gap:10px;padding:7px 4px;border-top:1px solid var(--bd-eef2f1,#eef2f1);font-size:14px;min-height:40px}
+.ppl input{width:18px;height:18px}
+.warn{background:var(--bg-fff7e6,#fff7e6);color:var(--fg-8a4a00,#8a4a00);border-radius:10px;padding:9px 12px;font-size:13px;margin-bottom:10px}
+.overlay{position:fixed;inset:0;background:rgba(10,30,30,.45);z-index:80;display:flex;align-items:flex-start;justify-content:center;padding:24px 12px;overflow-y:auto}
+.modal{background:var(--bg-ffffff,#fff);border-radius:16px;width:100%;max-width:520px;padding:18px;box-shadow:0 20px 50px rgba(0,0,0,.2)}
+.modal h2{margin:0 0 6px;font-size:18px}
+.alert{padding:9px 12px;border-radius:10px;font-size:13px;margin:8px 0;background:var(--bg-fdecec,#fdecec);color:var(--fg-a32020,#a32020)}
+.empty{color:var(--muted);text-align:center;padding:40px 10px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--bg-15242b,#15242b);color:var(--fg-ffffff,#fff);padding:10px 18px;border-radius:12px;z-index:99;font-size:14px}
+</style>
+<script src="nav-back.js?v=2026-10-28.1" defer></script>
+</head>
+<body>
+<div id="bootView" class="boot"><span class="spin"></span><div>جارٍ التحميل…</div></div>
+<div id="app" class="hidden">
+  <div class="topbar">
+    <h1>المناوبة والإشراف</h1>
+    <span class="tb-badge" id="tbSchool">—</span>
+    <span class="tb-badge" id="tbPeriod">—</span>
+    <span style="flex:1"></span>
+    <button class="tb-btn" id="tbBack">→ الرئيسية</button>
+  </div>
+  <main id="main"></main>
+</div>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-auth-compat.js"></script>
+<script src="users-api.js"></script>
+<script src="form-header.js?v=2026-10-15.3"></script>
+<script>
+'use strict';
+/* =========================================================================
+   المناوبة والإشراف — أداة من «أدوات إدارية» (مدير المدرسة والوكيل بالدور، أو تفويض «المناوبة والإشراف»).
+   - لكل مرحلة جدولها (مستند dutyPlans/{sid}_{period}_{stage})، والأوقات والحصص من الجدول المنشور ({period}_published).
+   - المناوبة (صباحًا وبعد خروج آخر طالب): بالتواريخ من/إلى، عدد المناوبين في اليوم، تُستبعد أيام الإجازة.
+     الأولوية: من عنده الحصة الأخيرة ذلك اليوم، ثم قبل الأخيرة، وهكذا.
+   - الإشراف (الفسحة والصلاة): ثابت أسبوعيًا، أماكن يدخلها صاحب الصلاحية ولكل مكان عدد مشرفين.
+     الأولوية: (أ) حصة قبلها وفراغ بعدها، (ب) فراغ قبلها وحصة بعدها — بنفس الدرجة، ثم (ج) حصة قبلها وبعدها، ثم (د) فراغ قبلها وبعدها.
+   - «اعتماد ورفع كتعميم»: لمدير المدرسة أو صاحب صلاحية التعاميم فقط — يكتب النسخة المعتمدة (pub + members) فيصل
+     كل معلم تنبيه في «لوحتي ← مناوبتي»، وينشئ تعميمًا إلزاميًا للمحددين؛ توقيعه = الاستلام الإلكتروني.
+   خصوصية كالتعاميم: لا صلاحية لأدمن النظام ولا للحساب الفردي.
+   ========================================================================= */
+const firebaseConfig = window.FB_CONFIG;
+let db = null;
+const WEEKDAYS = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+const $ = s=>document.querySelector(s);
+const esc = s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const arN = n=>String(n).replace(/\d/g, d=>'٠١٢٣٤٥٦٧٨٩'[d]);
+const periodLabel = p=> p==='second'?'الفصل الثاني':'الفصل الأول';
+function toast(m){ const t=document.createElement('div'); t.className='toast'; t.textContent=m; document.body.appendChild(t); setTimeout(()=>t.remove(),2200); }
+function fatal(msg){
+  $('#bootView').innerHTML = `<div class="card" style="max-width:460px;text-align:center"><h3>${esc(msg)}</h3>
+    <button class="tb-btn" style="background:var(--brand);color:var(--fg-ffffff,#fff)" onclick="location.href='index.html'">العودة للرئيسية</button></div>`;
+}
+const dk = d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const wdOf = k=>new Date(k+'T12:00:00').getDay();
+function hijri(k){
+  if(!k) return '';
+  try{
+    const parts = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura-nu-arab',{year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date(k+'T12:00:00'));
+    const g = t=>((parts.find(x=>x.type===t)||{}).value||'').replace(/[^٠-٩\d]/g,'');
+    return g('year')+'/'+g('month')+'/'+g('day')+'هـ';
+  }catch(e){ return k; }
+}
+function hijriYear(){ try{ const p=new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura-nu-arab',{year:'numeric'}).formatToParts(new Date()); return ((p.find(x=>x.type==='year')||{}).value||'').replace(/[^٠-٩\d]/g,'')+'هـ'; }catch(e){ return ''; } }
+
+// الإشراف وقت واحد ثابت داخلياً (بلا فسحة وصلاة): المفتاح 'sup' يحفظ بنية البيانات كما هي
+const SUP_EV = { key:'sup', type:'sup', after:0, label:'', sub:'' };
+const DS = { ctx:{}, sid:null, period:'first', me:null, canEdit:false, canPublish:false, schoolName:'', stages:{}, stage:'', users:[], plans:{}, tab:'setup' };
+const col = ()=>db.collection('dutyPlans');
+const planId = st=>DS.sid+'_'+DS.period+'_'+st;
+const emptyPlan = ()=>({ participants:[], places:[], dutyFrom:'', dutyTo:'', perDay:1, dutyDays:{}, sup:{}, agentName:'', principalName:'' });
+// الإجازات: مصدر واحد للمدرسة كلها — بند «الإجازات» في الأدوات الإدارية (schoolCalendar/{sid}) — ص-١٢
+DS.holidays = new Set(); DS.holidayList = [];
+function expandHolidays(list){
+  const out = new Set();
+  (list||[]).forEach(h=>{ if(!h || !h.from) return; const d = new Date(h.from+'T12:00:00'); const end = h.to && h.to>=h.from ? h.to : h.from; let g=0;
+    while(dk(d) <= end && g++ < 400){ if(d.getDay()<=4) out.add(dk(d)); d.setDate(d.getDate()+1); } });
+  return out;
+}
+
+(function start(){
+  let s=null; try{ s = JSON.parse(localStorage.getItem('cls_session')||'null'); }catch(e){}
+  if(!s || !s.userId){ location.replace('index.html'); return; }
+  if(s.role==='soloTeacher' || s.role==='admin'){ fatal('هذه الأداة خاصة بإدارة المدرسة ولا صلاحية لأدمن النظام أو الحساب الفردي عليها.'); return; }
+  if(!s.schoolId){ fatal('لا يمكن تحديد المدرسة.'); return; }
+  DS.sid = s.schoolId; DS.period = s.period || 'first'; DS.session = s;
+  try{ firebase.initializeApp(firebaseConfig); db = firebase.firestore(); }
+  catch(e){ fatal('تعذّر الاتصال بقاعدة البيانات.'); return; }
+  firebase.auth().onAuthStateChanged(async au=>{
+    if(!au){ try{ localStorage.removeItem('cls_session'); }catch(e){} location.replace('index.html'); return; }
+    try{ await boot(au); }catch(e){ console.error(e); fatal('تعذّر التحميل: '+(e.message||e)); }
+  });
+})();
+
+async function boot(au){
+  const us = await db.collection('users').doc(DS.session.userId).get();
+  if(!us.exists || us.data().authUid !== au.uid){ await firebase.auth().signOut(); location.replace('index.html'); return; }
+  const u = us.data();
+  if(u.active===false){ fatal('حسابك موقوف.'); return; }
+  DS.me = { id: us.id, name: u.username||'', role: u.role||'' };
+  if(u.role==='schoolAdmin'){
+    if(!(u.adminSchools||[]).includes(DS.sid)){ fatal('لا يمكن الوصول لهذه المدرسة.'); return; }
+    DS.canEdit = true; DS.canPublish = true;
+  } else {
+    const ctx = (u.schools||{})[DS.sid];
+    if(!ctx || ctx.active===false){ fatal('ليست لديك صلاحية الوصول لهذه المدرسة.'); return; }
+    const pm = ctx.permissions||{}, p = pm['tools.duty']||{};
+    if(ctx.role!=='agent' && !p.access && !p.edit){ fatal('هذه الأداة لمدير المدرسة والوكيل أو من فُوِّض بها.'); return; }
+    DS.canEdit = ctx.role==='agent' || !!p.edit;
+    DS.canPublish = !!(pm['tools.circulars']||{}).edit;
+    DS.me.role = ctx.role||'';
+  }
+  $('#tbPeriod').textContent = periodLabel(DS.period);
+  $('#tbBack').onclick = ()=>location.href='index.html';
+  try{ const sd = await db.collection('schoolData').doc(DS.sid).get(); DS.schoolName = sd.exists ? (sd.data().name||DS.sid) : DS.sid; }catch(e){ DS.schoolName = DS.sid; }
+  $('#tbSchool').textContent = DS.schoolName;
+  try{ DS.ctx = Object.assign({}, await FormHdr.resolve({ db, session:DS.session, period:DS.period })); }catch(e){ DS.ctx = {}; }
+  if(!DS.ctx.school) DS.ctx.school = DS.schoolName;
+  $('#bootView').classList.add('hidden'); $('#app').classList.remove('hidden');
+  await loadAll();
+  render();
+}
+
+/* ---------- التحميل: الجدول المنشور (الأوقات والحصص) + الموظفون + خطط المراحل ---------- */
+async function loadAll(){
+  let pub = null;
+  try{
+    const ps = await db.collection('timetables').doc(DS.sid).collection('data').doc(DS.period+'_published').get();
+    if(ps.exists) pub = JSON.parse(ps.data().value||'null');
+  }catch(e){}
+  DS.stages = {};
+  if(pub && pub.layouts){
+    Object.keys(pub.layouts).forEach(k=>{
+      const L = pub.layouts[k];
+      DS.stages[k] = { label: L.label||k, days: (L.days||[]).slice().sort((a,b)=>a-b), ppd: L.ppd||{}, events:[SUP_EV] };
+    });
+  }
+  const byUser = (pub && pub.byUser) || {};
+  const uSnap = await UsersAPI.listSnap(DS.sid);
+  DS.users = uSnap.docs.map(d=>({id:d.id,...d.data()}))
+    .filter(x=>!x.migratedTo && x.authUid && x.active!==false && x.schools && x.schools[DS.sid] && x.schools[DS.sid].active!==false)
+    .map(x=>{
+      const lessons = (byUser[x.id] && byUser[x.id].lessons) || [];
+      const busy = {};   // stage -> weekday -> Set(period)
+      lessons.forEach(l=>{ const b = (busy[l.st] = busy[l.st] || {}); const s = (b[l.d] = b[l.d] || new Set()); for(let i=0;i<(l.n||1);i++) s.add(l.p+i); });
+      return { id:x.id, name:x.username||'', role:x.schools[DS.sid].role||'', busy, stagesTaught: Object.keys(busy) };
+    })
+    .sort((a,b)=>a.name.localeCompare(b.name,'ar'));
+  try{
+    const cs = await db.collection('schoolCalendar').doc(DS.sid).get();
+    DS.holidayList = cs.exists ? (cs.data().holidays||[]) : [];
+  }catch(e){ DS.holidayList = []; }
+  DS.holidays = expandHolidays(DS.holidayList);
+  DS.plans = {};
+  try{
+    const q = await col().where('schoolId','==',DS.sid).get();
+    q.docs.forEach(d=>{ const v=d.data(); if(v.period===DS.period) DS.plans[v.stage] = Object.assign(emptyPlan(), v); });
+  }catch(e){}
+  Object.values(DS.plans).forEach(normPlan);
+  const keys = Object.keys(DS.stages);
+  if(!DS.stage || !DS.stages[DS.stage]) DS.stage = keys[0] || '';
+  keys.forEach(k=>{ if(!DS.plans[k]) DS.plans[k] = defaultPlan(k); });
+  // أيام صارت إجازة بعد التوزيع: تُستبعد من التوزيع (تُحفظ مع أول حفظ)
+  Object.values(DS.plans).forEach(p=>{ Object.keys(p.dutyDays||{}).forEach(k=>{ if(DS.holidays.has(k)) delete p.dutyDays[k]; }); });
+}
+// ترحيل الخطط القديمة: عدد واحد لكل مكان (الأكبر)، ودمج مشرفي الفسحة والصلاة بلا تكرار تحت المفتاح 'sup'
+function normPlan(p){
+  (p.places||[]).forEach(pl=>{
+    if(pl.count==null){ const v = Object.values(pl.counts||{}).map(Number).filter(n=>n>0); pl.count = v.length ? Math.max(...v) : 0; }
+    delete pl.counts;
+  });
+  const cnt = {}; (p.places||[]).forEach(pl=>cnt[pl.id]=+pl.count||0);
+  Object.keys(p.sup||{}).forEach(w=>{
+    const byEv = p.sup[w] || {}; const evKeys = Object.keys(byEv);
+    if(evKeys.length===1 && evKeys[0]==='sup') return;
+    const merged = {};
+    evKeys.forEach(ev=>Object.keys(byEv[ev]||{}).forEach(pl=>{ const a = merged[pl] = merged[pl] || []; (byEv[ev][pl]||[]).forEach(id=>{ if(!a.includes(id)) a.push(id); }); }));
+    Object.keys(merged).forEach(pl=>{ if(cnt[pl]>0) merged[pl] = merged[pl].slice(0, cnt[pl]); });
+    p.sup[w] = { sup: merged };
+  });
+}
+// خطة جديدة: يُحدَّد مبدئيًا من يدرّس في هذه المرحلة وحدها؛ معلم المرحلتين يُحدَّد يدويًا في إحداهما
+function defaultPlan(st){
+  const p = emptyPlan(); p.stage = st; p.isNew = true;
+  p.participants = DS.users.filter(u=>u.stagesTaught.length===1 && u.stagesTaught[0]===st).map(u=>u.id);
+  return p;
+}
+const P = ()=>DS.plans[DS.stage];
+const S = ()=>DS.stages[DS.stage];
+const uName = id=>{ const u=DS.users.find(x=>x.id===id); if(u) return u.name; const pub=(P()||{}).pub; return (pub && pub.names && pub.names[id]) || '—'; };
+const busySet = (uid, w)=>{ const u=DS.users.find(x=>x.id===uid); return (u && u.busy[DS.stage] && u.busy[DS.stage][w]) || new Set(); };
+function otherStageOf(uid){ return Object.keys(DS.plans).find(k=>k!==DS.stage && (DS.plans[k].participants||[]).includes(uid)) || ''; }
+
+async function savePlan(silent){
+  const p = P(); if(!p || !DS.canEdit) return;
+  const doc = { kind:'plan', schoolId:DS.sid, period:DS.period, stage:DS.stage, stageLabel:S().label,
+    participants:p.participants, places:p.places, dutyFrom:p.dutyFrom, dutyTo:p.dutyTo, perDay:+p.perDay||1,
+    dutyDays:p.dutyDays, sup:p.sup, agentName:p.agentName||'', principalName:p.principalName||'',
+    updatedAt:Date.now(), updatedBy:DS.me.id, updatedByName:DS.me.name };
+  try{ await col().doc(planId(DS.stage)).set(doc, { merge:true }); p.isNew = false; p.updatedAt = doc.updatedAt; if(!silent) toast('حُفظ'); }
+  catch(e){ toast('خطأ في الحفظ: '+(e.message||e)); }
+}
+
+/* ---------- الحساب ---------- */
+function dutyDates(){
+  const p = P(), s = S(); if(!p.dutyFrom || !p.dutyTo || p.dutyTo < p.dutyFrom) return [];
+  const out = []; const d = new Date(p.dutyFrom+'T12:00:00'); const end = p.dutyTo; let guard = 0;
+  while(dk(d) <= end && guard++ < 400){ const k = dk(d); if(s.days.includes(d.getDay()) && !DS.holidays.has(k)) out.push(k); d.setDate(d.getDate()+1); }
+  return out;
+}
+// ترتيب المناوب في يوم: ٠ = عنده الحصة الأخيرة، ١ = قبل الأخيرة، … ، ٩٩ = لا حصص له ذلك اليوم
+function dutyRank(uid, w){
+  const last = (+S().ppd[w]||0) - 1; const b = busySet(uid, w);
+  if(!b.size || last<0) return 99;
+  return last - Math.max(...b);
+}
+function dutyRankLabel(r){ return r===0 ? 'الحصة الأخيرة' : r===99 ? 'لا حصص له' : r===1 ? 'قبل الأخيرة' : 'قبل الأخيرة بـ'+arN(r); }
+const evOnDay = (ev, w)=> S().days.includes(w);
+const supOf = (w, plId)=> ((((P().sup||{})[w]||{}).sup||{})[plId])||[];
+function setSup(w, plId, arr){ const p = P(); p.sup = p.sup || {}; p.sup[w] = p.sup[w] || {}; p.sup[w].sup = Object.assign({}, p.sup[w].sup, { [plId]: arr }); }
+function autoDistribute(){
+  const p = P(), s = S(), ppl = p.participants.slice();
+  // المناوبة
+  const dCount = {}; ppl.forEach(id=>dCount[id]=0);
+  p.dutyDays = {};
+  dutyDates().forEach(k=>{
+    const w = wdOf(k);
+    const pick = ppl.slice().sort((a,b)=> dutyRank(a,w)-dutyRank(b,w) || dCount[a]-dCount[b] || uName(a).localeCompare(uName(b),'ar')).slice(0, Math.max(1,+p.perDay||1));
+    pick.forEach(id=>dCount[id]++); p.dutyDays[k] = pick;
+  });
+  // الإشراف: توزيع عادل (الأقل إشرافًا أولًا) دون تكرار المعلم في أكثر من مكان باليوم
+  const sCount = {}; ppl.forEach(id=>sCount[id]=0);
+  p.sup = {};
+  s.days.forEach(w=>{
+    const used = new Set(), byPl = {};
+    p.places.forEach(pl=>{
+      const n = +pl.count||0; if(!n) return;
+      const pick = ppl.filter(id=>!used.has(id)).sort((a,b)=> sCount[a]-sCount[b] || uName(a).localeCompare(uName(b),'ar')).slice(0,n);
+      pick.forEach(id=>{ used.add(id); sCount[id]++; }); byPl[pl.id] = pick;
+    });
+    p.sup[w] = { sup: byPl };
+  });
+}
+function allSupIds(){ const out=[]; Object.values(P().sup||{}).forEach(byEv=>Object.values(byEv||{}).forEach(byPl=>Object.values(byPl||{}).forEach(a=>a.forEach(id=>out.push(id))))); return out; }
+function warnings(){
+  const p = P(), s = S(), out = [];
+  const dutyC = {}, supC = {};
+  Object.values(p.dutyDays||{}).forEach(a=>a.forEach(id=>dutyC[id]=(dutyC[id]||0)+1));
+  allSupIds().forEach(id=>supC[id]=(supC[id]||0)+1);
+  const hasDuty = Object.keys(p.dutyDays||{}).length, hasSup = Object.keys(p.sup||{}).length;
+  const noDuty = p.participants.filter(id=>!dutyC[id]), noSup = p.participants.filter(id=>!supC[id]);
+  if(hasDuty && noDuty.length) out.push('لم يُكلَّف بمناوبة: '+noDuty.map(uName).join('، '));
+  if(hasSup && noSup.length) out.push('لم يُكلَّف بإشراف: '+noSup.map(uName).join('، '));
+  const multi = p.participants.filter(id=>new Set(slotsOf(id).map(x=>x.w)).size>1);
+  if(hasSup && multi.length) out.push('يشرفون أكثر من يوم في الأسبوع: '+multi.map(uName).join('، ')+(allSupIds().length>p.participants.length?' — عدد الخانات الأسبوعية أكبر من عدد المشمولين فلا يكفي كل معلم بيوم واحد.':''));
+  const short = dutyDates().filter(k=>((p.dutyDays||{})[k]||[]).length < (+p.perDay||1)).length;
+  if(hasDuty && short) out.push('أيام مناوبة ناقصة العدد: '+arN(short)+' — أكملها يدويًا.');
+  let supShort = 0;
+  s.days.forEach(w=>p.places.forEach(pl=>{ const n=+pl.count||0; if(n && supOf(w,pl.id).length < n) supShort++; }));
+  if(hasSup && supShort) out.push('خانات إشراف ناقصة: '+arN(supShort)+' — أكملها يدويًا.');
+  return out;
+}
+
+/* ---------- العرض ---------- */
+function render(){
+  const keys = Object.keys(DS.stages);
+  if(!keys.length){ $('#main').innerHTML = '<div class="empty">لا يوجد جدول منشور لهذا الفصل الدراسي.<br>انشر الجدول أولًا من أداة «بناء الجدول المدرسي» — منه تُؤخذ أوقات الفسحة والصلاة وحصص المعلمين.</div>'; return; }
+  const p = P();
+  const pubTxt = p.pub ? 'معتمد ومرفوع '+(p.pub.circular?('بتعميم رقم '+arN(p.pub.circular.number)+(p.pub.supCircular?(' ورقم '+arN(p.pub.supCircular.number)):'')):'')+' — '+new Date(p.pub.at).toLocaleDateString('ar-SA') : 'لم يُعتمد بعد';
+  $('#main').innerHTML = `
+    <div class="row" style="margin-bottom:6px">
+      <span class="sub">المرحلة:</span>
+      ${keys.map(k=>`<button class="pill ${k===DS.stage?'on':''}" data-st="${esc(k)}">${esc(DS.stages[k].label)}</button>`).join('')}
+      <span style="flex:1"></span>
+      ${DS.canEdit?'<button class="btn pri" id="btnAuto">توزيع تلقائي</button>':''}
+      <button class="btn" id="btnPrintDuty">طباعة سجل المناوبة</button>
+      <button class="btn" id="btnPrintSup">طباعة سجل الإشراف</button>
+      <button class="btn blue" id="btnPub" ${DS.canPublish?'':'disabled'}>اعتماد ورفع كتعميم</button>
+    </div>
+    <div class="sub" style="margin-bottom:12px">الحالة: <b>${esc(pubTxt)}</b>${DS.canPublish?'':' · «اعتماد ورفع كتعميم» لمدير المدرسة أو صاحب صلاحية التعاميم — الوكيل يجهّز التوزيع.'}${p.pub&&p.updatedAt>p.pub.at?' · <b style="color:var(--fg-8a4a00,#8a4a00)">عُدِّل بعد الاعتماد — أعد الاعتماد ليصل التعديل للمعلمين.</b>':''}</div>
+    <div class="tabs">${[['setup','الإعداد'],['duty','المناوبة'],['sup','الإشراف'],['recv','الاستلام']].map(([k,l])=>`<button data-tab="${k}" class="${DS.tab===k?'on':''}">${l}</button>`).join('')}</div>
+    <div id="tabBody"></div>`;
+  document.querySelectorAll('[data-st]').forEach(b=>b.onclick=()=>{ DS.stage=b.dataset.st; render(); });
+  document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{ DS.tab=b.dataset.tab; render(); });
+  if($('#btnAuto')) $('#btnAuto').onclick = async()=>{
+    const pp = P();
+    if(!pp.participants.length){ toast('حدّد المشمولين أولًا'); return; }
+    if((Object.keys(pp.dutyDays||{}).length || Object.keys(pp.sup||{}).length) && !await mnConfirm('إعادة التوزيع تستبدل التوزيع الحالي (ومنه تعديلاتك اليدوية). متابعة؟')) return;
+    autoDistribute(); await savePlan(true); toast('تم التوزيع'); if(DS.tab==='setup') DS.tab='duty'; render();
+  };
+  $('#btnPrintDuty').onclick = printDutyRecord;
+  $('#btnPrintSup').onclick = printSupRecord;
+  $('#btnPub').onclick = publish;
+  const body = $('#tabBody');
+  if(DS.tab==='setup') renderSetup(body);
+  else if(DS.tab==='duty') renderDuty(body);
+  else if(DS.tab==='sup') renderSup(body);
+  else renderRecv(body);
+}
+function warnHtml(){ const w = warnings(); return w.length ? '<div class="warn">'+w.map(esc).join('<br>')+'</div>' : ''; }
+
+function renderSetup(body){
+  const p = P(), s = S(), dis = DS.canEdit ? '' : 'disabled';
+  const ppl = DS.users.map(u=>{
+    const other = otherStageOf(u.id);
+    const both = u.stagesTaught.length>1;
+    const note = other ? 'محدد في '+(DS.stages[other]||{}).label : both ? 'يدرّس المرحلتين — حدّده في إحداهما' : !u.stagesTaught.length ? 'لا حصص له في الجدول' : '';
+    return `<label><input type="checkbox" data-pp="${esc(u.id)}" ${p.participants.includes(u.id)?'checked':''} ${other||!DS.canEdit?'disabled':''}><span style="flex:1">${esc(u.name)}</span><span class="sub">${esc(note)}</span></label>`;
+  }).join('');
+  const places = p.places.map((pl,i)=>`<tr><td><input data-pn="${i}" value="${esc(pl.name)}" ${dis} style="width:100%"></td><td><input data-pc="${i}" type="number" min="0" max="20" value="${+pl.count||0}" ${dis} style="width:64px;text-align:center"></td><td>${DS.canEdit?`<button class="btn ghost sm" data-pdel="${i}">حذف</button>`:''}</td></tr>`).join('');
+  body.innerHTML = `
+    <div class="grid2">
+      <section class="card ppl">
+        <h3>المشمولون بالمناوبة والإشراف</h3>
+        <div class="sub" style="margin-bottom:6px">كل المحددين يأخذون مناوبة وإشرافًا. غير المحدد مستثنى. معلم المرحلتين يُحدَّد في إحداهما فقط.</div>
+        ${ppl||'<div class="sub">لا يوجد موظفون.</div>'}
+      </section>
+      <div>
+        <section class="card">
+          <h3>المناوبة — صباحًا وبعد خروج آخر طالب</h3>
+          <div class="row">
+            <label class="field" style="flex:1 1 140px">من تاريخ<input type="date" id="dFrom" value="${esc(p.dutyFrom)}" ${dis}></label>
+            <label class="field" style="flex:1 1 140px">إلى تاريخ<input type="date" id="dTo" value="${esc(p.dutyTo)}" ${dis}></label>
+            <label class="field" style="flex:1 1 120px">المناوبون في اليوم<input type="number" id="dPer" min="1" max="10" value="${+p.perDay||1}" ${dis}></label>
+          </div>
+          <div class="sub" style="margin:8px 0">أيام الدوام فقط (${s.days.map(w=>WEEKDAYS[w]).join('، ')}). الأولوية لمن عنده الحصة الأخيرة ذلك اليوم، ثم قبل الأخيرة، وهكذا. عدد أيام المناوبة: <b>${arN(dutyDates().length)}</b></div>
+          <div class="row"><b style="font-size:13px">الإجازات:</b>
+            ${DS.holidayList.slice().sort((a,b)=>String(a.from).localeCompare(String(b.from))).map(h=>`<span class="chip" style="background:var(--bg-eef2f1,#eef2f1);color:var(--fg-15242b,#15242b)">${h.label?esc(h.label)+': ':''}${esc(hijri(h.from))}${h.to&&h.to!==h.from?' – '+esc(hijri(h.to)):''}</span>`).join('')||'<span class="sub">لا يوجد</span>'}
+          </div>
+          <div class="sub" style="margin-top:6px">تُستبعد تلقائيًا. تُضاف وتُعدَّل من بند «الإجازات» في الأدوات الإدارية (مصدر واحد للمدرسة).</div>
+        </section>
+        <section class="card">
+          <h3>الإشراف — الأماكن وعدد المشرفين</h3>
+          <div class="sub" style="margin-bottom:8px">لكل مكان عدد مشرفين واحد يُطبَّق على أيام الدوام كلها.</div>
+          <div class="tbl-wrap"><table class="t"><thead><tr><th style="text-align:right">المكان</th><th>عدد المشرفين</th><th></th></tr></thead><tbody>${places||`<tr><td colspan="3" class="sub">أضف مكانًا.</td></tr>`}</tbody></table></div>
+          ${DS.canEdit?'<button class="btn sm" id="plAdd" style="margin-top:8px">+ إضافة مكان</button>':''}
+        </section>
+        <section class="card">
+          <h3>أسماء التوقيع في السجل</h3>
+          <div class="row">
+            <label class="field" style="flex:1 1 200px">وكيل الشؤون التعليمية<input id="sgA" value="${esc(p.agentName)}" ${dis} maxlength="80"></label>
+            <label class="field" style="flex:1 1 200px">مدير المدرسة (من بيانات المدرسة)<input value="${esc(DS.ctx.principal||'')}" disabled></label>
+          </div>
+        </section>
+      </div>
+    </div>`;
+  if(!DS.canEdit) return;
+  const sv = ()=>savePlan(true);
+  body.querySelectorAll('[data-pp]').forEach(c=>c.onchange=()=>{ const id=c.dataset.pp; p.participants = c.checked ? p.participants.concat([id]) : p.participants.filter(x=>x!==id); sv(); });
+  $('#dFrom').onchange = ()=>{ p.dutyFrom=$('#dFrom').value; sv(); render(); };
+  $('#dTo').onchange = ()=>{ p.dutyTo=$('#dTo').value; sv(); render(); };
+  $('#dPer').onchange = ()=>{ p.perDay=Math.max(1,Math.min(10,+$('#dPer').value||1)); sv(); };
+  if($('#plAdd')) $('#plAdd').onclick = ()=>{ p.places = p.places.concat([{ id:'pl'+Date.now().toString(36), name:'', count:1 }]); sv(); render(); setTimeout(()=>{ const ins=body.querySelectorAll('[data-pn]'); if(ins.length) ins[ins.length-1].focus(); },0); };
+  body.querySelectorAll('[data-pn]').forEach(i=>i.onchange=()=>{ p.places[+i.dataset.pn].name=i.value.trim(); sv(); });
+  body.querySelectorAll('[data-pc]').forEach(i=>i.onchange=()=>{ const pl=p.places[+i.dataset.pc]; pl.count = Math.max(0,Math.min(20,+i.value||0)); sv(); });
+  body.querySelectorAll('[data-pdel]').forEach(b=>b.onclick=async ()=>{ if(!await mnConfirm('حذف المكان؟')) return; const id=p.places[+b.dataset.pdel].id; p.places.splice(+b.dataset.pdel,1);
+    Object.values(p.sup||{}).forEach(byEv=>Object.values(byEv||{}).forEach(byPl=>{ delete byPl[id]; })); sv(); render(); });
+  $('#sgA').onchange = ()=>{ p.agentName=$('#sgA').value.trim(); sv(); };
+}
+
+function renderDuty(body){
+  const p = P(), dates = dutyDates();
+  if(!dates.length){ body.innerHTML = '<div class="empty">حدّد تاريخ البداية والنهاية للمناوبة من «الإعداد».</div>'; return; }
+  const need = +p.perDay||1;
+  const rows = dates.map(k=>{
+    const w = wdOf(k), ids = (p.dutyDays||{})[k]||[];
+    const chips = ids.map(id=>{ const r=dutyRank(id,w); const c = r===0?['#e7f6ee','#197a44']:r===99?['#fdecec','#a32020']:['#fff1e0','#8a4a00'];
+      return `<span class="chip" style="background:${c[0]};color:${c[1]}">${esc(uName(id))} · ${esc(dutyRankLabel(r))}</span>`; }).join(' ');
+    const miss = ids.length < need;
+    return `<tr><td><b>${esc(WEEKDAYS[w])}</b></td><td>${esc(hijri(k))}<div class="sub">${esc(k)}</div></td><td class="${DS.canEdit?'cl':''} ${miss?'miss':''}" data-dd="${k}" style="text-align:right">${chips}${miss?` <span class="chip" style="background:var(--bg-fdecec,#fdecec);color:var(--fg-a32020,#a32020)">ناقص ${arN(need-ids.length)}</span>`:''}</td></tr>`;
+  }).join('');
+  body.innerHTML = warnHtml()+`<div class="card"><div class="row" style="margin-bottom:8px"><h3 style="margin:0">جدول المناوبة بالتواريخ</h3><span style="flex:1"></span>${DS.canEdit?'<span class="sub">اضغط خانة المناوبين لتعديلها يدويًا</span>':''}</div>
+    <div class="tbl-wrap"><table class="t" style="min-width:600px"><thead><tr><th style="width:90px">اليوم</th><th style="width:130px">التاريخ</th><th>المناوبون (عدد اليوم: ${arN(need)})</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="row sub" style="margin-top:8px"><span><b style="color:var(--fg-197a44,#197a44)">الحصة الأخيرة</b> = الشرط متحقق</span><span><b style="color:var(--fg-8a4a00,#8a4a00)">قبل الأخيرة</b> = لم يكفِ من عندهم الأخيرة</span><span><b style="color:var(--fg-a32020,#a32020)">ناقص</b> = يكمله صاحب الصلاحية</span></div></div>`;
+  if(DS.canEdit) body.querySelectorAll('[data-dd]').forEach(td=>td.onclick=()=>editDutyDay(td.dataset.dd));
+}
+function editDutyDay(k){
+  const p = P(), w = wdOf(k), cur = new Set((p.dutyDays||{})[k]||[]);
+  const list = p.participants.slice().sort((a,b)=>dutyRank(a,w)-dutyRank(b,w) || uName(a).localeCompare(uName(b),'ar'));
+  openPick(`مناوبة ${WEEKDAYS[w]} ${hijri(k)}`, `المطلوب ${arN(+p.perDay||1)} — مرتّبون حسب الأولوية`, list.map(id=>({ id, label:uName(id), tag:dutyRankLabel(dutyRank(id,w)), on:cur.has(id) })), async ids=>{
+    const notes = {}, d = WEEKDAYS[w]+' '+hijri(k);
+    ids.filter(id=>!cur.has(id)).forEach(id=>notes[id]='أُسندت إليك مناوبة '+d+'.');
+    [...cur].filter(id=>!ids.includes(id)).forEach(id=>notes[id]='أُلغيت مناوبتك '+d+'.');
+    p.dutyDays = Object.assign({}, p.dutyDays, { [k]: ids }); await commitEdit(notes); render();
+  });
+}
+
+function renderSup(body){
+  const p = P(), s = S();
+  const cols = p.places.filter(pl=>+pl.count>0);
+  if(!cols.length){ body.innerHTML = '<div class="empty">أضف أماكن الإشراف وعدد المشرفين من «الإعداد».</div>'; return; }
+  const rows = s.days.map(w=>`<tr><td><b>${esc(WEEKDAYS[w])}</b></td>${cols.map(pl=>{
+      const ids = supOf(w, pl.id), n = +pl.count, miss = ids.length < n;
+      const chips = ids.map((id,i)=>`<div style="margin:2px 0"><span class="chip ${DS.canEdit?'cl':''}" ${DS.canEdit?`data-sw="${w}" data-sp="${esc(pl.id)}" data-si="${i}" style="cursor:pointer;background:#e7f6ee;color:#197a44"`:'style="background:#e7f6ee;color:#197a44"'}>${esc(uName(id))}</span></div>`).join('');
+      const add = miss ? `<span class="chip ${DS.canEdit?'cl':''}" ${DS.canEdit?`data-sw="${w}" data-sp="${esc(pl.id)}" data-si="-1"`:''} style="background:var(--bg-fdecec,#fdecec);color:var(--fg-a32020,#a32020);${DS.canEdit?'cursor:pointer':''}">ناقص ${arN(n-ids.length)}${DS.canEdit?' +':''}</span>` : '';
+      return `<td class="${miss?'miss':''}">${chips}${add}</td>`;
+    }).join('')}</tr>`).join('');
+  body.innerHTML = warnHtml()+`<div class="card"><div class="row" style="margin-bottom:8px"><h3 style="margin:0">جدول الإشراف — ثابت أسبوعيًا</h3><span style="flex:1"></span>${DS.canEdit?'<span class="sub">اضغط اسم المشرف لتبديله أو إلغائه، و«ناقص» لإضافة مشرف</span>':''}</div>
+    <div class="tbl-wrap"><table class="t" style="min-width:${120+cols.length*140}px"><thead>
+      <tr><th style="width:90px">اليوم</th>${cols.map(pl=>`<th>${esc(pl.name||'—')} (${arN(+pl.count)})</th>`).join('')}</tr>
+    </thead><tbody>${rows}</tbody></table></div></div>`;
+  if(DS.canEdit) body.querySelectorAll('[data-sw]').forEach(c=>c.onclick=()=>supMenu(+c.dataset.sw, c.dataset.sp, +c.dataset.si));
+}
+// قائمة تبديل المشرف على مستوى الأسبوع كله: اختيار معلم (وموضعه إن كان يشرف) = تبادل، ومعلم بلا إشراف = استبدال، و«إلغاء الإشراف» = حذفه من الموقع
+function slotsOf(id){ const p = P(), out = []; S().days.forEach(w=>p.places.forEach(pl=>supOf(w,pl.id).forEach((x,i)=>{ if(x===id) out.push({ w, plId:pl.id, i }); }))); return out; }
+const onDay = (id, w)=>slotsOf(id).some(x=>x.w===w);
+function supMenu(w, plId, idx){
+  const p = P(), pl = p.places.find(x=>x.id===plId), cur = supOf(w, plId), oldId = idx>=0 ? cur[idx] : null;
+  const entries = [];
+  p.participants.forEach(id=>{
+    if(id===oldId || cur.includes(id)) return;
+    const sl = slotsOf(id);
+    if(idx<0){ if(!onDay(id,w)) entries.push({ id, tag: sl.length?('يشرف '+sl.map(x=>WEEKDAYS[x.w]).join('، ')):'' }); return; }
+    if(!sl.length){ entries.push({ id, tag:'' }); return; }
+    sl.forEach(x=>{
+      // تبادل مع موضعه: يُمنع إن أدّى لتكرار المعلم في اليوم نفسه
+      if(x.w!==w && (onDay(id,w) || onDay(oldId,x.w))) return;
+      entries.push({ id, slot:x, tag:'يشرف: '+WEEKDAYS[x.w]+' / '+((p.places.find(q=>q.id===x.plId)||{}).name||'')+' (تبادل)' });
+    });
+  });
+  entries.sort((a,b)=>(a.slot?1:0)-(b.slot?1:0) || uName(a.id).localeCompare(uName(b.id),'ar'));
+  const o = document.createElement('div'); o.className='overlay'; o.id='ovl';
+  o.innerHTML = `<div class="modal"><h2>${esc(WEEKDAYS[w])} — ${esc(pl.name||'')}</h2>
+    <div class="sub" style="margin-bottom:8px">${oldId?('المشرف الحالي: <b>'+esc(uName(oldId))+'</b>. اختر معلمًا ليحل مكانه، ومن كان يشرف في موضع آخر من الأسبوع (حتى في يوم آخر) يتبادل معه موضعه.'):'اختر المعلم المراد إضافته.'}</div>
+    <div class="ppl" style="max-height:52vh;overflow:auto">${entries.map((e,i)=>`<label style="cursor:pointer" data-pk="${i}"><span style="flex:1">${esc(uName(e.id))}</span><span class="sub">${esc(e.tag)}</span></label>`).join('')||'<div class="sub">لا يوجد معلمون متاحون.</div>'}</div>
+    <div class="row" style="margin-top:12px">${oldId?'<button class="btn" id="pkDel" style="border-color:#a32020;color:#a32020">إلغاء الإشراف</button>':''}<button class="btn ghost" id="pkNo">إغلاق</button></div></div>`;
+  document.body.appendChild(o);
+  $('#pkNo').onclick = ()=>o.remove();
+  if($('#pkDel')) $('#pkDel').onclick = ()=>{ o.remove(); changeSup(w, plId, idx, null); };
+  o.querySelectorAll('[data-pk]').forEach(l=>l.onclick=()=>{ const e = entries[+l.dataset.pk]; o.remove(); changeSup(w, plId, idx, e.id, e.slot); });
+}
+async function changeSup(w, plId, idx, newId, slot){
+  const p = P(), notes = {};
+  const place = id=>((p.places.find(x=>x.id===id)||{}).name||'');
+  const day = WEEKDAYS[w];
+  const cur = supOf(w, plId).slice(), oldId = idx>=0 ? cur[idx] : null;
+  if(newId===null){
+    cur.splice(idx,1); setSup(w, plId, cur);
+    notes[oldId] = 'أُلغي إشرافك يوم '+day+' في '+place(plId)+'.';
+  } else if(idx<0){
+    cur.push(newId); setSup(w, plId, cur);
+    notes[newId] = 'أُسند إليك إشراف يوم '+day+' في '+place(plId)+'.';
+  } else if(slot){
+    const a = supOf(slot.w, slot.plId).slice();
+    if(slot.w===w && slot.plId===plId){ return; }
+    if(slot.w===w && slot.plId!==plId){ cur[idx] = newId; setSup(w, plId, cur); a[slot.i] = oldId; setSup(slot.w, slot.plId, a); }
+    else { cur[idx] = newId; setSup(w, plId, cur); a[slot.i] = oldId; setSup(slot.w, slot.plId, a); }
+    const d2 = WEEKDAYS[slot.w];
+    notes[newId] = 'تبدّل إشرافك: أصبح يوم '+day+' في '+place(plId)+' بدل يوم '+d2+' في '+place(slot.plId)+'.';
+    notes[oldId] = 'تبدّل إشرافك: أصبح يوم '+d2+' في '+place(slot.plId)+' بدل يوم '+day+' في '+place(plId)+'.';
+  } else {
+    cur[idx] = newId; setSup(w, plId, cur);
+    notes[newId] = 'أُسند إليك إشراف يوم '+day+' في '+place(plId)+'.';
+    notes[oldId] = 'أُلغي إشرافك يوم '+day+' في '+place(plId)+'.';
+  }
+  await commitEdit(notes); render();
+}
+function openPick(title, sub, items, onSave){
+  const o = document.createElement('div'); o.className='overlay'; o.id='ovl';
+  o.innerHTML = `<div class="modal"><h2>${esc(title)}</h2><div class="sub" style="margin-bottom:8px">${esc(sub)}</div>
+    <div class="ppl" style="max-height:55vh;overflow:auto">${items.map(it=>`<label><input type="checkbox" value="${esc(it.id)}" ${it.on?'checked':''}><span style="flex:1">${esc(it.label)}</span><span class="sub">${esc(it.tag)}</span></label>`).join('')||'<div class="sub">لا يوجد مشمولون.</div>'}</div>
+    <div class="row" style="margin-top:12px"><button class="btn pri" id="pkOk">حفظ</button><button class="btn ghost" id="pkNo">إلغاء</button></div></div>`;
+  document.body.appendChild(o);
+  $('#pkNo').onclick = ()=>o.remove();
+  $('#pkOk').onclick = async()=>{ const ids=[...o.querySelectorAll('input:checked')].map(i=>i.value); o.remove(); await onSave(ids); };
+}
+
+async function renderRecv(body){
+  const p = P();
+  if(!p.pub){ body.innerHTML = '<div class="empty">لم يُعتمد التوزيع بعد. بعد «اعتماد ورفع كتعميم» يصل كل معلم تنبيه في «لوحتي ← مناوبتي»، وتظهر هنا حالة توقيع التعميمين (المناوبة والإشراف اليومي).</div>'; return; }
+  const list = [p.pub.circular, p.pub.supCircular].filter(Boolean);
+  body.innerHTML = list.length ? list.map((c,i)=>`<div class="card"><div class="row"><h3 style="margin:0">${c.kind==='sup'?'الإشراف اليومي':c.kind==='duty'?'المناوبة':'الاستلام'} — توقيع التعميم</h3><span class="chip" style="background:var(--bg-e9f1fd,#e9f1fd);color:var(--fg-1e5aaa,#1e5aaa)">تعميم رقم ${arN(c.number)}</span><span style="flex:1"></span><b id="rcvSum${i}"></b></div><div id="rcvList${i}" style="margin-top:10px"><span class="spin"></span></div></div>`).join('')
+    : '<div class="card"><div class="sub">لم يُنشأ تعميم.</div></div>';
+  const allM = p.pub.members||[];
+  for(let i=0;i<list.length;i++){
+    const c = list[i]; let sigs = null, recips = null;
+    if(DS.canPublish){
+      try{
+        const ref = db.collection('circulars').doc(DS.sid).collection('items').doc(c.id);
+        const [it, s] = await Promise.all([ ref.get(), ref.collection('signatures').get() ]);
+        recips = it.exists ? (it.data().recipients||[]) : allM; sigs = {}; s.docs.forEach(d=>sigs[d.id]=d.data());
+      }catch(e){ sigs = null; }
+    }
+    const members = recips || allM;
+    if(!sigs){ $('#rcvList'+i).innerHTML = '<div class="sub">حالة التوقيع تظهر لمدير المدرسة أو صاحب صلاحية التعاميم (ومن صفحة التعاميم نفسها).</div>'+members.map(id=>`<div style="padding:7px 2px;border-top:1px solid var(--bd-eef2f1,#eef2f1)">${esc(uName(id))}</div>`).join(''); continue; }
+    const done = members.filter(id=>sigs[id]).length;
+    $('#rcvSum'+i).textContent = 'وقّع '+arN(done)+' من '+arN(members.length);
+    $('#rcvList'+i).innerHTML = members.map(id=>{ const s=sigs[id]; return `<div class="row" style="padding:7px 2px;border-top:1px solid var(--bd-eef2f1,#eef2f1)"><span style="flex:1;font-weight:700">${esc(uName(id))}</span>${s?`<span class="chip" style="background:var(--bg-e7f6ee,#e7f6ee);color:var(--fg-197a44,#197a44)">وقّع</span><span class="sub">${s.at?esc(new Date(s.at).toLocaleString('ar-SA')):''}</span>`:'<span class="chip" style="background:var(--bg-fdecec,#fdecec);color:var(--fg-a32020,#a32020)">لم يوقّع</span>'}</div>`; }).join('');
+  }
+}
+
+/* ---------- السجل الأسبوعي (للطباعة): ملفان منفصلان — المناوبة، والإشراف اليومي ---------- */
+const ORD = ['الأول','الثاني','الثالث','الرابع','الخامس','السادس','السابع','الثامن','التاسع','العاشر','الحادي عشر','الثاني عشر','الثالث عشر','الرابع عشر','الخامس عشر','السادس عشر','السابع عشر','الثامن عشر','التاسع عشر','العشرون'];
+function recordWeeks(){
+  const dates = dutyDates();
+  if(!dates.length) return [];
+  const weeks = []; let cur = null, curKey = '';
+  dates.forEach(k=>{ const d=new Date(k+'T12:00:00'); d.setDate(d.getDate()-d.getDay()); const wk=dk(d); if(wk!==curKey){ curKey=wk; cur=[]; weeks.push(cur); } cur.push(k); });
+  return weeks;
+}
+const principalName = ()=>DS.ctx.principal || '';
+const PRINT_CSS = '@page{size:A4 portrait;margin:10mm}body{font-family:Tahoma,Arial;color:#111;margin:0;padding:6px}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}.pg{page-break-after:always}.pg:last-child{page-break-after:auto}'+
+  'table{width:100%;border-collapse:collapse}th,td{border:1px solid #222;padding:5px 4px;text-align:center;font-size:11.5px;height:20px}th{background:#eef4f3}td.wk{font-weight:800}td.b{font-weight:700}tr{page-break-inside:avoid}'+
+  '.sig{display:flex;justify-content:space-between;margin-top:18px;font-weight:700;font-size:13px}';
+async function openPrint(title, pagesFn){
+  const w = window.open('','_blank'); if(!w){ toast('اسمح بالنوافذ المنبثقة للطباعة'); return; }
+  const ctx = DS.ctx;
+  w.document.write('<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>'+esc(title)+'</title><style>'+FormHdr.css()+PRINT_CSS+'</style></head><body>'+FormHdr.optionBar()+pagesFn(ctx)+FormHdr.script()+'</body></html>');
+  w.document.close();
+}
+const sigBlock = ()=>{ const p = P(); return `<div class="sig"><div>وكيل الشؤون التعليمية: ${esc(p.agentName)||'....................'}<br><br>التوقيع: ....................</div><div>مدير المدرسة: ${esc(principalName())||'....................'}<br><br>التوقيع: ....................</div></div>`; };
+function printDutyRecord(){
+  const p = P(), dates = dutyDates();
+  if(!dates.length){ toast('حدّد تاريخ البداية والنهاية للمناوبة من «الإعداد»'); return; }
+  openPrint('سجل المناوبة', ctx=>{
+    const rows = []; dates.forEach(k=>{ const ids = (p.dutyDays||{})[k]||[]; const names = ids.length ? ids.map(uName) : ['']; names.forEach((nm,i)=>rows.push({ k, nm, first:i===0, span:names.length })); });
+    const body = rows.map(x=>`<tr>${x.first?`<td rowspan="${x.span}" class="b">${esc(WEEKDAYS[wdOf(x.k)])}</td><td rowspan="${x.span}">${esc(hijri(x.k))}</td>`:''}<td>${esc(x.nm)}</td><td></td><td></td></tr>`).join('');
+    return `<section>${FormHdr.header({ formTitle:'سجل المناوبة', ctx, extra:[['المرحلة', S().label]] })}
+      <table><thead><tr><th style="width:80px">اليوم</th><th style="width:100px">التاريخ</th><th>الاسم</th><th style="width:110px">التوقيع</th><th style="width:130px">الملاحظات</th></tr></thead><tbody>${body}</tbody></table>${sigBlock()}</section>`;
+  });
+}
+function supRows(){ // [{day, name, where}] أسبوع واحد
+  const p = P(), s = S(), out = [];
+  s.days.forEach(w=>{ p.places.filter(pl=>+pl.count>0).forEach(pl=>supOf(w,pl.id).forEach(id=>out.push({ w, day:WEEKDAYS[w], uid:id, name:uName(id), where:pl.name||'' }))); });
+  return out;
+}
+function printSupRecord(){
+  const rows = supRows();
+  if(!rows.length){ toast('لا يوجد توزيع إشراف'); return; }
+  openPrint('سجل الإشراف اليومي', ctx=>{
+    const byDay = {}; rows.forEach(r=>(byDay[r.w]=byDay[r.w]||[]).push(r));
+    const body = Object.keys(byDay).map(w=>byDay[w].map((r,i)=>`<tr>${i===0?`<td rowspan="${byDay[w].length}" class="b">${esc(r.day)}</td>`:''}<td>${esc(r.name)}</td><td>${esc(r.where)}</td><td></td></tr>`).join('')).join('');
+    return `<section class="pg">${FormHdr.header({ formTitle:'سجل الإشراف اليومي', ctx, extra:[['المرحلة', S().label]] })}
+      <table><thead><tr><th style="width:80px">اليوم</th><th>المشرف</th><th>الموقع</th><th style="width:150px">ملاحظات</th></tr></thead><tbody>${body}</tbody></table>${sigBlock()}</section>`;
+  });
+}
+
+/* ---------- جدول التعميم (يُحفظ مع التعميم ليُعرض حيًّا مع عمود التوقيع في صفحة التعاميم) ---------- */
+function buildTable(kind){
+  const p = P(), c = DS.ctx||{};
+  const ctx = { edu:c.edu||'', school:c.school||DS.schoolName, year:c.year||'', term:c.term||'', principal:c.principal||'' };
+  let rows = [];
+  if(kind==='duty') dutyDates().forEach(k=>((p.dutyDays||{})[k]||[]).forEach(id=>rows.push({ day:WEEKDAYS[wdOf(k)], date:hijri(k), uid:id, name:uName(id) })));
+  else rows = supRows().map(r=>({ day:r.day, uid:r.uid, name:r.name, where:r.where }));
+  return { kind, formTitle: kind==='duty'?'سجل المناوبة':'سجل الإشراف اليومي', stage:S().label, ctx, agent:p.agentName||'', rows };
+}
+function collectMembers(){
+  const p = P(), m = new Set();
+  Object.values(p.dutyDays||{}).forEach(a=>a.forEach(id=>m.add(id)));
+  allSupIds().forEach(id=>m.add(id));
+  return m;
+}
+
+/* ---------- تعديل بعد الاعتماد: يتحدث النظام ويصل التنبيه للمشمولين بالتعديل دون توقيع جديد ---------- */
+async function commitEdit(notes){
+  const p = P(); await savePlan(true);
+  if(!p.pub) return;
+  try{ await syncPub(notes||{}); }catch(e){ toast('تعذّر تحديث النسخة المعتمدة: '+(e.message||e)); }
+}
+async function syncPub(notes){
+  const p = P(), old = p.pub, at = Date.now();
+  const members = collectMembers(); Object.keys(notes).forEach(id=>members.add(id));
+  (old.members||[]).forEach(id=>{ if((old.notes||{})[id]) members.add(id); });
+  const names = {}; members.forEach(id=>names[id]=uName(id));
+  const pn = Object.assign({}, old.notes||{}); Object.entries(notes).forEach(([id,t])=>{ pn[id] = { at, text:t }; });
+  const pub = Object.assign({}, old, { at, names, members:[...members], dutyDays:p.dutyDays||{}, sup:p.sup||{}, places:p.places.map(x=>({id:x.id,name:x.name})), events:[SUP_EV], notes:pn, tables:{ duty:buildTable('duty'), sup:buildTable('sup') } });
+  await col().doc(planId(DS.stage)).set({ pub, members:[...members], updatedAt:at-1 }, { merge:true });
+  if(DS.canPublish) for(const ref of [old.circular, old.supCircular]){
+    if(ref && ref.live && ref.id && ref.kind){ try{ await db.collection('circulars').doc(DS.sid).collection('items').doc(ref.id).update({ table: buildTable(ref.kind) }); }catch(e){} }
+  }
+  p.pub = pub; p.members = pub.members; p.updatedAt = at-1;
+}
+
+/* ---------- الاعتماد: النسخة المعتمدة + تعميمان إلزاميان (المناوبة، والإشراف اليومي) ---------- */
+async function publish(){
+  if(!DS.canPublish){ toast('للمدير أو صاحب صلاحية التعاميم'); return; }
+  const p = P();
+  const dutyM = new Set(); Object.values(p.dutyDays||{}).forEach(a=>a.forEach(id=>dutyM.add(id)));
+  const supM = new Set(allSupIds());
+  const members = new Set([...dutyM, ...supM]);
+  if(!members.size){ toast('لا يوجد توزيع لاعتماده'); return; }
+  const w = warnings();
+  if(!await mnConfirm((w.length?('تنبيهات:\n'+w.join('\n')+'\n\n'):'')+'اعتماد التوزيع ورفعه تعميمين إلزاميين (المناوبة، والإشراف اليومي) لـ '+members.size+' معلم؟ يصل كل معلم تنبيه في «لوحتي».')) return;
+  $('#btnPub').disabled = true;
+  try{
+    const names = {}; members.forEach(id=>names[id]=uName(id));
+    const kinds = [];
+    if(dutyM.size) kinds.push(['duty', dutyM]);
+    if(supM.size) kinds.push(['sup', supM]);
+    const counterRef = db.collection('circulars').doc(DS.sid);
+    const refs = kinds.map(()=>db.collection('circulars').doc(DS.sid).collection('items').doc());
+    let first = 0;
+    await db.runTransaction(async tx=>{
+      const snap = await tx.get(counterRef);
+      first = snap.exists ? (snap.data().nextNumber||1) : 1;
+      tx.set(counterRef, { nextNumber: first+kinds.length }, { merge:true });
+      kinds.forEach(([kind, set], i)=>{
+        tx.set(refs[i], { number:first+i, title:(kind==='duty'?'سجل المناوبة — ':'سجل الإشراف اليومي — ')+S().label, mandatory:true, recipients:[...set], pageCount:0,
+          createdBy:DS.me.id, createdByName:DS.me.name, createdAt:Date.now(), source:'duty', kind, planId:planId(DS.stage), table:buildTable(kind) });
+      });
+    });
+    const s = S(), circ = {};
+    kinds.forEach(([kind], i)=>{ circ[kind] = { id:refs[i].id, number:first+i, live:true, kind }; });
+    const pub = { at:Date.now(), by:DS.me.id, byName:DS.me.name, stageLabel:s.label, names, members:[...members],
+      dutyDays:p.dutyDays||{}, sup:p.sup||{}, places:p.places.map(x=>({id:x.id,name:x.name})), events:[SUP_EV],
+      circular: circ.duty || circ.sup, supCircular: circ.duty && circ.sup ? circ.sup : null, notes:{}, tables:{ duty:buildTable('duty'), sup:buildTable('sup') } };
+    await col().doc(planId(DS.stage)).set({ kind:'plan', schoolId:DS.sid, period:DS.period, stage:DS.stage, pub, members:[...members], updatedAt:pub.at-1 }, { merge:true });
+    p.pub = pub; p.members = pub.members; p.updatedAt = pub.at-1;
+    toast('تم الاعتماد ورفع '+kinds.length+' تعميم'+(kinds.length>1?'ين':'')); DS.tab='recv'; render();
+  }catch(e){ toast('خطأ: '+(e.message||e)); $('#btnPub').disabled = false; }
+}
+</script>
+<script src="sem-guard.js?v=2026-10-14.5"></script>
+<script>try{ SemGuard.start(); }catch(e){}</script>
+</body>
+</html>

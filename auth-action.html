@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<!-- إصدار: 2026-10-29.1 · الاختبار -->
+<html lang="ar" dir="rtl">
+<head>
+<script src="fb-config.js"></script>
+<script src="mn-dialog.js?v=2026-10-06.1"></script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>نظام إنجاز</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f8f7; --surface:#ffffff; --surface-2:#eef4f3;
+  --brand:#0f766e; --brand-2:#0b5a54; --accent:#0f766e; --accent-d:#0b5a54;
+  --ink:#15242b; --muted:#5b6f76; --line:#d8e2e0;
+  --danger:#d64545; --danger-d:#b5332e; --warn:#c9870a; --ok:#1f9d55;
+  --r:16px; --r-sm:11px; --shadow:0 1px 2px rgba(16,40,40,.06),0 8px 24px rgba(16,40,40,.06);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:'Tajawal',"Segoe UI",Tahoma,system-ui,sans-serif;background:var(--bg);color:var(--ink);
+  font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased;min-height:100vh;
+  display:flex;align-items:center;justify-content:center;padding:20px
+}
+.wrap{width:100%;max-width:420px}
+.logo{width:64px;height:64px;border-radius:16px;background:var(--brand);color:#fff;display:flex;align-items:center;
+  justify-content:center;font-weight:800;font-size:26px;margin:0 auto 18px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:26px 22px;
+  box-shadow:var(--shadow);text-align:center}
+.emoji{font-size:42px;margin-bottom:10px;display:block}
+h1{font-size:18px;margin:0 0 10px;font-weight:800}
+p{color:var(--muted);font-size:14px;margin:0 0 18px}
+.btn{display:block;width:100%;padding:14px;border-radius:var(--r-sm);font-weight:700;font-size:15px;
+  background:var(--accent);color:#fff;border:none;cursor:pointer;text-decoration:none;transition:background .15s}
+.btn:hover{background:var(--accent-d)}
+.field{text-align:right;margin-bottom:12px}
+.field label{display:block;font-size:13px;color:var(--muted);margin-bottom:5px;font-weight:600}
+.field input{width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;font-size:15px;
+  font-family:inherit;background:#fff}
+.spin{display:inline-block;width:34px;height:34px;border:3px solid var(--line);border-top-color:var(--brand);
+  border-radius:50%;animation:sp 0.8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.alert{padding:11px 14px;border-radius:10px;font-size:13.5px;margin-bottom:14px;font-weight:500;text-align:right}
+.alert.err{background:#fdecec;color:var(--danger-d)}
+.alert.ok{background:#e9f7ef;color:#166a3c}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo">ف</div>
+  <div class="card" id="box">
+    <span class="spin"></span>
+    <p style="margin-top:14px">جارٍ التحقق…</p>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-auth-compat.js"></script>
+<script>
+const firebaseConfig = window.FB_CONFIG;
+firebase.initializeApp(firebaseConfig);
+
+const box = document.getElementById('box');
+const params = new URLSearchParams(window.location.search);
+const mode = params.get('mode');
+const oobCode = params.get('oobCode');
+const HOME = (window.FB_SITE || 'https://injaz.awraqai.com/') + 'index.html';
+
+function render(html){ box.innerHTML = html; }
+
+function showSuccess(title, msg){
+  render(`<span class="emoji">✅</span><h1>${title}</h1><p>${msg}</p>
+    <a class="btn" href="${HOME}">المتابعة لتسجيل الدخول</a>`);
+}
+function showError(msg){
+  render(`<span class="emoji">⚠️</span><h1>تعذّر إتمام الطلب</h1><p>${msg}</p>
+    <a class="btn" href="${HOME}">العودة لصفحة الدخول</a>`);
+}
+
+async function run(){
+  if(!oobCode){ showError('الرابط غير مكتمل أو تالف.'); return; }
+
+  if(mode === 'verifyEmail'){
+    try{
+      await firebase.auth().applyActionCode(oobCode);
+      showSuccess('تم التحقق من بريدك الإلكتروني', 'يمكنك الآن العودة لصفحة الدخول وتسجيل الدخول بحسابك الجديد.');
+    }catch(e){
+      showError('هذا الرابط غير صالح أو منتهي الصلاحية. سجّل الدخول من جديد لطلب رابط تحقق جديد.');
+    }
+    return;
+  }
+
+  if(mode === 'resetPassword'){
+    try{
+      const email = await firebase.auth().verifyPasswordResetCode(oobCode);
+      render(`<h1>إعادة تعيين كلمة المرور</h1>
+        <p>الحساب: <b style="direction:ltr;display:inline-block">${email}</b></p>
+        <div id="rpAlert"></div>
+        <div class="field"><label>كلمة المرور الجديدة</label><input id="rpPass" type="password" placeholder="٦ أحرف على الأقل"></div>
+        <button class="btn" id="rpBtn">تعيين كلمة المرور</button>`);
+      document.getElementById('rpBtn').onclick = async ()=>{
+        const p = document.getElementById('rpPass').value;
+        const alertBox = document.getElementById('rpAlert');
+        if(!p || p.length<6){ alertBox.innerHTML = '<div class="alert err">كلمة المرور يجب ألا تقل عن ٦ أحرف.</div>'; return; }
+        try{
+          await firebase.auth().confirmPasswordReset(oobCode, p);
+          showSuccess('تم تغيير كلمة المرور', 'يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة.');
+        }catch(e){
+          alertBox.innerHTML = '<div class="alert err">تعذّر تعيين كلمة المرور. الرابط قد يكون منتهي الصلاحية.</div>';
+        }
+      };
+    }catch(e){
+      showError('هذا الرابط غير صالح أو منتهي الصلاحية.');
+    }
+    return;
+  }
+
+  showError('نوع طلب غير معروف.');
+}
+run();
+</script>
+</body>
+</html>

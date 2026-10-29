@@ -1,0 +1,2390 @@
+<!DOCTYPE html>
+<!-- إصدار: 2026-10-29.1 · الاختبار -->
+<html lang="ar" dir="rtl">
+<head>
+<script src="fb-config.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>أوراق العمل الإلكترونية</title>
+<meta name="theme-color" content="#3f6659">
+<link rel="stylesheet" href="theme.css?v=2026-10-05.1">
+<script src="mn-dialog.js?v=2026-10-06.1"></script>
+<script>/* احتياط: لو لم يُحمَّل mn-dialog.js (لم يُرفع/كاش قديم) تبقى التأكيدات تعمل بنافذة المتصفح بدل أن تتوقف الأزرار */
+if(typeof window.mnConfirm!=="function"){ window.mnConfirm=function(m){ return Promise.resolve(window.confirm(m)); }; window.mnPrompt=function(m,d){ return Promise.resolve(window.prompt(m,d)); }; window.mnAlert=function(m){ window.alert(m); return Promise.resolve(); }; }</script>
+<script src="theme.js?v=2026-10-05.1"></script>
+<script src="solo-guard.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  .bank-badge{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:700;background:var(--teal-l);color:var(--teal-d);margin-inline-end:4px;border:1px solid var(--line);}
+  .bank-badge.none{background:#fff4e0;color:#8a5a00;}
+  :root{
+    /* نفس ألوان omr.html الأساسية */
+    --teal:#0f766e; --teal-d:#0b5a54; --teal-l:#e6f2f0;
+    --ink:#15242b; --muted:#5b6f76; --line:#d8e2e0;
+    --paper:#f6f8f7; --white:#ffffff;
+    --ok:#1f9d55; --bad:#d64545; --warn:#c9870a;
+    --shadow:0 1px 2px rgba(16,40,40,.06),0 8px 24px rgba(16,40,40,.06);
+    /* أسماء متغيرات كانت مستخدمة في كود أوراق العمل — مرادفات لنفس لوحة الألوان فوق */
+    --teal-light: var(--teal-l);
+    --coral: var(--bad);
+    --coral-light: #fbe3e3;
+    --navy: var(--teal-d);
+    --card: var(--white);
+    --ink-soft: var(--muted);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:'Tajawal',"Segoe UI",Tahoma,system-ui,sans-serif;
+    background:var(--paper); color:var(--ink); line-height:1.5;
+    direction:rtl;
+  }
+  header.app{
+    background:linear-gradient(180deg,var(--teal),var(--teal-d));
+    color:var(--fg-ffffff,#fff); padding:8px 12px; position:sticky; top:0; z-index:30;
+    box-shadow:var(--shadow);
+  }
+  nav.tabs{display:flex;gap:6px;margin-top:0}
+  nav.tabs button{
+    flex:1;min-width:0;border:0;border-radius:9px;padding:7px 5px;font-size:12px;font-weight:600;line-height:1.25;
+    background:rgba(255,255,255,.14);color:var(--fg-ffffff,#fff);cursor:pointer;transition:.15s;
+    white-space:normal;word-break:break-word;font-family:'Tajawal',sans-serif;
+  }
+  nav.tabs button.active{background:var(--bg-ffffff,#fff);color:var(--teal-d)}
+  @media (min-width:768px){
+    nav.tabs button{ padding:12px 18px; font-size:15px; border-radius:11px; }
+    header.app{ padding:12px 18px; }
+    main{ padding:24px; }
+  }
+  main{padding:16px;max-width:860px;margin:0 auto}
+  .panel{display:none}
+  .panel.active{display:block;animation:fade .2s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; }
+  .btn { border: none; border-radius: 10px; padding: 12px 20px; font-family: 'Tajawal', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .btn-primary { background: var(--coral); color: var(--fg-ffffff,#fff); }
+  .btn-secondary { background: var(--teal-light); color: var(--teal); }
+  input[type=text], input[type=email], input[type=number], input[type=date], input[type=file], select, textarea {
+    width: 100%; border: 1.5px solid var(--line); border-radius: 8px; padding: 8px 10px;
+    font-family: 'Tajawal', sans-serif; font-size: 14px; background: var(--bg-ffffff,#fff); color: var(--ink);
+  }
+  label { font-size: 13px; color: var(--ink-soft); }
+  .status-pill { display: inline-block; border-radius: 20px; padding: 3px 12px; font-size: 12px; font-weight: 700; }
+  .status-not-started { background: var(--line); color: var(--ink-soft); }
+  .status-in-progress { background: var(--bg-fdf1d8,#fdf1d8); color: var(--fg-97650b,#97650b); }
+  .status-submitted { background: var(--teal-light); color: var(--teal); }
+  .status-corrected { background: var(--bg-e1f5ee,#e1f5ee); color: var(--ok); }
+
+  .ex-block { border:1.5px solid var(--line); border-radius:10px; padding:14px; margin-bottom:14px; background:var(--bg-ffffff,#fff); }
+  .ex-block-header { display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+  .type-badge { background:var(--teal-light); color:var(--teal); font-size:12px; padding:3px 10px; border-radius:20px; font-weight:700; }
+  .raw-ref { background:var(--paper); border-radius:8px; padding:8px 10px; font-size:12px; color:var(--ink-soft); max-height:110px; overflow-y:auto; margin-bottom:10px; white-space:pre-wrap; }
+  .item-row { display:flex; gap:6px; margin-bottom:8px; align-items:center; }
+  .item-row input[type=text] { flex:1; }
+  .small-btn { padding:5px 10px; font-size:12px; }
+  .remove-btn { background:var(--coral-light); color:var(--coral); border:none; border-radius:6px; padding:5px 9px; cursor:pointer; font-size:12px; }
+</style>
+<style>
+/* المظاهر: الياسمين (افتراضي) والأساسي — ألوانها وأشكالها في theme.css */
+</style>
+
+<script type="module">
+(function(){
+  /* المظهر العام يُطبَّق عبر theme.js (الياسمين افتراضيًا) */
+  function apply(t){ if(window.InjazTheme) InjazTheme.applyRemote(t); }
+  document.addEventListener('DOMContentLoaded', async function(){
+    try{
+      const { initializeApp, getApps, getApp } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
+      const { getFirestore, doc, onSnapshot } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+      const cfg = window.FB_CONFIG;
+      const app = getApps().length ? getApp() : initializeApp(cfg);
+      const db = getFirestore(app);
+      onSnapshot(doc(db,'settings','appearance'), (s)=>{ apply(s.exists() ? (s.data().theme||'') : ''); }, ()=>{});
+    }catch(e){}
+  });
+})();
+</script>
+
+<style>
+@media (max-width:767px){ body{overflow-x:hidden} }
+</style>
+<script src="nav-back.js?v=2026-10-28.1" defer></script>
+</head>
+<body>
+<header class="app">
+  <nav class="tabs">
+    <button id="tab-upload" class="active" onclick="showWsTab('upload')">🛠️ بناء نشاط</button>
+    <button id="tab-publish" onclick="showWsTab('publish')">📢 مسودات النشر</button>
+    <button id="tab-submissions" onclick="showWsTab('submissions')">📋 متابعة التسليمات</button>
+    <button id="tab-bank" onclick="showWsTab('bank')">🗂️ بنك الأسئلة</button>
+    <button id="tab-pins" onclick="showWsTab('pins')">🔑 أكواد الطلاب</button>
+  </nav>
+</header>
+
+  <main>
+
+  <!-- ================= رفع وتحويل ================= -->
+  <section id="panel-upload" class="panel active">
+
+    <!-- إعداد شكل عرض الأوراق للطالب -->
+    <div class="card">
+      <h3 style="margin-top:0">شكل عرض الأوراق للطالب</h3>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-secondary" id="viewCardsBtn" style="flex:1;">بطاقات</button>
+        <button class="btn btn-secondary" id="viewListBtn" style="flex:1;">قائمة</button>
+      </div>
+      <p id="viewSettingStatus" style="font-size:12px;color:var(--ink-soft);margin-top:8px;"></p>
+    </div>
+
+    <!-- 1) استيراد الملف -->
+    <div class="card">
+      <h3 style="margin-top:0">١) استيراد الملف</h3>
+      <p style="font-size:13px;color:var(--teal);font-weight:700;">يقبل النظام ملفات PDF فقط، وتُحلَّل الصفحات بواسطة الذكاء الاصطناعي لضمان أعلى دقة ممكنة في قراءة النص العربي.</p>
+
+      <div style="display:flex;gap:10px;margin:12px 0;">
+        <button class="btn btn-primary" id="modeFileBtn" style="flex:1;">رفع ملف PDF</button>
+        <button class="btn btn-secondary" id="modeCameraBtn" style="flex:1;">التقاط صور بالكاميرا</button>
+      </div>
+
+      <!-- وضع رفع ملف PDF -->
+      <div id="fileModeSection">
+        <input type="file" id="pdfInput" accept="application/pdf,.pdf">
+        <p id="pageCountInfo" style="font-size:13px;color:var(--teal);font-weight:700;margin-top:8px;"></p>
+        <br>
+
+        <div id="pdfOnlyControls" style="display:none;">
+          <div style="display:flex; gap:10px;">
+            <div style="flex:1;">
+              <label>من صفحة</label>
+              <input type="text" id="pageFrom" inputmode="numeric" placeholder="مثال: 2">
+            </div>
+            <div style="flex:1;">
+              <label>إلى صفحة</label>
+              <input type="text" id="pageTo" inputmode="numeric" placeholder="مثال: 3">
+            </div>
+          </div>
+          <p id="pageRangeHint" style="font-size:13px;font-weight:700;color:var(--warn);margin-top:6px;"></p>
+          <br>
+          <button class="btn btn-secondary" id="previewPagesBtn">معاينة الصفحات المحددة</button>
+          <div id="pagePreviewWrap" style="margin-top:14px;display:flex;flex-direction:column;gap:10px;"></div>
+          <br>
+        </div>
+      </div>
+
+      <!-- وضع التقاط صور بالكاميرا -->
+      <div id="cameraModeSection" style="display:none;">
+        <p style="font-size:13px;font-weight:700;color:var(--warn);">تنبيه: للحصول على أفضل النتائج، تأكد من إضاءة جيدة، والتقط الصورة بشكل مستقيم وواضح بدون انعكاس ضوء أو ظل يغطي النص.</p>
+        <p style="font-size:12px;color:var(--ink-soft);">يمكن التقاط حتى 3 صور كحد أقصى، وتُعالج معًا دفعة واحدة.</p>
+        <input type="file" id="cameraInput" accept="image/*" capture="environment">
+        <div id="cameraPreviewWrap" style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;"></div>
+      </div>
+
+      <button class="btn btn-primary" id="extractBtn" style="margin-top:14px;">استخراج التمارين بالذكاء الاصطناعي</button>
+      <p id="extractStatus" style="font-size:14px;font-weight:700;color:var(--teal);margin-top:10px;"></p>
+    </div>
+
+
+    <!-- 2) مراجعة التمارين المستخرجة -->
+    <div class="card" id="reviewCard" style="display:none;">
+      <h3 style="margin-top:0">٢) مراجعة التمارين قبل النشر</h3>
+      <p style="font-size:13px;color:var(--ink-soft);">راجع كل تمرين، عدّل النوع لو محتاج، واملأ العناصر الناقصة.</p>
+      <div id="exercisesWrap"></div>
+    </div>
+
+    <!-- 3) بيانات الورقة والحفظ -->
+    <div class="card" id="saveCard" style="display:none;">
+      <h3 style="margin-top:0">٣) بيانات الورقة</h3>
+      <label>عنوان الورقة</label>
+      <input type="text" id="worksheetTitle" placeholder="مثال: تمثيل البيانات">
+      <br><br>
+      <label>المادة</label>
+      <select id="worksheetSubject"><option value="">— اختر مادة —</option></select>
+      <br><br>
+      <label>الصف</label>
+      <select id="worksheetGrade">
+        <option value="">— اختر —</option>
+        <optgroup label="الابتدائية">
+          <option value="أول ابتدائي">أول ابتدائي</option>
+          <option value="ثاني ابتدائي">ثاني ابتدائي</option>
+          <option value="ثالث ابتدائي">ثالث ابتدائي</option>
+          <option value="رابع ابتدائي">رابع ابتدائي</option>
+          <option value="خامس ابتدائي">خامس ابتدائي</option>
+          <option value="سادس ابتدائي">سادس ابتدائي</option>
+        </optgroup>
+        <optgroup label="المتوسطة">
+          <option value="أول متوسط">أول متوسط</option>
+          <option value="ثاني متوسط">ثاني متوسط</option>
+          <option value="ثالث متوسط">ثالث متوسط</option>
+        </optgroup>
+        <optgroup label="الثانوية">
+          <option value="أول ثانوي">أول ثانوي</option>
+          <option value="ثاني ثانوي">ثاني ثانوي</option>
+          <option value="ثالث ثانوي">ثالث ثانوي</option>
+        </optgroup>
+      </select>
+      <br><br>
+      <label>الوحدة</label>
+      <input type="text" id="worksheetUnit">
+      <br><br>
+      <label>الدرس</label>
+      <input type="text" id="worksheetLesson">
+      <br><br>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-primary" id="saveWorksheetBtn" style="flex:1;">حفظ الورقة (مسودة)</button>
+        <button class="btn btn-secondary" id="cancelWorksheetBtn" style="flex:0 0 auto;">إلغاء</button>
+      </div>
+      <p id="saveStatus" style="font-size:13px;color:var(--ink-soft);margin-top:10px;"></p>
+    </div>
+
+  </section>
+
+  <!-- معاينة الورقة (مشتركة بين التبويبات) -->
+  <div class="card" id="previewWorksheetCard" style="display:none;max-width:860px;margin:0 auto 16px;">
+    <h3 style="margin-top:0;cursor:pointer;" onclick="const el=document.getElementById('previewWorksheetInner'); el.style.display = el.style.display === 'none' ? 'block' : 'none';">
+      معاينة: <span id="previewWorksheetTitle"></span> <span style="font-size:12px;color:var(--ink-soft);">(اضغط للطي/الفتح)</span>
+    </h3>
+    <div id="previewWorksheetInner">
+      <p style="font-size:12px;color:var(--ink-soft);">هذا شكل تقريبي لما سيظهر للطالب (بدون حفظ إجابات).</p>
+      <div id="previewWorksheetBody"></div>
+    </div>
+  </div>
+
+  <!-- ================= نشر ================= -->
+  <section id="panel-publish" class="panel">
+    <!-- 4) نشر الورقة (يظهر فور الحفظ) -->
+    <div class="card" id="publishCard" style="display:none;">
+      <h3 style="margin-top:0">٤) نشر الورقة: <span id="publishTitle"></span></h3>
+      <p style="font-size:13px;color:var(--ink-soft);">اختر الفصل أو الفصول التي ستصل إليها الورقة.</p>
+      <div id="classCheckboxes" style="margin-bottom:12px;"></div>
+      <label>هدف النشاط <span style="color:var(--bad)">*</span></label>
+      <select id="activityTargetInput" style="margin-bottom:4px;">
+        <option value="part">المشاركة والتفاعل والأنشطة الصفية</option>
+        <option value="hw" selected>الواجبات والتطبيقات الصفية</option>
+        <option value="proj">المشروعات والبحث</option>
+      </select>
+      <p style="font-size:12px;color:var(--ink-soft);margin:0 0 12px;">عند إغلاق النشر تُرحَّل درجات الطلاب إلى سجل المتابعة كملصق في هذا البند (موزونة من ١٠).</p>
+      <label>تاريخ الاستحقاق (اختياري)</label>
+      <input type="date" id="dueDateInput">
+      <br><br>
+      <button class="btn btn-primary" id="confirmPublishBtn">تأكيد النشر</button>
+      <p id="publishStatus" style="font-size:13px;color:var(--ink-soft);margin-top:10px;"></p>
+    </div>
+
+    <!-- 5) المسودات الحالية غير المنشورة -->
+    <div class="card">
+      <h3 style="margin-top:0">٥) المسودات الحالية</h3>
+      <button class="btn btn-secondary" id="refreshDraftsBtn">تحديث القائمة</button>
+      <div id="draftsList" style="margin-top:14px;"></div>
+    </div>
+  </section>
+
+  <!-- ================= بنك الأسئلة ================= -->
+  <section id="panel-bank" class="panel">
+    <div class="card">
+      <h3 style="margin-top:0">٦) بنك الأسئلة</h3>
+      <p style="font-size:12px;color:var(--ink-soft);">أوراق محفوظة لإعادة استخدامها في سنوات قادمة — تُنسخ كمسودة جديدة كل مرة تحتاجها.</p>
+      <button class="btn btn-secondary" id="refreshBankBtn">تحديث القائمة</button>
+      <div id="bankFilters" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;"></div>
+      <div id="bankList" style="margin-top:14px;"></div>
+    </div>
+  </section>
+
+  <!-- ================= متابعة التسليمات ================= -->
+  <section id="panel-submissions" class="panel">
+    <div class="card">
+      <h3 style="margin-top:0">١) اختر ورقة منشورة</h3>
+      <button class="btn btn-secondary" id="refreshWsBtn">تحديث القائمة</button>
+      <div id="worksheetsList" style="margin-top:14px;"></div>
+    </div>
+
+    <div class="card" id="studentsCard" style="display:none;">
+      <h3 style="margin-top:0">٢) الطلاب — <span id="selectedWsTitle"></span></h3>
+      <div id="studentsList"></div>
+      <div id="closePublishWrap" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line);display:none;">
+        <p style="font-size:13px;color:var(--ink-soft);margin:0 0 10px;">عند إغلاق النشر تُرحَّل درجات جميع الطلاب إلى سجل المتابعة كملصقات (موزونة من ١٠)، ومن لم يسلّم يأخذ صفراً. لا يمكن التراجع.</p>
+        <button class="btn btn-primary" id="closePublishBtn" style="background:var(--bad);">🔒 إغلاق النشر وترحيل الدرجات</button>
+        <p id="closePublishStatus" style="font-size:13px;margin-top:10px;"></p>
+      </div>
+    </div>
+
+    <div class="card" id="detailCard" style="display:none;">
+      <h3 style="margin-top:0">تسليم: <span id="detailStudentName"></span></h3>
+      <div id="answersWrap"></div>
+      <button class="btn btn-primary" id="saveGradingBtn" style="width:100%;margin-top:10px;">حفظ التصحيح</button>
+      <p id="gradingStatus" style="font-size:13px;color:var(--ink-soft);margin-top:10px;"></p>
+    </div>
+  </section>
+
+  <!-- ================= رموز دخول الفصول ================= -->
+  <section id="panel-pins" class="panel">
+    <div class="card">
+      <h3 style="margin-top:0">رموز دخول الطلاب</h3>
+      <p style="font-size:13px;color:var(--ink-soft);line-height:1.9;">
+        لكل فصل رمز واحد يُوزَّع على طلابه. يدخل الطالب بحسابه (بريد Google) ويُدخل رقم هويته مع رمز فصله <b>مرة واحدة فقط</b> لتفعيل حسابه، ثم تظهر له أنشطته تلقائياً بعد ذلك.
+      </p>
+      <div id="pinsList" style="margin-top:14px;">جاري التحميل...</div>
+    </div>
+  </section>
+
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import {
+      getFirestore, collection, addDoc as _addDoc, getDocs, query, where, doc, updateDoc as _updateDoc, deleteDoc as _deleteDoc, setDoc as _setDoc, getDoc, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    /* (2026-10-13) المعلم الفردي بعد انتهاء اشتراكه: قراءة فقط — تُرفض الكتابة هنا (والحماية الأصلية بالخادم/القواعد حيث تنطبق) */
+    const _sgGuard = () => { if (window.SoloGuard) window.SoloGuard.assertWritable(); };
+    const addDoc = (...a) => { _sgGuard(); return _addDoc(...a); };
+    const updateDoc = (...a) => { _sgGuard(); return _updateDoc(...a); };
+    const deleteDoc = (...a) => { _sgGuard(); return _deleteDoc(...a); };
+    const setDoc = (...a) => { _sgGuard(); return _setDoc(...a); };
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
+
+    /* إعدادات مشروع Firebase الموحّد — عدّلها بمفاتيح المشروع الجديد فور توفرها */
+    const firebaseConfig = window.FB_CONFIG;
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    // قواعد Firestore تمنع أي قراءة قبل المصادقة — ننتظر جاهزية الجلسة
+    const authReady = new Promise((resolve)=>{
+      const un = onAuthStateChanged(auth, (u)=>{ un(); resolve(u); });
+    });
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+    /* ===== حارس الدخول: نفس جلسة omr — لا يوجد نظام دخول منفصل لأوراق العمل ===== */
+    let CLS_SESSION = null;
+    try { CLS_SESSION = JSON.parse(localStorage.getItem('cls_session') || 'null'); } catch (e) { CLS_SESSION = null; }
+    if (!CLS_SESSION || !CLS_SESSION.userId) {
+      location.replace('index.html');
+    }
+    // القواعد تمنع القراءة قبل المصادقة — نتحقق من الجلسة الحيّة
+    authReady.then(async (au) => {
+      if (!au) {
+        try { localStorage.removeItem('cls_session'); } catch (e) {}
+        location.replace('index.html');
+        return;
+      }
+      // (2026-10-13) حارس اشتراك الفردي: قراءة فقط عند الانتهاء + تنبيه ثلاثة أيام (لا أثر لغير الفردي)
+      try {
+        if (window.SoloGuard) window.SoloGuard.start(async () => {
+          const us = await getDoc(doc(db, "users", CLS_SESSION.userId));
+          return us.exists() ? (us.data().solo || null) : null;
+        });
+      } catch (e) {}
+      // بند ١٣: صلاحية "الأنشطة الرقمية" تتحكم بالوصول لهذه الصفحة كاملة
+      // الأدمن والمدير والمعلم الفردي: وصول كامل. غيرهم: الصلاحيات داخل سياق المدرسة (schools[sid].permissions) بالنموذج الموحَّد
+      if (CLS_SESSION.role !== 'admin' && CLS_SESSION.role !== 'schoolAdmin' && CLS_SESSION.role !== 'soloTeacher') {
+        try {
+          const uSnap = await getDoc(doc(db, "users", CLS_SESSION.userId));
+          const u = uSnap.exists() ? uSnap.data() : {};
+          const ctx = (u.schools && CLS_SESSION.schoolId && u.schools[CLS_SESSION.schoolId]) || {};
+          const perm = ctx.permissions || u.permissions || {};
+          /* [ADMIN-TOOLS:MOD] ORIG: const allowed = !!(perm['worksheets.enabled'] && perm['worksheets.enabled'].edit); */
+          let allowed = !!(perm['worksheets.enabled'] && perm['worksheets.enabled'].edit);
+          /* [ADMIN-TOOLS:BEGIN] */
+          // دور غير معلم مُسندة له فصول من «بناء الجدول المدرسي»: يُعامل كمعلم ويُمنح وصول الأنشطة الرقمية لتلك الفصول
+          if (!allowed && CLS_SESSION.role !== 'teacher' && CLS_SESSION.schoolId && Array.isArray(ctx.ttAssignedClasses) && ctx.ttAssignedClasses.length) {
+            try {
+              const metaSnap = await getDoc(doc(db, "timetables", CLS_SESSION.schoolId, "data", "meta"));
+              if (metaSnap.exists()) {
+                let d = {}; try { d = JSON.parse(metaSnap.data().value || "{}"); } catch (e) {}
+                if (d.toolActive !== false) allowed = true;
+              }
+            } catch (e) {}
+          }
+          /* [ADMIN-TOOLS:END] */
+          if (!allowed) {
+            document.body.innerHTML = '<div style="padding:40px;text-align:center;font-family:inherit">'
+              + '<h2>ليست لديك صلاحية الوصول إلى الأنشطة الرقمية</h2>'
+              + '<a href="index.html">العودة للرئيسية</a></div>';
+            return;
+          }
+        } catch (e) {}
+      }
+    });
+    const currentTeacher = { uid: CLS_SESSION.userId, name: CLS_SESSION.username, schoolId: CLS_SESSION.schoolId };
+    /* ===== ص-١: الأنشطة ملك المعلم وتنتقل معه =====
+       المكتبة (المسودات وبنك الأسئلة) تظهر في أي سياق يدخله المعلم (مدرسة أو حساب فردي).
+       النشر (الفصول والتسليمات والدرجات) مرتبط بالسياق الحالي وفصله فقط. */
+    const CUR_PERIOD = (CLS_SESSION && CLS_SESSION.period) || "first";
+    function wsInCurrentCtx(w) {
+      return ((w.schoolId || null) === (currentTeacher.schoolId || null)) && ((w.period || "first") === CUR_PERIOD);
+    }
+    /* ===== ص-٣ (أ): ختم بنك الأسئلة = الفصل + العام الدراسي الموحَّد (settings/academicYear يضبطه أدمن النظام) =====
+       الختم يُثبَّت على النشاط عند حفظه في البنك. العام غير المضبوط = بلا ختم (يُختم لاحقًا عند ضبطه من الأدمن). */
+    let _ayCache;
+    async function getAcademicYear() {
+      if (_ayCache !== undefined) return _ayCache;
+      try { const s = await getDoc(doc(db, "settings", "academicYear")); _ayCache = (s.exists() && s.data().year) ? String(s.data().year) : null; }
+      catch (e) { _ayCache = null; }
+      return _ayCache;
+    }
+    function arDigits(v) { return String(v == null ? "" : v).replace(/\d/g, (d) => "٠١٢٣٤٥٦٧٨٩"[d]); }
+    function semLabel(p) { return p === "second" ? "الفصل الثاني" : (p === "first" ? "الفصل الأول" : "غير مصنّف"); }
+    function otherSem(p) { return p === "second" ? "first" : "second"; }
+    function stableStr(v) {
+      if (Array.isArray(v)) return "[" + v.map(stableStr).join(",") + "]";
+      if (v && typeof v === "object") return "{" + Object.keys(v).sort().map((k) => JSON.stringify(k) + ":" + stableStr(v[k])).join(",") + "}";
+      return JSON.stringify(v === undefined ? null : v);
+    }
+    async function bankStamp() { return { semester: CUR_PERIOD, yearStamp: await getAcademicYear(), stampMode: "new" }; }
+    /* حفظ نشاط في البنك:
+       - جديد: يُضاف بختم الفصل الحالي والعام.
+       - مأخوذ من البنك ولم يتغير محتواه: لا يُضاف شيء؛ وتعديل الاسم/الوحدة/الدرس/المادة/الصف وحده يُحدِّث العنصر دون إعادة ختم.
+       - مأخوذ من البنك وتغيّر محتواه: يختار المعلم تحديث العنصر القديم (يُعاد ختمه بالفصل الحالي والعام) أو حفظه نسخةً جديدة. */
+    async function saveWorksheetToBank(w) {
+      const st = await bankStamp();
+      const meta = { subject: w.subject || "", grade: w.grade || "", title: w.title || "", unit: w.unit || "", lesson: w.lesson || "" };
+      if (w.fromBankId) {
+        let bSnap = null;
+        try { bSnap = await getDoc(doc(db, "questionBank", w.fromBankId)); } catch (e) { bSnap = null; }
+        if (bSnap && bSnap.exists() && bSnap.data().createdBy === currentTeacher.uid) {
+          const b = bSnap.data();
+          if (!w.bankChanged) {
+            const metaDiff = Object.keys(meta).some((k) => (b[k] || "") !== meta[k]);
+            if (metaDiff) await updateDoc(bSnap.ref, meta);
+            return metaDiff ? "meta" : "unchanged";
+          }
+          const ok = await mnConfirm("هذا النشاط مأخوذ من بنك الأسئلة («" + (b.title || "") + "» " + (b.yearStamp ? arDigits(b.yearStamp) : "بلا عام") + ") وعُدِّل محتواه.\n\nموافق = تحديث العنصر القديم في البنك ليصير بختم الفصل الحالي والعام الحالي.\nإلغاء = حفظه كنسخة جديدة وإبقاء القديم كما هو.");
+          if (ok) {
+            await updateDoc(bSnap.ref, Object.assign({}, meta, {
+              exercises: w.exercises, sourceFileName: w.sourceFileName || b.sourceFileName || "",
+              semester: st.semester, yearStamp: st.yearStamp, stampMode: "edit", savedAt: serverTimestamp()
+            }));
+            return "restamped";
+          }
+        }
+      }
+      await addDoc(collection(db, "questionBank"), Object.assign(
+        { schoolId: currentTeacher.schoolId || null, createdBy: currentTeacher.uid }, meta,
+        { sourceFileName: w.sourceFileName || "", exercises: w.exercises, savedAt: serverTimestamp() }, st));
+      return "added";
+    }
+    // تسليمات نشاط: الجديدة تحمل teacherUid، والقديمة تُقرأ باستعلام احتياطي إن سمحت به القواعد
+    async function getSubmissionsFor(worksheetId) {
+      const byId = new Map();
+      const s1 = await getDocs(query(collection(db, "submissions"), where("worksheetId", "==", worksheetId), where("teacherUid", "==", currentTeacher.uid)));
+      s1.docs.forEach((d) => byId.set(d.id, d));
+      try {
+        const s2 = await getDocs(query(collection(db, "submissions"), where("worksheetId", "==", worksheetId)));
+        s2.docs.forEach((d) => byId.set(d.id, d));
+      } catch (e) { /* القواعد لا تسمح بالاستعلام القديم — تكفي التسليمات الجديدة */ }
+      return [...byId.values()];
+    }
+    // استرجاع المحتوى من حساب سابق بنفس البريد (بعد حذف الحساب وإعادة إنشائه) — مرة لكل جلسة
+    authReady.then(async (au) => {
+      if (!au) return;
+      try {
+        if (sessionStorage.getItem("ws_reclaim_" + au.uid)) return;
+        sessionStorage.setItem("ws_reclaim_" + au.uid, "1");
+        const res = await httpsCallable(getFunctions(app), "reclaimTeacherContent")({});
+        if (res && res.data && res.data.moved > 0) {
+          try { await loadDrafts(); await loadBank(); } catch (e) {}
+          alert("تم استرجاع " + res.data.moved + " من أنشطتك وأسئلتك من حسابك السابق.");
+        }
+      } catch (e) { /* الدالة غير منشورة بعد أو لا يوجد ما يُسترجع */ }
+    });
+    // روستر المدرسة، أو روستر المعلم الفردي (بلا مدرسة)
+    function rosterDocId() { return currentTeacher.schoolId ? ("roster_" + currentTeacher.schoolId) : ("roster_solo_" + currentTeacher.uid); }
+    /* [ADMIN-TOOLS:BEGIN] */
+    // هل «بناء الجدول المدرسي» مفعّل لهذه المدرسة؟ (نفس منطق omr.html — قفل/تفعيل على مستوى المدرسة)
+    async function wsTtToolActive(schoolId) {
+      if (!schoolId) return false;
+      try {
+        const metaSnap = await getDoc(doc(db, "timetables", schoolId, "data", "meta"));
+        if (!metaSnap.exists()) return false;
+        let d = {}; try { d = JSON.parse(metaSnap.data().value || "{}"); } catch (e) { return false; }
+        return d.toolActive !== false;
+      } catch (e) { return false; }
+    }
+    /* [ADMIN-TOOLS:END] */
+    /* سياق المستخدم بالنموذج الموحَّد: الدور من الجلسة، والفصول والمواد من schools[sid] (أو solo للفردي) — لا حقول top-level */
+    async function loadMyCtx() {
+      const snap = await getDoc(doc(db, "users", currentTeacher.uid));
+      const u = snap.exists() ? snap.data() : {};
+      const role = CLS_SESSION.role || "";
+      const ctx = currentTeacher.schoolId ? ((u.schools || {})[currentTeacher.schoolId] || {}) : (u.solo || {});
+      /* [ADMIN-TOOLS:BEGIN] */
+      // دور غير معلم مُسندة له فصول من الجدول: تُضاف لفصوله المسندة هنا أيضًا (دون المساس بفصوله اليدوية)
+      let assigned = Array.isArray(ctx.assignedClasses) ? ctx.assignedClasses.map(String) : [];
+      if (role !== "teacher" && role !== "soloTeacher" && role !== "admin" && role !== "schoolAdmin"
+          && Array.isArray(ctx.ttAssignedClasses) && ctx.ttAssignedClasses.length && !assigned.includes("__all__")) {
+        if (await wsTtToolActive(currentTeacher.schoolId)) {
+          assigned = [...new Set([...assigned, ...ctx.ttAssignedClasses.map(String)])];
+        }
+      }
+      /* [ADMIN-TOOLS:END] */
+      return {
+        u, role, ctx,
+        isAdmin: role === "admin" || role === "schoolAdmin",
+        isSolo: role === "soloTeacher",
+        assigned,
+        /* [ADMIN-TOOLS:MOD] ORIG: subjectAssignments: Array.isArray(ctx.subjectAssignments) ? ctx.subjectAssignments : [] */
+        subjectAssignments: (ctx.subjectAssignmentsByPeriod && typeof ctx.subjectAssignmentsByPeriod === "object") ? (Array.isArray(ctx.subjectAssignmentsByPeriod[CLS_SESSION.period || "first"]) ? ctx.subjectAssignmentsByPeriod[CLS_SESSION.period || "first"] : []) : (Array.isArray(ctx.subjectAssignments) ? ctx.subjectAssignments : [])
+      };
+    }
+
+    function headerDateStr() {
+      try {
+        const d = new Date();
+        const wd = new Intl.DateTimeFormat('ar-SA', { weekday: 'long' }).format(d);
+        const g = new Intl.DateTimeFormat('ar-SA-u-ca-gregory', { day: 'numeric', month: 'long', year: 'numeric' }).format(d);
+        const h = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura', { day: 'numeric', month: 'long', year: 'numeric' }).format(d);
+        return `${wd}<br>${g}م<br>${h}هـ`;
+      } catch (e) { return ""; }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      /* الترويسة الموحّدة (نفس ترويسة الرئيسية وإدارة الصف) */
+      const IT = window.InjazTheme;
+      const ic = (n, sz, sw) => IT ? IT.icon(n, sz, sw) : '';
+      const uname = CLS_SESSION.username || '';
+      const bar = document.createElement('div');
+      bar.className = 'ijh';
+      bar.innerHTML =
+        '<div class="ijh-row1">' +
+          '<div class="ijh-ava" aria-hidden="true">' + escapeHtml(IT ? IT.initials(uname) : uname.charAt(0)) + '</div>' +
+          '<div class="ijh-id"><div class="ijh-name">' + escapeHtml(uname) + '</div><div class="ijh-date">' + (IT ? IT.dateHTML() : headerDateStr()) + '</div></div>' +
+          '<button class="ijh-acc" id="wsAccBtn" type="button" aria-label="قائمة الحساب">' + ic('user', 22) + ic('chev', 14, 2.4) + '</button>' +
+        '</div>' +
+        '<div class="ijh-row2">' +
+          '<nav class="ijh-seg" aria-label="الصفحات">' +
+            '<a href="index.html">' + ic('home', 17, 1.9) + 'الرئيسية</a>' +
+            '<a class="on" href="omr.html">' + ic('omr', 17, 1.9) + 'إدارة الصف</a>' +
+          '</nav>' +
+          '<span class="ijh-spacer"></span>' +
+          '<span class="ijh-period">الأنشطة الرقمية</span>' +
+        '</div>' +
+        '<div class="ijh-menu" id="wsAccMenu" role="menu" aria-label="قائمة الحساب" hidden>' +
+          '<div class="ijh-mhead"><b>' + escapeHtml(uname) + '</b><span>الأنشطة الرقمية</span></div>' +
+          '<div class="ijh-mlist">' +
+            '<a class="ijh-mitem" role="menuitem" href="index.html?home=1&pw=1">' + ic('key', 20) + 'تغيير كلمة المرور</a>' +
+            '<a class="ijh-mitem" role="menuitem" href="delete-account.html">' + ic('out', 20) + 'حذف الحساب</a>' +
+          '</div>' +
+          '<div class="ijh-mmode"><div class="ijh-mlabel">المظهر</div><div id="wsModeSlot"></div></div>' +
+        '</div>';
+      document.body.insertBefore(bar, document.body.firstChild);
+      if (IT) {
+        const ms = document.getElementById('wsModeSlot'); if (ms) ms.appendChild(IT.modePicker());
+        IT.bindMenu(document.getElementById('wsAccBtn'), document.getElementById('wsAccMenu'));
+      }
+    });
+
+    /* ===== تبديل التبويبات ===== */
+    function showWsTab(t) {
+      ['upload', 'publish', 'bank', 'submissions', 'pins'].forEach((x) => {
+        document.getElementById('panel-' + x).classList.toggle('active', x === t);
+        document.getElementById('tab-' + x).classList.toggle('active', x === t);
+      });
+      if (t === 'publish') loadDrafts();
+      if (t === 'bank') loadBank();
+      if (t === 'submissions') loadWorksheetsForSubmissions();
+      if (t === 'pins') loadPinsClasses();
+    }
+    window.showWsTab = showWsTab;
+
+    const WS_FIXED_SUBJECTS = [
+      "القرآن الكريم والتفسير", "الكفايات اللغوية", "الرياضيات", "اللغة الإنجليزية", "الأحياء", "الكيمياء",
+      "التفكير الناقد", "التقنية الرقمية", "التربية الصحية والبدنية", "الفيزياء", "التاريخ", "التوحيد والفقه",
+      "الفنون", "علوم الأرض والفضاء", "البحث ومصادر المعلومات", "المهارات الإدارية", "التنمية المستدامة", "التصميم الرقمي"
+    ];
+    async function loadSubjectOptions() {
+      let custom = [];
+      try {
+        const rosterSnap = await getDoc(doc(db, "schoolData", rosterDocId()));
+        custom = JSON.parse((rosterSnap.exists() ? rosterSnap.data().value : "{}") || "{}").customSubjects || [];
+      } catch (e) { custom = []; }
+      const all = [...WS_FIXED_SUBJECTS, ...custom.filter((s) => !WS_FIXED_SUBJECTS.includes(s))];
+      const sel = document.getElementById("worksheetSubject");
+      sel.innerHTML = `<option value="">— اختر مادة —</option>` + all.map((s) => `<option value="${s}">${s}</option>`).join("");
+    }
+
+    loadViewSetting();
+    loadDrafts();
+    loadBank();
+    loadSubjectOptions();
+
+    // ---------- إعداد شكل عرض الأوراق للطالب ----------
+    async function loadViewSetting() {
+      const snap = await getDoc(doc(db, "settings", "display"));
+      const current = snap.exists() ? snap.data().worksheetView : "cards";
+      highlightViewBtn(current);
+    }
+    function highlightViewBtn(current) {
+      document.getElementById("viewCardsBtn").classList.toggle("btn-primary", current === "cards");
+      document.getElementById("viewCardsBtn").classList.toggle("btn-secondary", current !== "cards");
+      document.getElementById("viewListBtn").classList.toggle("btn-primary", current === "list");
+      document.getElementById("viewListBtn").classList.toggle("btn-secondary", current !== "list");
+    }
+    async function setViewSetting(val) {
+      await setDoc(doc(db, "settings", "display"), { worksheetView: val }, { merge: true });
+      highlightViewBtn(val);
+      document.getElementById("viewSettingStatus").textContent = "تم الحفظ.";
+      document.getElementById("viewSettingStatus").style.color = "var(--ok)";
+    }
+    document.getElementById("viewCardsBtn").addEventListener("click", () => setViewSetting("cards"));
+    document.getElementById("viewListBtn").addEventListener("click", () => setViewSetting("list"));
+    loadViewSetting();
+
+    let exercises = []; // { id, type, rawText, ...structuredData }
+    let exCounter = 0;
+
+    // رابط سيرفر التحليل بالذكاء الاصطناعي (Cloudflare Worker) — يُستخدم مع ملفات PDF وصور الكاميرا
+    const AI_WORKER_URL = "https://injaz-worksheets-analyzer.teachermnr.workers.dev";
+    const MAX_CAMERA_IMAGES = 3;
+    const MAX_PDF_PAGES_PER_RUN = 4;
+
+    // ---------- التبديل بين وضع رفع ملف PDF ووضع التقاط صور بالكاميرا ----------
+    let uploadMode = "file";
+    function setUploadMode(mode) {
+      uploadMode = mode;
+      document.getElementById("fileModeSection").style.display = mode === "file" ? "block" : "none";
+      document.getElementById("cameraModeSection").style.display = mode === "camera" ? "block" : "none";
+      document.getElementById("modeFileBtn").className = mode === "file" ? "btn btn-primary" : "btn btn-secondary";
+      document.getElementById("modeCameraBtn").className = mode === "camera" ? "btn btn-primary" : "btn btn-secondary";
+      document.getElementById("extractStatus").textContent = "";
+    }
+    document.getElementById("modeFileBtn").addEventListener("click", () => setUploadMode("file"));
+    document.getElementById("modeCameraBtn").addEventListener("click", () => setUploadMode("camera"));
+
+    // ---------- إدارة الصور الملتقطة بالكاميرا (حتى 3 صور) ----------
+    let capturedImages = []; // مصفوفة من data URLs
+
+    function renderCameraPreviews() {
+      const wrap = document.getElementById("cameraPreviewWrap");
+      wrap.innerHTML = "";
+      capturedImages.forEach((dataUrl, idx) => {
+        const box = document.createElement("div");
+        box.style.cssText = "position:relative;width:90px;";
+        box.innerHTML = `
+          <img src="${dataUrl}" style="width:90px;height:120px;object-fit:cover;border-radius:8px;border:1px solid var(--line);">
+          <button data-remove-capture="${idx}" style="position:absolute;top:-8px;left:-8px;background:var(--bad);color:var(--fg-ffffff,#fff);border:none;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;">✕</button>
+          <p style="text-align:center;font-size:11px;color:var(--ink-soft);margin:4px 0 0;">صورة ${idx + 1}</p>
+        `;
+        wrap.appendChild(box);
+        box.querySelector(`[data-remove-capture="${idx}"]`).addEventListener("click", () => {
+          capturedImages.splice(idx, 1);
+          renderCameraPreviews();
+        });
+      });
+    }
+
+    document.getElementById("cameraInput").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      e.target.value = ""; // تصفير الحقل عشان يقدر يلتقط صورة جديدة بنفس الزر
+      if (!file) return;
+
+      if (capturedImages.length >= MAX_CAMERA_IMAGES) {
+        alert(`لا يمكن إضافة أكثر من ${MAX_CAMERA_IMAGES} صور — احذف صورة أولًا لإضافة صورة جديدة.`);
+        return;
+      }
+
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      capturedImages.push(dataUrl);
+      renderCameraPreviews();
+    });
+
+    setUploadMode("file");
+
+    // ---------- تحويل تمرين محفوظ (صيغة Firestore) لصيغة قابلة للتعديل في المحرر ----------
+    function hydrateExercise(savedEx) {
+      exCounter++;
+      const base = { id: "ex" + exCounter, type: savedEx.type, rawText: "" };
+      if (savedEx.type === "matching") {
+        base.pairs = JSON.parse(JSON.stringify(savedEx.data.pairs || [{ left: "", right: "" }]));
+      } else if (savedEx.type === "fill-table") {
+        const d = savedEx.data;
+        base.table = {
+          cols: d.cols,
+          rows: d.rows,
+          cells: (d.cells || []).map((r) => (r.row || []).map((cell) => ({ ...cell })))
+        };
+      } else if (savedEx.type === "open-text") {
+        base.prompt = savedEx.data.prompt || "";
+      } else {
+        base.items = JSON.parse(JSON.stringify(savedEx.data.items || []));
+      }
+      return base;
+    }
+
+    // ---------- تحميل ورقة محفوظة (مسودة أو من بنك الأسئلة) داخل المحرر للتعديل ----------
+    // الحفظ بعد كده بينشئ مستند جديد دايمًا، فالأصل بيفضل زي ما هو
+    let editingDraftId = null;
+    let editingSrc = null;        // {bankId, changed}: مصدر الورقة من البنك (إن وُجد) وهل تغيّر محتواها
+    let editingSigAtLoad = "";
+    function buildExercisesPayload() {
+      return exercises.map((ex) => ({
+        exerciseId: ex.id,
+        type: ex.type,
+        data: ex.type === "open-text" ? { prompt: ex.prompt }
+            : ex.type === "matching" ? { pairs: ex.pairs }
+            : ex.type === "fill-table" ? { cols: ex.table.cols, rows: ex.table.rows, cells: ex.table.cells.map((row) => ({ row })) }
+            : { items: ex.items },
+        autoGraded: ex.type !== "open-text"
+      }));
+    }
+    function loadWorksheetIntoEditor(w, draftId, src) {
+      editingDraftId = draftId || null;
+      exercises = (w.exercises || []).map(hydrateExercise);
+      document.getElementById("worksheetTitle").value = draftId ? (w.title || "") : (w.title || "") + " (نسخة)";
+      document.getElementById("worksheetSubject").value = w.subject || "";
+      document.getElementById("worksheetGrade").value = w.grade || "";
+      document.getElementById("worksheetUnit").value = w.unit || "";
+      document.getElementById("worksheetLesson").value = w.lesson || "";
+      renderExercises();
+      editingSrc = src && src.bankId ? { bankId: src.bankId, changed: !!src.changed } : null;
+      editingSigAtLoad = stableStr(buildExercisesPayload());
+      document.getElementById("reviewCard").style.display = "block";
+      document.getElementById("saveCard").style.display = "block";
+      document.getElementById("saveWorksheetBtn").textContent = draftId ? "حفظ التعديلات" : "حفظ الورقة (مسودة)";
+      showWsTab("upload");
+      document.getElementById("reviewCard").scrollIntoView({ behavior: "smooth" });
+    }
+
+    function makeExercise(type, rawText) {
+      exCounter++;
+      const base = { id: "ex" + exCounter, type, rawText };
+      if (type === "fill-blank") {
+        let lines = rawText.split("\n").filter((l) => /\.{3,}|_{3,}/.test(l));
+        if (lines.length === 0) {
+          // مفيش نقط فراغ ظاهرة (جدول بخلايا فاضية مثلًا) — نستخدم كل سطر محتوى كنقطة بداية بدل خانة فاضية
+          lines = rawText.split("\n")
+            .map((l) => l.trim())
+            .filter((l) => l.length > 0 && !/^تدريب|^أكمل الفراغ|^امأل الفراغ/.test(l));
+        }
+        base.items = lines.map((l) => ({ prompt: l.trim(), answer: "" }));
+        if (base.items.length === 0) base.items = [{ prompt: "", answer: "" }];
+      } else if (type === "true-false") {
+        const lines = rawText.split("\n")
+          .filter((l) => l.trim().length > 15 && !/ضع علامة|تدريب/.test(l));
+        base.items = lines.map((l) => ({ statement: l.trim(), answer: null }));
+        if (base.items.length === 0) base.items = [{ statement: "", answer: null }];
+      } else if (type === "mcq") {
+        base.items = extractMcqQuestions(rawText);
+      } else if (type === "matching") {
+        base.pairs = [{ left: "", right: "" }];
+      } else if (type === "ordering") {
+        base.items = [""];
+      } else if (type === "fill-table") {
+        base.table = makeEmptyTable(3, 4);
+      } else {
+        base.prompt = "";
+      }
+      return base;
+    }
+
+    // ---------- بناء جدول فاضي بعدد أعمدة وصفوف معيّن (يشمل عمود/صف العناوين) ----------
+    // كل خلية عندها نوع مستقل (header/answer) قابل للتبديل لاحقًا بالضغط المطول
+    // افتراضيًا: الصف الأول والعمود الأول (اليمين في RTL) = عناوين
+    function makeEmptyTable(cols, rows) {
+      const cells = [];
+      for (let r = 0; r < rows; r++) {
+        const row = [];
+        for (let c = 0; c < cols; c++) {
+          const isHeader = r === 0 || c === 0;
+          row.push({ type: isHeader ? "header" : "answer", value: "" });
+        }
+        cells.push(row);
+      }
+      return { cols, rows, cells };
+    }
+
+    // ---------- محاولة استخراج أسئلة الاختيار من متعدد وخياراتها ----------
+    function extractMcqQuestions(rawText) {
+      const lines = rawText.split("\n").map((l) => l.trim()).filter(Boolean);
+      const questions = [];
+      let current = null;
+
+      lines.forEach((line) => {
+        // سطر يبدأ برقم = بداية سؤال جديد (مثال: "1 النظام العشري ...")
+        if (/^[0-9\u0660-\u0669]+[\s.\-)]/.test(line)) {
+          if (current) questions.push(current);
+          current = { promptLine: line.replace(/^[0-9\u0660-\u0669]+[\s.\-)]*/, ""), optionParts: [] };
+        } else if (current) {
+          current.optionParts.push(line);
+        }
+      });
+      if (current) questions.push(current);
+
+      const result = questions.map((q) => {
+        // نحاول نلاقي حروف الاختيار أ/ب/ج منفصلة في الأسطر التالية ونقسم عليها
+        const joined = q.optionParts.join(" ");
+        const parts = joined.split(/(?:^|\s)[أإا](?=\s)|(?:^|\s)ب(?=\s)|(?:^|\s)ج(?=\s)/).map((p) => p.trim()).filter(Boolean);
+        const options = parts.length >= 3 ? parts.slice(0, 3) : ["", "", ""];
+        return { prompt: q.promptLine.trim(), options, correctIndex: 0 };
+      }).filter((q) => q.prompt.length > 0);
+
+      return result.length > 0 ? result : [{ prompt: "", options: ["", "", ""], correctIndex: 0 }];
+    }
+
+    // ---------- معاينة الصفحات المحددة كصور ----------
+    document.getElementById("previewPagesBtn").addEventListener("click", async () => {
+      const fileInput = document.getElementById("pdfInput");
+      const previewWrap = document.getElementById("pagePreviewWrap");
+      if (!fileInput.files[0]) {
+        alert("اختر ملف PDF أولًا.");
+        return;
+      }
+
+      previewWrap.innerHTML = `<p style="font-size:12px;color:var(--ink-soft);">جاري تجهيز المعاينة...</p>`;
+
+      try {
+        const arrayBuffer = await fileInput.files[0].arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+        const fromRaw = document.getElementById("pageFrom").value.trim();
+        const toRaw = document.getElementById("pageTo").value.trim();
+        let startPage = fromRaw ? parseInt(fromRaw, 10) : 1;
+        let endPage = toRaw ? parseInt(toRaw, 10) : pdf.numPages;
+        if (isNaN(startPage) || startPage < 1) startPage = 1;
+        if (isNaN(endPage) || endPage > pdf.numPages) endPage = pdf.numPages;
+        if (startPage > endPage) {
+          previewWrap.innerHTML = `<p style="font-size:12px;color:var(--bad);">رقم صفحة البداية أكبر من النهاية.</p>`;
+          return;
+        }
+        // حماية: لا يمكن معالجة أكثر من 4 صفحات في المرة الواحدة
+        if (endPage - startPage + 1 > MAX_PDF_PAGES_PER_RUN) {
+          previewWrap.innerHTML = `<p style="font-size:13px;font-weight:700;color:var(--bad);">النطاق المحدد أكبر من الحد المسموح (${MAX_PDF_PAGES_PER_RUN} صفحات) — ضيّق النطاق أو استخرج مباشرة بدون معاينة.</p>`;
+          return;
+        }
+
+        previewWrap.innerHTML = "";
+        for (let i = startPage; i <= endPage; i++) {
+          const page = await pdf.getPage(i);
+          const baseViewport = page.getViewport({ scale: 1 });
+          const scale = 320 / baseViewport.width;
+          const viewport = page.getViewport({ scale });
+
+          const canvas = document.createElement("canvas");
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          canvas.style.border = "1px solid var(--line)";
+          canvas.style.borderRadius = "8px";
+          canvas.style.maxWidth = "100%";
+
+          const ctx = canvas.getContext("2d");
+          await page.render({ canvasContext: ctx, viewport }).promise;
+
+          const label = document.createElement("p");
+          label.textContent = `صفحة ${i}`;
+          label.style.cssText = "font-size:12px;font-weight:700;color:var(--teal);margin:0;";
+
+          const box = document.createElement("div");
+          box.appendChild(label);
+          box.appendChild(canvas);
+          previewWrap.appendChild(box);
+        }
+      } catch (err) {
+        previewWrap.innerHTML = `<p style="font-size:12px;color:var(--bad);">حدث خطأ في المعاينة: ${err.message}</p>`;
+      }
+    });
+
+    // ---------- عرض عدد صفحات ملف PDF المختار + توضيح قاعدة حد الصفحات ----------
+    document.getElementById("pdfInput").addEventListener("change", async (e) => {
+      const infoEl = document.getElementById("pageCountInfo");
+      const pdfControls = document.getElementById("pdfOnlyControls");
+      const rangeHint = document.getElementById("pageRangeHint");
+      const file = e.target.files[0];
+      if (!file) { infoEl.textContent = ""; pdfControls.style.display = "none"; return; }
+
+      if (!(file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf"))) {
+        infoEl.textContent = "يجب اختيار ملف بصيغة PDF فقط.";
+        infoEl.style.color = "var(--bad)";
+        pdfControls.style.display = "none";
+        return;
+      }
+
+      infoEl.style.color = "var(--teal)";
+      infoEl.textContent = "جاري قراءة عدد الصفحات...";
+      pdfControls.style.display = "block";
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        infoEl.textContent = `عدد صفحات الملف: ${pdf.numPages}`;
+
+        if (pdf.numPages > MAX_PDF_PAGES_PER_RUN) {
+          rangeHint.textContent = `الملف يتجاوز ${MAX_PDF_PAGES_PER_RUN} صفحات — يجب تحديد "من صفحة" و"إلى صفحة" بنطاق لا يتجاوز ${MAX_PDF_PAGES_PER_RUN} صفحات قبل الاستخراج.`;
+        } else {
+          rangeHint.textContent = `يمكن ترك الحقلين فارغين لاستخراج الملف كاملًا (لا يتجاوز ${MAX_PDF_PAGES_PER_RUN} صفحات أصلًا).`;
+        }
+      } catch (err) {
+        infoEl.textContent = "";
+      }
+    });
+
+    // ---------- دمج تمارين مستخرجة من صورة واحدة عبر سيرفر الذكاء الاصطناعي ----------
+    async function analyzeImageWithAI(dataUrl) {
+      let resp, result;
+      try {
+        resp = await fetch(AI_WORKER_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ image: dataUrl }),
+        });
+        result = await resp.json();
+      } catch (netErr) {
+        throw new Error(`تعذّر الاتصال بسيرفر التحليل: ${netErr.message}`);
+      }
+      if (!resp.ok || result.error) {
+        throw new Error(result.error || resp.statusText);
+      }
+      return result.exercises || [];
+    }
+
+    // ---------- زر الاستخراج: يتفرّع حسب الوضع المختار (ملف PDF أو صور كاميرا) ----------
+    document.getElementById("extractBtn").addEventListener("click", async () => {
+      const statusEl = document.getElementById("extractStatus");
+      statusEl.style.color = "var(--teal)";
+
+      try {
+        // ==================== وضع الكاميرا ====================
+        if (uploadMode === "camera") {
+          if (capturedImages.length === 0) {
+            statusEl.textContent = "التقط صورة واحدة على الأقل أولًا.";
+            statusEl.style.color = "var(--bad)";
+            return;
+          }
+
+          const aiExercises = [];
+          for (let i = 0; i < capturedImages.length; i++) {
+            statusEl.textContent = `جاري تحليل الصورة ${i + 1} من ${capturedImages.length} بالذكاء الاصطناعي...`;
+            const found = await analyzeImageWithAI(capturedImages[i]);
+            found.forEach((ex) => aiExercises.push(hydrateExercise(ex)));
+          }
+
+          exercises = aiExercises;
+          if (exercises.length === 0) {
+            statusEl.textContent = "لم يتمكن الذكاء الاصطناعي من إيجاد أي تمارين في الصور الملتقطة.";
+            statusEl.style.color = "var(--bad)";
+            return;
+          }
+
+          statusEl.textContent = `تم استخراج ${exercises.length} تمرين بواسطة الذكاء الاصطناعي من ${capturedImages.length} صورة. راجعها بالأسفل.`;
+          statusEl.style.color = "var(--ok)";
+          renderExercises();
+          document.getElementById("reviewCard").style.display = "block";
+          document.getElementById("saveCard").style.display = "block";
+          return;
+        }
+
+        // ==================== وضع رفع ملف PDF ====================
+        const fileInput = document.getElementById("pdfInput");
+        if (!fileInput.files[0]) {
+          statusEl.textContent = "اختر ملف PDF أولًا.";
+          statusEl.style.color = "var(--bad)";
+          return;
+        }
+
+        const file = fileInput.files[0];
+        if (!(file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf"))) {
+          statusEl.textContent = "يجب اختيار ملف بصيغة PDF فقط.";
+          statusEl.style.color = "var(--bad)";
+          return;
+        }
+
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+        const fromRaw = document.getElementById("pageFrom").value.trim();
+        const toRaw = document.getElementById("pageTo").value.trim();
+        let startPage, endPage;
+
+        if (pdf.numPages > MAX_PDF_PAGES_PER_RUN) {
+          // الملف أكبر من الحد المسموح — تحديد النطاق يصبح إلزاميًا
+          if (!fromRaw || !toRaw) {
+            statusEl.textContent = `الملف يحتوي على ${pdf.numPages} صفحة (أكثر من ${MAX_PDF_PAGES_PER_RUN}) — يجب تحديد "من صفحة" و"إلى صفحة" بنطاق لا يتجاوز ${MAX_PDF_PAGES_PER_RUN} صفحات.`;
+            statusEl.style.color = "var(--bad)";
+            return;
+          }
+          startPage = parseInt(fromRaw, 10);
+          endPage = parseInt(toRaw, 10);
+        } else {
+          // 4 صفحات فأقل: التحديد اختياري، وإن تُرك فارغًا يُعالج الملف كاملًا
+          startPage = fromRaw ? parseInt(fromRaw, 10) : 1;
+          endPage = toRaw ? parseInt(toRaw, 10) : pdf.numPages;
+        }
+
+        if (isNaN(startPage) || startPage < 1) startPage = 1;
+        if (isNaN(endPage) || endPage > pdf.numPages) endPage = pdf.numPages;
+        if (startPage > endPage) {
+          statusEl.textContent = "رقم صفحة البداية أكبر من رقم النهاية — راجع الأرقام.";
+          statusEl.style.color = "var(--bad)";
+          return;
+        }
+        if (endPage - startPage + 1 > MAX_PDF_PAGES_PER_RUN) {
+          statusEl.textContent = `لا يمكن معالجة أكثر من ${MAX_PDF_PAGES_PER_RUN} صفحات في المرة الواحدة — ضيّق النطاق المحدد.`;
+          statusEl.style.color = "var(--bad)";
+          return;
+        }
+
+        const aiExercises = [];
+        for (let i = startPage; i <= endPage; i++) {
+          statusEl.textContent = `جاري تحليل الصفحة ${i} من ${endPage} بالذكاء الاصطناعي...`;
+
+          const page = await pdf.getPage(i);
+          const baseViewport = page.getViewport({ scale: 1 });
+          const scale = 1400 / baseViewport.width; // دقة جيدة لقراءة النص بوضوح
+          const viewport = page.getViewport({ scale });
+
+          const canvas = document.createElement("canvas");
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          const ctx = canvas.getContext("2d");
+          await page.render({ canvasContext: ctx, viewport }).promise;
+          const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+
+          const found = await analyzeImageWithAI(dataUrl).catch((err) => {
+            throw new Error(`تعذّر تحليل الصفحة ${i}: ${err.message}`);
+          });
+          found.forEach((ex) => aiExercises.push(hydrateExercise(ex)));
+        }
+
+        exercises = aiExercises;
+
+        if (exercises.length === 0) {
+          statusEl.textContent = "لم يتمكن الذكاء الاصطناعي من إيجاد أي تمارين في الصفحات المحددة.";
+          statusEl.style.color = "var(--bad)";
+          return;
+        }
+
+        statusEl.textContent = `تم استخراج ${exercises.length} تمرين بواسطة الذكاء الاصطناعي من ${endPage - startPage + 1} صفحة. راجعها بالأسفل.`;
+        statusEl.style.color = "var(--ok)";
+        renderExercises();
+        document.getElementById("reviewCard").style.display = "block";
+        document.getElementById("saveCard").style.display = "block";
+      } catch (err) {
+        statusEl.textContent = "حدث خطأ أثناء المعالجة: " + err.message;
+        statusEl.style.color = "var(--bad)";
+      }
+    });
+
+    const typeLabels = {
+      "fill-blank": "أكمل الفراغات",
+      "fill-table": "أكمل الجدول",
+      "mcq": "اختيار من متعدد",
+      "true-false": "صح / خطأ",
+      "matching": "مزاوجة",
+      "ordering": "ترتيب",
+      "open-text": "سؤال مفتوح"
+    };
+
+    function renderExercises() {
+      const wrap = document.getElementById("exercisesWrap");
+      wrap.innerHTML = "";
+      exercises.forEach((ex, idx) => {
+        const div = document.createElement("div");
+        div.className = "ex-block";
+
+        const typeSelect = `
+          <select data-retype="${ex.id}" style="width:auto;">
+            ${Object.entries(typeLabels).map(([val, label]) =>
+              `<option value="${val}" ${val === ex.type ? "selected" : ""}>${label}</option>`).join("")}
+          </select>`;
+
+        div.innerHTML = `
+          <div class="ex-block-header">
+            <span class="type-badge">تمرين ${idx + 1}</span>
+            ${typeSelect}
+            <button class="remove-btn" data-delete="${ex.id}">حذف البطاقة</button>
+          </div>
+          <div class="ex-editor" id="editor-${ex.id}"></div>
+        `;
+        wrap.appendChild(div);
+        renderEditor(ex);
+
+        div.querySelector(`[data-delete="${ex.id}"]`).addEventListener("click", async () => {
+          if (await mnConfirm("هل أنت متأكد من رغبتك في حذف هذا التمرين؟")) {
+            exercises.splice(idx, 1);
+            renderExercises();
+          }
+        });
+
+        div.querySelector(`[data-retype="${ex.id}"]`).addEventListener("change", (e) => {
+          const newType = e.target.value;
+          exercises[idx] = makeExercise(newType, ex.rawText);
+          exercises[idx].id = ex.id;
+          renderExercises();
+        });
+      });
+    }
+
+    function renderEditor(ex) {
+      const el = document.getElementById(`editor-${ex.id}`);
+      if (!el) return;
+
+      if (ex.type === "fill-blank") {
+        el.innerHTML = ex.items.map((it, i) => `
+          <div class="item-row">
+            <input type="text" placeholder="نص الفراغ" value="${escapeHtml(it.prompt)}" data-field="prompt" data-i="${i}">
+            <input type="text" placeholder="الإجابة الصحيحة" value="${escapeHtml(it.answer)}" data-field="answer" data-i="${i}" style="max-width:120px;">
+            <button class="remove-btn" data-remove="${i}">حذف</button>
+          </div>`).join("") + `<button class="btn btn-secondary small-btn" data-add>+ إضافة فراغ</button>`;
+      } else if (ex.type === "true-false") {
+        el.innerHTML = ex.items.map((it, i) => `
+          <div class="item-row">
+            <input type="text" placeholder="نص العبارة" value="${escapeHtml(it.statement)}" data-field="statement" data-i="${i}">
+            <select data-field="answer" data-i="${i}" style="width:auto;">
+              <option value="" ${it.answer === null ? "selected" : ""}>—</option>
+              <option value="true" ${it.answer === true ? "selected" : ""}>صح</option>
+              <option value="false" ${it.answer === false ? "selected" : ""}>خطأ</option>
+            </select>
+            <button class="remove-btn" data-remove="${i}">حذف</button>
+          </div>`).join("") + `<button class="btn btn-secondary small-btn" data-add>+ إضافة عبارة</button>`;
+      } else if (ex.type === "mcq") {
+        el.innerHTML = ex.items.map((it, i) => `
+          <div style="border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:8px;">
+            <input type="text" placeholder="نص السؤال" value="${escapeHtml(it.prompt)}" data-field="prompt" data-i="${i}" style="margin-bottom:6px;">
+            ${it.options.map((opt, oi) => `
+              <div class="item-row">
+                <input type="radio" name="correct-${ex.id}-${i}" ${it.correctIndex === oi ? "checked" : ""} data-correct="${i}" data-oi="${oi}">
+                <input type="text" placeholder="خيار ${oi + 1}" value="${escapeHtml(opt)}" data-option="${i}" data-oi="${oi}">
+              </div>`).join("")}
+            <button class="remove-btn" data-remove="${i}">حذف السؤال</button>
+          </div>`).join("") + `<button class="btn btn-secondary small-btn" data-add>+ إضافة سؤال</button>`;
+      } else if (ex.type === "matching") {
+        el.innerHTML = ex.pairs.map((p, i) => `
+          <div class="item-row">
+            <input type="text" placeholder="العنصر" value="${escapeHtml(p.left)}" data-left="${i}">
+            <span>↔</span>
+            <input type="text" placeholder="المقابل الصحيح" value="${escapeHtml(p.right)}" data-right="${i}">
+            <button class="remove-btn" data-remove="${i}">حذف</button>
+          </div>`).join("") + `<button class="btn btn-secondary small-btn" data-add>+ إضافة زوج</button>`;
+      } else if (ex.type === "ordering") {
+        el.innerHTML = ex.items.map((it, i) => `
+          <div class="item-row">
+            <span style="font-weight:700;">${i + 1}.</span>
+            <input type="text" placeholder="العنصر بترتيبه الصحيح" value="${escapeHtml(it)}" data-order="${i}">
+            <button class="remove-btn" data-remove="${i}">حذف</button>
+          </div>`).join("") + `<button class="btn btn-secondary small-btn" data-add>+ إضافة عنصر</button>`;
+      } else if (ex.type === "fill-table") {
+        renderTableEditor(el, ex);
+        return;
+      } else {
+        el.innerHTML = `<textarea data-prompt rows="3" placeholder="نص السؤال المفتوح">${escapeHtml(ex.prompt)}</textarea>`;
+      }
+
+      bindEditorEvents(el, ex);
+    }
+
+    // ---------- محرر تمرين أكمل الجدول (عدد الأعمدة/الصفوف يشمل رأس الجدول) ----------
+    function renderTableEditor(el, ex) {
+      const t = ex.table;
+      el.innerHTML = `
+        <div style="display:flex;gap:10px;margin-bottom:10px;">
+          <div style="flex:1;">
+            <label style="font-size:12px;">عدد الأعمدة (شامل عمود العناوين)</label>
+            <input type="number" id="colsInput-${ex.id}" value="${t.cols}" min="2" max="6">
+          </div>
+          <div style="flex:1;">
+            <label style="font-size:12px;">عدد الصفوف (شامل صف العناوين)</label>
+            <input type="number" id="rowsInput-${ex.id}" value="${t.rows}" min="2" max="8">
+          </div>
+        </div>
+        <button class="btn btn-secondary small-btn" id="genTableBtn-${ex.id}" style="margin-bottom:12px;">توليد الجدول</button>
+        <div id="tableGrid-${ex.id}"></div>
+        <p style="font-size:11px;color:var(--ink-soft);margin-top:8px;">الخلايا الزرقاء = عناوين، الخلايا الوردية = إجابة يملأها الطالب. اضغط مطولًا على أي خلية لتبديل نوعها.</p>
+      `;
+
+      document.getElementById(`genTableBtn-${ex.id}`).addEventListener("click", () => {
+        const newCols = Math.max(2, parseInt(document.getElementById(`colsInput-${ex.id}`).value, 10) || 2);
+        const newRows = Math.max(2, parseInt(document.getElementById(`rowsInput-${ex.id}`).value, 10) || 2);
+        const resized = makeEmptyTable(newCols, newRows);
+        for (let r = 0; r < Math.min(newRows, t.rows); r++) {
+          for (let c = 0; c < Math.min(newCols, t.cols); c++) {
+            resized.cells[r][c] = { ...t.cells[r][c] };
+          }
+        }
+        ex.table = resized;
+        renderTableEditor(el, ex);
+      });
+
+      drawTableGrid(document.getElementById(`tableGrid-${ex.id}`), ex.table);
+    }
+
+    function drawTableGrid(container, t) {
+      container.innerHTML = "";
+      const grid = document.createElement("div");
+      grid.style.cssText = `display:grid;grid-template-columns:repeat(${t.cols},minmax(80px,1fr));gap:6px;`;
+      container.appendChild(grid);
+
+      for (let r = 0; r < t.rows; r++) {
+        for (let c = 0; c < t.cols; c++) {
+          const cellData = t.cells[r][c];
+          const cell = document.createElement("input");
+          cell.type = "text";
+          cell.value = cellData.value || "";
+          cell.placeholder = cellData.type === "header" ? "عنوان" : "الإجابة الصحيحة";
+          applyTableCellStyle(cell, cellData.type);
+          cell.addEventListener("input", (e) => { cellData.value = e.target.value; });
+          attachLongPress(cell, () => {
+            cellData.type = cellData.type === "header" ? "answer" : "header";
+            drawTableGrid(container, t);
+          });
+          grid.appendChild(cell);
+        }
+      }
+    }
+
+    function applyTableCellStyle(el, type) {
+      if (type === "header") {
+        el.style.cssText = "background:var(--bg-2f5aa8,#2f5aa8);color:var(--fg-ffffff,#fff);border:none;border-radius:6px;padding:8px;font-size:12px;text-align:center;font-weight:700;";
+      } else {
+        el.style.cssText = "background:var(--bg-ffffff,#fff);border:2px solid var(--bd-d43d8f,#d43d8f);border-radius:6px;padding:8px;font-size:12px;text-align:center;";
+      }
+    }
+
+    // ---------- ضغط مطوّل (تعمل على اللمس والفأرة) ----------
+    function attachLongPress(el, callback) {
+      let timer = null;
+      const start = () => { timer = setTimeout(callback, 550); };
+      const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
+      el.addEventListener("pointerdown", start);
+      el.addEventListener("pointerup", cancel);
+      el.addEventListener("pointerleave", cancel);
+      el.addEventListener("pointercancel", cancel);
+    }
+
+    function bindEditorEvents(el, ex) {
+      el.querySelectorAll("[data-field]").forEach((input) => {
+        input.addEventListener("input", (e) => {
+          const i = +e.target.dataset.i;
+          const field = e.target.dataset.field;
+          let val = e.target.value;
+          if (field === "answer" && ex.type === "true-false") {
+            val = val === "true" ? true : val === "false" ? false : null;
+          }
+          ex.items[i][field] = val;
+        });
+      });
+      el.querySelectorAll("[data-option]").forEach((input) => {
+        input.addEventListener("input", (e) => {
+          ex.items[+e.target.dataset.option].options[+e.target.dataset.oi] = e.target.value;
+        });
+      });
+      el.querySelectorAll("[data-correct]").forEach((input) => {
+        input.addEventListener("change", (e) => {
+          ex.items[+e.target.dataset.correct].correctIndex = +e.target.dataset.oi;
+        });
+      });
+      el.querySelectorAll("[data-left]").forEach((input) => {
+        input.addEventListener("input", (e) => { ex.pairs[+e.target.dataset.left].left = e.target.value; });
+      });
+      el.querySelectorAll("[data-right]").forEach((input) => {
+        input.addEventListener("input", (e) => { ex.pairs[+e.target.dataset.right].right = e.target.value; });
+      });
+      el.querySelectorAll("[data-order]").forEach((input) => {
+        input.addEventListener("input", (e) => { ex.items[+e.target.dataset.order] = e.target.value; });
+      });
+      const promptEl = el.querySelector("[data-prompt]");
+      if (promptEl) promptEl.addEventListener("input", (e) => { ex.prompt = e.target.value; });
+
+      el.querySelectorAll("[data-remove]").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          const i = +e.target.dataset.remove;
+          if (ex.type === "matching") ex.pairs.splice(i, 1);
+          else if (ex.type === "ordering") ex.items.splice(i, 1);
+          else ex.items.splice(i, 1);
+          renderEditor(ex);
+        });
+      });
+      const addBtn = el.querySelector("[data-add]");
+      if (addBtn) addBtn.addEventListener("click", () => {
+        if (ex.type === "fill-blank") ex.items.push({ prompt: "", answer: "" });
+        else if (ex.type === "true-false") ex.items.push({ statement: "", answer: null });
+        else if (ex.type === "mcq") ex.items.push({ prompt: "", options: ["", "", ""], correctIndex: 0 });
+        else if (ex.type === "matching") ex.pairs.push({ left: "", right: "" });
+        else if (ex.type === "ordering") ex.items.push("");
+        renderEditor(ex);
+      });
+    }
+
+    function escapeHtml(str) {
+      return (str || "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    // ---------- حفظ الورقة كمسودة في Firestore ----------
+    function resetBuildActivityForm() {
+      exercises = [];
+      document.getElementById("pdfInput").value = "";
+      document.getElementById("pageCountInfo").textContent = "";
+      document.getElementById("pagePreviewWrap").innerHTML = "";
+      document.getElementById("extractStatus").textContent = "";
+      document.getElementById("exercisesWrap").innerHTML = "";
+      document.getElementById("reviewCard").style.display = "none";
+      document.getElementById("saveCard").style.display = "none";
+      document.getElementById("worksheetTitle").value = "";
+      document.getElementById("worksheetSubject").value = "";
+      document.getElementById("worksheetGrade").value = "";
+      document.getElementById("worksheetUnit").value = "";
+      document.getElementById("worksheetLesson").value = "";
+      document.getElementById("saveStatus").textContent = "";
+    }
+    document.getElementById("cancelWorksheetBtn").addEventListener("click", async () => {
+      if (!await mnConfirm("سيتم إلغاء جميع التمارين المستخرجة والبيانات المدخلة. هل ترغب في المتابعة؟")) return;
+      resetBuildActivityForm();
+    });
+
+    document.getElementById("saveWorksheetBtn").addEventListener("click", async () => {
+      const statusEl = document.getElementById("saveStatus");
+      const title = document.getElementById("worksheetTitle").value.trim();
+      const subject = document.getElementById("worksheetSubject").value;
+      const grade = document.getElementById("worksheetGrade").value;
+      if (!title) {
+        statusEl.textContent = "اكتب عنوان الورقة أولًا.";
+        statusEl.style.color = "var(--bad)";
+        return;
+      }
+      if (!subject) {
+        statusEl.textContent = "اختر المادة أولًا.";
+        statusEl.style.color = "var(--bad)";
+        return;
+      }
+      if (!grade) {
+        statusEl.textContent = "اختر الصف أولًا.";
+        statusEl.style.color = "var(--bad)";
+        return;
+      }
+
+      statusEl.textContent = "جاري الحفظ...";
+      statusEl.style.color = "var(--ink-soft)";
+
+      const exercisesPayload = buildExercisesPayload();
+      // مصدر البنك: هل تغيّر المحتوى منذ تحميله من البنك (تراكميًا عبر التعديلات المتتالية على المسودة)
+      const bankSrcFields = editingSrc
+        ? { fromBankId: editingSrc.bankId, bankChanged: !!(editingSrc.changed || stableStr(exercisesPayload) !== editingSigAtLoad) }
+        : {};
+
+      try {
+        let savedId;
+        if (editingDraftId) {
+          // تعديل مسودة موجودة — تحديث في مكانها بدل إنشاء نسخة جديدة
+          await updateDoc(doc(db, "worksheets", editingDraftId), {
+            subject, grade, title,
+            unit: document.getElementById("worksheetUnit").value.trim(),
+            lesson: document.getElementById("worksheetLesson").value.trim(),
+            exercises: exercisesPayload,
+            ...bankSrcFields
+          });
+          savedId = editingDraftId;
+          editingDraftId = null; editingSrc = null;
+        } else {
+          const worksheetsRef = collection(db, "worksheets");
+          const newDoc = await addDoc(worksheetsRef, {
+            schoolId: currentTeacher.schoolId,
+            createdBy: currentTeacher.uid,
+            createdByName: currentTeacher.name,
+            subject,
+            grade,
+            title,
+            unit: document.getElementById("worksheetUnit").value.trim(),
+            lesson: document.getElementById("worksheetLesson").value.trim(),
+            sourceFileName: document.getElementById("pdfInput").files[0]?.name || "",
+            status: "draft",
+            assignedClassIds: [],
+            assignedStudentIds: [],
+            dueDate: null,
+            createdAt: serverTimestamp(),
+            publishedAt: null,
+            exercises: exercisesPayload,
+            ...bankSrcFields
+          });
+          savedId = newDoc.id; editingSrc = null;
+        }
+        statusEl.textContent = "تم الحفظ بنجاح.";
+        statusEl.style.color = "var(--ok)";
+        document.getElementById("saveWorksheetBtn").textContent = "حفظ الورقة (مسودة)";
+        await openPublishPanel(savedId, title);
+        await loadDrafts();
+        exercises = [];
+        document.getElementById("pdfInput").value = "";
+        document.getElementById("pageCountInfo").textContent = "";
+        document.getElementById("pagePreviewWrap").innerHTML = "";
+        document.getElementById("extractStatus").textContent = "";
+        document.getElementById("exercisesWrap").innerHTML = "";
+        document.getElementById("reviewCard").style.display = "none";
+        document.getElementById("saveCard").style.display = "none";
+        document.getElementById("worksheetTitle").value = "";
+        document.getElementById("worksheetSubject").value = "";
+        document.getElementById("worksheetGrade").value = "";
+        document.getElementById("worksheetUnit").value = "";
+        document.getElementById("worksheetLesson").value = "";
+      } catch (err) {
+        statusEl.textContent = "حدث خطأ أثناء الحفظ: " + err.message;
+        statusEl.style.color = "var(--bad)";
+      }
+    });
+
+    // ---------- فتح لوحة النشر لورقة معيّنة ----------
+    let currentPublishId = null;
+
+    async function openPublishPanel(worksheetId, title) {
+      currentPublishId = worksheetId;
+      document.getElementById("publishTitle").textContent = title;
+      const box = document.getElementById("classCheckboxes");
+      box.innerHTML = "جاري تحميل الفصول...";
+      showWsTab("publish");
+
+      try {
+        const wSnap = await getDoc(doc(db, "worksheets", worksheetId));
+        const wSubject = wSnap.exists() ? (wSnap.data().subject || "") : "";
+
+        const rosterSnap = await getDoc(doc(db, "schoolData", rosterDocId()));
+        const rosterData = rosterSnap.exists() ? rosterSnap.data() : {};
+        let classes = [];
+        try { classes = JSON.parse(rosterData.value || "{}").classes || []; } catch (e) { classes = []; }
+
+        const me = await loadMyCtx();
+
+        if (!me.isAdmin) {
+          // الفردي يرى كل فصوله؛ الموظف يرى المسنَدة له (أو كلها لو «كل الفصول») أو ما أنشأه
+          if (!me.isSolo && !me.assigned.includes("__all__")) {
+            classes = classes.filter((c) => me.assigned.includes(String(c.code)) || c.createdBy === currentTeacher.uid);
+          }
+          // فلترة إضافية: بس الفصول اللي المعلم أسند لها نفس مادة هذه الورقة تحديدًا
+          if (wSubject) {
+            const subjAssign = me.subjectAssignments;
+            const subjectClassCodes = subjAssign.filter((a) => a.subject === wSubject).map((a) => String(a.classCode));
+            classes = classes.filter((c) => subjectClassCodes.includes(String(c.code)));
+          }
+        }
+
+        if (classes.length === 0) {
+          box.innerHTML = `<p style="font-size:13px;color:var(--bad);">لا توجد فصول مُسندة لك في مادة «${wSubject || "—"}» — راجع تبويب «إسناد المواد» في إدارة الصف.</p>`;
+        } else {
+          box.innerHTML = classes.map((c) => `
+            <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:14px;">
+              <input type="checkbox" value="${c.code}" data-class-check>
+              ${c.code}${c.name ? " - " + c.name : ""}
+            </label>`).join("");
+        }
+      } catch (err) {
+        box.innerHTML = `<p style="font-size:13px;color:var(--bad);">حدث خطأ: ${err.message}</p>`;
+      }
+
+      document.getElementById("publishCard").style.display = "block";
+      document.getElementById("publishCard").scrollIntoView({ behavior: "smooth" });
+    }
+
+    document.getElementById("confirmPublishBtn").addEventListener("click", async () => {
+      const statusEl = document.getElementById("publishStatus");
+      const selected = Array.from(document.querySelectorAll("[data-class-check]:checked")).map((cb) => cb.value);
+
+      if (selected.length === 0) {
+        statusEl.textContent = "اختر فصل واحد على الأقل.";
+        statusEl.style.color = "var(--bad)";
+        return;
+      }
+
+      statusEl.textContent = "جاري النشر...";
+      statusEl.style.color = "var(--ink-soft)";
+
+      try {
+        if (CLS_SESSION && CLS_SESSION.viewOnly) { statusEl.textContent = "أنت تعرض فصلًا سابقًا للقراءة فقط، ولا يمكن النشر فيه. عُد إلى الفصل الحالي."; statusEl.style.color = "var(--bad)"; return; }
+        const dueDateVal = document.getElementById("dueDateInput").value;
+        const activityTarget = document.getElementById("activityTargetInput").value || "hw";
+        await updateDoc(doc(db, "worksheets", currentPublishId), {
+          status: "published",
+          assignedClassIds: selected,
+          activityTarget,
+          dueDate: dueDateVal || null,
+          publishedAt: serverTimestamp(),
+          // ص-١: النشر يرتبط بالسياق الحالي وفصله (المسودة قد تكون أُنشئت في سياق آخر)
+          schoolId: currentTeacher.schoolId || null,
+          period: CUR_PERIOD
+        });
+        statusEl.textContent = "تم نشر الورقة بنجاح، وستظهر للطلاب في الفصول المحددة.";
+        statusEl.style.color = "var(--ok)";
+
+        if (await mnConfirm("هل ترغب في حفظ نسخة من هذا النشاط في بنك الأسئلة الخاص بك؟")) {
+          try {
+            const wSnap = await getDoc(doc(db, "worksheets", currentPublishId));
+            if (wSnap.exists()) {
+              const r = await saveWorksheetToBank(wSnap.data());
+              if (r === "unchanged") alert("هذا النشاط موجود في بنك الأسئلة بلا تغيير في المحتوى، فلم تُضَف نسخة جديدة.");
+            }
+          } catch (e2) { /* تجاهل خطأ الحفظ الاختياري بدون مقاطعة تجربة النشر */ }
+        }
+
+        await loadDrafts();
+      } catch (err) {
+        statusEl.textContent = "حدث خطأ أثناء النشر: " + err.message;
+        statusEl.style.color = "var(--bad)";
+      }
+    });
+
+    // ---------- عرض المسودات الحالية ----------
+    async function loadDrafts() {
+      const listEl = document.getElementById("draftsList");
+      listEl.innerHTML = "جاري التحميل...";
+      const q = query(collection(db, "worksheets"),
+        where("createdBy", "==", currentTeacher.uid), where("status", "==", "draft"));
+      const snap = await getDocs(q);
+
+      if (snap.empty) {
+        listEl.innerHTML = `<p style="font-size:13px;color:var(--ink-soft);">لا توجد مسودات حاليًا.</p>`;
+        return;
+      }
+
+      listEl.innerHTML = "";
+      snap.docs.forEach((d) => {
+        const w = d.data();
+        const row = document.createElement("div");
+        row.style.cssText = "display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);";
+        row.innerHTML = `
+          <div>
+            <p style="margin:0;font-weight:700;font-size:14px;">${w.title}</p>
+            <p style="margin:2px 0 0;font-size:12px;color:var(--ink-soft);">${w.unit || ""} ${w.lesson ? "— " + w.lesson : ""} (${(w.exercises || []).length} تمرين)</p>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="btn btn-secondary small-btn" data-preview-existing="${d.id}" data-title="${escapeHtml(w.title)}">معاينة</button>
+            <button class="btn btn-secondary small-btn" data-edit-existing="${d.id}">تعديل</button>
+            <button class="btn btn-primary small-btn" data-publish-existing="${d.id}" data-title="${escapeHtml(w.title)}">نشر</button>
+            <button class="btn btn-secondary small-btn" data-tobank="${d.id}">نقل لبنك الأسئلة</button>
+            <button class="remove-btn" data-delete-draft="${d.id}">حذف</button>
+          </div>
+        `;
+        listEl.appendChild(row);
+      });
+
+      listEl.querySelectorAll("[data-preview-existing]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const wDoc = snap.docs.find((d) => d.id === btn.dataset.previewExisting);
+          renderWorksheetPreview(btn.dataset.title, wDoc.data());
+        });
+      });
+
+      listEl.querySelectorAll("[data-edit-existing]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const wDoc = snap.docs.find((d) => d.id === btn.dataset.editExisting);
+          const dd = wDoc.data();
+          loadWorksheetIntoEditor(dd, wDoc.id, dd.fromBankId ? { bankId: dd.fromBankId, changed: !!dd.bankChanged } : null);
+        });
+      });
+
+      listEl.querySelectorAll("[data-publish-existing]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          openPublishPanel(btn.dataset.publishExisting, btn.dataset.title);
+        });
+      });
+
+      listEl.querySelectorAll("[data-delete-draft]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          if (!await mnConfirm("هل أنت متأكد من رغبتك في حذف هذه المسودة نهائيًا؟")) return;
+          await deleteDoc(doc(db, "worksheets", btn.dataset.deleteDraft));
+          await loadDrafts();
+        });
+      });
+
+      listEl.querySelectorAll("[data-tobank]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          if (!await mnConfirm("ستُنقل هذه الورقة إلى بنك الأسئلة وتُحذف من المسودات. متابعة؟")) return;
+          const wDoc = snap.docs.find((d) => d.id === btn.dataset.tobank);
+          const w = wDoc.data();
+          const r = await saveWorksheetToBank(w);
+          if (r === "unchanged") alert("هذا النشاط موجود في بنك الأسئلة بلا تغيير في المحتوى، فلم تُضَف نسخة جديدة.");
+          await deleteDoc(doc(db, "worksheets", btn.dataset.tobank));
+          await loadDrafts();
+          await loadBank();
+        });
+      });
+    }
+
+    // ---------- عرض معاينة شبيهة بشاشة الطالب (t هنا بصيغة Firestore المغلّفة) ----------
+    function renderTablePreview(container, t) {
+      if (!container || !t) return;
+      const cellsMatrix = (t.cells || []).map((r) => r.row || []);
+      const grid = document.createElement("div");
+      grid.style.cssText = `display:grid;grid-template-columns:repeat(${t.cols},minmax(80px,1fr));gap:6px;`;
+      container.appendChild(grid);
+
+      cellsMatrix.forEach((row) => {
+        row.forEach((cellData) => {
+          const cell = document.createElement("div");
+          cell.style.cssText = "border-radius:6px;padding:8px;font-size:12px;text-align:center;min-height:16px;";
+          if (cellData.type === "header") {
+            cell.textContent = cellData.value || "";
+            cell.style.background = "#2f5aa8"; cell.style.color = "#fff"; cell.style.fontWeight = "700";
+          } else {
+            cell.style.background = "#fff"; cell.style.border = "2px solid #d43d8f";
+          }
+          grid.appendChild(cell);
+        });
+      });
+    }
+
+    function renderWorksheetPreview(title, worksheetData) {
+      document.getElementById("previewWorksheetTitle").textContent = title;
+      const body = document.getElementById("previewWorksheetBody");
+      const exList = worksheetData.exercises || [];
+
+      body.innerHTML = exList.map((ex, i) => {
+        const header = `<p style="font-weight:700;font-size:13px;color:var(--teal);margin:16px 0 8px;">تمرين ${i + 1} — ${typeLabels[ex.type] || ex.type}</p>`;
+
+        if (ex.type === "fill-blank") {
+          return header + (ex.data.items || []).map((it) => `
+            <div class="item-row"><input type="text" placeholder="${escapeHtml(it.prompt)}" disabled></div>`).join("");
+        }
+        if (ex.type === "true-false") {
+          return header + (ex.data.items || []).map((it) => `
+            <div class="tf-row" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px;">
+              <span>${escapeHtml(it.statement)}</span><span>✓ / ✗</span>
+            </div>`).join("");
+        }
+        if (ex.type === "mcq") {
+          return header + (ex.data.items || []).map((it) => `
+            <p style="font-size:13px;margin:6px 0 4px;font-weight:500;">${escapeHtml(it.prompt)}</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+              ${it.options.map((opt) => `<span class="type-badge" style="background:var(--paper);color:var(--ink-soft);">${escapeHtml(opt) || "—"}</span>`).join("")}
+            </div>`).join("");
+        }
+        if (ex.type === "fill-table") {
+          const containerId = `tblprev-${i}`;
+          setTimeout(() => renderTablePreview(document.getElementById(containerId), ex.data), 0);
+          return header + `<div id="${containerId}"></div>`;
+        }
+        if (ex.type === "matching") {
+          return header + (ex.data.pairs || []).map((p) => `
+            <div class="item-row" style="font-size:13px;"><span>${escapeHtml(p.left)}</span><span>↔</span><span>${escapeHtml(p.right)}</span></div>`).join("");
+        }
+        if (ex.type === "ordering") {
+          return header + `<ol style="font-size:13px;padding-inline-start:20px;">${(ex.data.items || []).map((it) => `<li>${escapeHtml(it)}</li>`).join("")}</ol>`;
+        }
+        return header + `<textarea rows="3" placeholder="${escapeHtml(ex.data.prompt || "")}" disabled></textarea>`;
+      }).join("");
+
+      document.getElementById("previewWorksheetCard").style.display = "block";
+      document.getElementById("previewWorksheetCard").scrollIntoView({ behavior: "smooth" });
+    }
+
+    document.getElementById("refreshDraftsBtn").addEventListener("click", loadDrafts);
+
+    // ---------- بنك الأسئلة ----------
+    let bankFilterSem = "all", bankFilterYear = "all";
+    function bankTitleKey(t) { return String(t || "").replace(/\s+/g, " ").trim(); }
+    function bankDraftFrom(w, bankId) {
+      return {
+        schoolId: currentTeacher.schoolId || null,
+        createdBy: currentTeacher.uid,
+        createdByName: currentTeacher.name,
+        subject: w.subject || "",
+        grade: w.grade || "",
+        title: w.title,
+        unit: w.unit || "",
+        lesson: w.lesson || "",
+        sourceFileName: w.sourceFileName || "",
+        status: "draft",
+        assignedClassIds: [],
+        assignedStudentIds: [],
+        dueDate: null,
+        createdAt: serverTimestamp(),
+        publishedAt: null,
+        exercises: w.exercises,
+        fromBankId: bankId,
+        bankChanged: false
+      };
+    }
+    async function loadBank() {
+      const listEl = document.getElementById("bankList");
+      const filtEl = document.getElementById("bankFilters");
+      listEl.innerHTML = "جاري التحميل...";
+      const snap = await getDocs(query(collection(db, "questionBank"), where("createdBy", "==", currentTeacher.uid)));
+
+      if (snap.empty) {
+        if (filtEl) filtEl.innerHTML = "";
+        listEl.innerHTML = `<p style="font-size:13px;color:var(--ink-soft);">بنك الأسئلة فاضي حاليًا.</p>`;
+        return;
+      }
+
+      // فلاتر الفصل والعام
+      const years = Array.from(new Set(snap.docs.map((d) => d.data().yearStamp).filter(Boolean))).sort().reverse();
+      if (bankFilterYear !== "all" && bankFilterYear !== "none" && !years.includes(bankFilterYear)) bankFilterYear = "all";
+      if (filtEl) {
+        filtEl.innerHTML = `
+          <select id="bankFSem" style="padding:6px 10px;border:1px solid var(--line);border-radius:8px;font:inherit;">
+            <option value="all">كل الفصول</option>
+            <option value="first">الفصل الأول</option>
+            <option value="second">الفصل الثاني</option>
+            <option value="none">غير مصنّف</option>
+          </select>
+          <select id="bankFYear" style="padding:6px 10px;border:1px solid var(--line);border-radius:8px;font:inherit;">
+            <option value="all">كل الأعوام</option>
+            ${years.map((y) => `<option value="${escapeHtml(y)}">${arDigits(y)}</option>`).join("")}
+            <option value="none">بلا عام</option>
+          </select>`;
+        const fs = document.getElementById("bankFSem"), fy = document.getElementById("bankFYear");
+        fs.value = bankFilterSem; fy.value = bankFilterYear;
+        fs.onchange = () => { bankFilterSem = fs.value; loadBank(); };
+        fy.onchange = () => { bankFilterYear = fy.value; loadBank(); };
+      }
+
+      const items = snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((w) => {
+        if (bankFilterSem === "none" ? !!w.semester : (bankFilterSem !== "all" && w.semester !== bankFilterSem)) return false;
+        if (bankFilterYear === "none" ? !!w.yearStamp : (bankFilterYear !== "all" && w.yearStamp !== bankFilterYear)) return false;
+        return true;
+      });
+      if (!items.length) {
+        listEl.innerHTML = `<p style="font-size:13px;color:var(--ink-soft);">لا توجد عناصر بهذا الفلتر.</p>`;
+        return;
+      }
+
+      listEl.innerHTML = "";
+      // تجميع حسب "المادة الصف" — مثال: تقنية رقمية أول ثانوي، ثم حسب العنوان (النسخ المتشابهة تظهر معًا بشارات الأعوام)
+      const groups = {};
+      items.forEach((w) => {
+        const key = (w.subject || "بدون مادة") + " " + (w.grade || "بدون صف");
+        (groups[key] = groups[key] || []).push(w);
+      });
+      const semRank = (p) => (p === "first" ? 0 : (p === "second" ? 1 : 2));
+      Object.keys(groups).sort().forEach((key) => {
+        const groupHeader = document.createElement("div");
+        groupHeader.style.cssText = "font-weight:800;font-size:14px;color:var(--teal);margin:14px 0 6px;padding-bottom:4px;border-bottom:2px solid var(--teal-light);";
+        groupHeader.textContent = key;
+        listEl.appendChild(groupHeader);
+
+        const byTitle = {};
+        groups[key].forEach((w) => { (byTitle[bankTitleKey(w.title)] = byTitle[bankTitleKey(w.title)] || []).push(w); });
+        Object.keys(byTitle).sort().forEach((tk) => {
+          const vers = byTitle[tk].sort((a, b) =>
+            String(b.yearStamp || "").localeCompare(String(a.yearStamp || "")) || (semRank(a.semester) - semRank(b.semester)));
+          const block = document.createElement("div");
+          block.style.cssText = "padding:10px 0;border-bottom:1px solid var(--line);";
+          const first = vers[0];
+          block.innerHTML = `<p style="margin:0;font-weight:700;font-size:14px;">${escapeHtml(first.title || "")}</p>
+            <p style="margin:2px 0 6px;font-size:12px;color:var(--ink-soft);">${escapeHtml(first.unit || "")} ${first.lesson ? "— " + escapeHtml(first.lesson) : ""}</p>`;
+          vers.forEach((w) => {
+            const row = document.createElement("div");
+            row.style.cssText = "display:flex;justify-content:space-between;align-items:center;padding:6px 0;flex-wrap:wrap;gap:8px;";
+            const semBtns = w.semester
+              ? `<button class="btn btn-secondary small-btn" data-movesem="${w.id}" data-sem="${otherSem(w.semester)}">نقل إلى ${semLabel(otherSem(w.semester))}</button>
+                 <button class="btn btn-secondary small-btn" data-copysem="${w.id}" data-sem="${otherSem(w.semester)}">نسخ إلى ${semLabel(otherSem(w.semester))}</button>`
+              : `<button class="btn btn-secondary small-btn" data-setsem="${w.id}" data-sem="first">تصنيف: الفصل الأول</button>
+                 <button class="btn btn-secondary small-btn" data-setsem="${w.id}" data-sem="second">تصنيف: الفصل الثاني</button>`;
+            row.innerHTML = `
+              <div>
+                <span class="bank-badge${w.yearStamp ? "" : " none"}">${w.yearStamp ? arDigits(w.yearStamp) : "بلا عام"}</span><span class="bank-badge${w.semester ? "" : " none"}">${semLabel(w.semester)}</span>
+                <span style="font-size:12px;color:var(--ink-soft);">(${(w.exercises || []).length} تمرين)</span>
+              </div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <button class="btn btn-secondary small-btn" data-preview-bank="${w.id}" data-title="${escapeHtml(w.title)}">معاينة</button>
+                <button class="btn btn-secondary small-btn" data-edit-bank="${w.id}">تعديل</button>
+                <button class="btn btn-primary small-btn" data-use-bank="${w.id}">استخدام (نسخ كمسودة جديدة)</button>
+                <button class="btn btn-primary small-btn" style="background:var(--teal);" data-publish-bank="${w.id}">📢 نشر</button>
+                ${semBtns}
+                <button class="remove-btn" data-delete-bank="${w.id}">حذف نهائي</button>
+              </div>
+            `;
+            block.appendChild(row);
+          });
+          listEl.appendChild(block);
+        });
+      });
+
+      const docOf = (id) => snap.docs.find((d) => d.id === id);
+
+      listEl.querySelectorAll("[data-preview-bank]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          renderWorksheetPreview(btn.dataset.title, docOf(btn.dataset.previewBank).data());
+        });
+      });
+
+      listEl.querySelectorAll("[data-edit-bank]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const wDoc = docOf(btn.dataset.editBank);
+          loadWorksheetIntoEditor(wDoc.data(), undefined, { bankId: wDoc.id, changed: false });
+        });
+      });
+
+      listEl.querySelectorAll("[data-use-bank]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const wDoc = docOf(btn.dataset.useBank);
+          await addDoc(collection(db, "worksheets"), bankDraftFrom(wDoc.data(), wDoc.id));
+          alert("تم نسخ الورقة كمسودة جديدة. تقدر تلاقيها في قائمة المسودات وتنشرها.");
+          await loadDrafts();
+        });
+      });
+
+      listEl.querySelectorAll("[data-publish-bank]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const wDoc = docOf(btn.dataset.publishBank);
+          const w = wDoc.data();
+          const newDoc = await addDoc(collection(db, "worksheets"), bankDraftFrom(w, wDoc.id));
+          await loadDrafts();
+          await openPublishPanel(newDoc.id, w.title);
+        });
+      });
+
+      // نقل بين الفصلين: يغيّر الفصل فقط ولا يعيد ختم العام
+      listEl.querySelectorAll("[data-movesem]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          await updateDoc(doc(db, "questionBank", btn.dataset.movesem), { semester: btn.dataset.sem });
+          await loadBank();
+        });
+      });
+      // تصنيف عنصر قديم غير مصنّف
+      listEl.querySelectorAll("[data-setsem]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          await updateDoc(doc(db, "questionBank", btn.dataset.setsem), { semester: btn.dataset.sem });
+          await loadBank();
+        });
+      });
+      // نسخ إلى الفصل الآخر: نسخة جديدة بختم العام الحالي (كل إضافة جديدة تأخذ عام إضافتها) ويبقى الأصل كما هو
+      listEl.querySelectorAll("[data-copysem]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const w = docOf(btn.dataset.copysem).data();
+          const st = await bankStamp();
+          await addDoc(collection(db, "questionBank"), {
+            schoolId: currentTeacher.schoolId || null, createdBy: currentTeacher.uid,
+            subject: w.subject || "", grade: w.grade || "", title: w.title || "", unit: w.unit || "", lesson: w.lesson || "",
+            sourceFileName: w.sourceFileName || "", exercises: w.exercises || [], savedAt: serverTimestamp(),
+            semester: btn.dataset.sem, yearStamp: st.yearStamp, stampMode: "new"
+          });
+          await loadBank();
+        });
+      });
+
+      listEl.querySelectorAll("[data-delete-bank]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          if (!await mnConfirm("هل أنت متأكد من رغبتك في حذف هذه الورقة نهائيًا من بنك الأسئلة؟ لا يمكن التراجع عن هذا الإجراء.")) return;
+          await deleteDoc(doc(db, "questionBank", btn.dataset.deleteBank));
+          await loadBank();
+        });
+      });
+    }
+
+    document.getElementById("refreshBankBtn").addEventListener("click", loadBank);
+
+    /* ================= متابعة التسليمات ================= */
+    const submissionStatusLabels = {
+      "not-started": "لم يبدأ",
+      "in-progress": "جاري",
+      "submitted": "مُسلّم",
+      "corrected": "مُصحح"
+    };
+
+    let currentWorksheet = null;
+    let currentWorksheetId = null;
+    let currentSubmission = null;
+    let manualGrades = {}; // exerciseId -> true/false
+
+    async function loadWorksheetsForSubmissions() {
+      const listEl = document.getElementById("worksheetsList");
+      listEl.innerHTML = "جاري التحميل...";
+      const q = query(collection(db, "worksheets"),
+        where("createdBy", "==", currentTeacher.uid), where("status", "==", "published"));
+      const snapAll = await getDocs(q);
+      // ص-١: المنشورة هنا = منشورة في هذا السياق وهذا الفصل الدراسي؛ غيرها يُعرض للنسخ فقط
+      const hereDocs = snapAll.docs.filter((d) => wsInCurrentCtx(d.data()));
+      const otherDocs = snapAll.docs.filter((d) => !wsInCurrentCtx(d.data()));
+      const snap = { docs: hereDocs, empty: !hereDocs.length };
+
+      listEl.innerHTML = "";
+      let otherBox = null;
+      if (snap.empty) {
+        listEl.innerHTML = `<p style="font-size:13px;color:var(--ink-soft);">لا توجد أوراق منشورة في ${currentTeacher.schoolId ? "هذه المدرسة" : "حسابك الفردي"} خلال ${CUR_PERIOD === "second" ? "الفصل الثاني" : "الفصل الأول"}.</p>`;
+      }
+      if (otherDocs.length) {
+        const box = document.createElement("div");
+        box.style.cssText = "margin-top:14px;padding:10px;background:var(--paper);border-radius:10px;";
+        box.innerHTML = `<p style="margin:0 0 6px;font-weight:700;font-size:13px;">أنشطة منشورة في سياق أو فصل دراسي آخر (${otherDocs.length})</p>
+          <p style="margin:0 0 8px;font-size:12px;color:var(--ink-soft);">تسليماتها ودرجاتها تبقى في سياقها. يمكنك نسخ محتواها كمسودة جديدة هنا.</p>` +
+          otherDocs.map((d) => { const w = d.data(); return `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--line);">
+            <span style="font-size:13px;">${escapeHtml(w.title || "")} <span style="color:var(--ink-soft);font-size:11px;">${w.schoolId ? "مدرسة" : "حساب فردي"} — ${(w.period || "first") === "second" ? "الفصل الثاني" : "الفصل الأول"}</span></span>
+            <button class="btn btn-secondary small-btn" data-copy-here="${d.id}">نسخ كمسودة هنا</button></div>`; }).join("");
+        box.querySelectorAll("[data-copy-here]").forEach((btn) => btn.addEventListener("click", async () => {
+          const src = otherDocs.find((x) => x.id === btn.dataset.copyHere).data();
+          btn.disabled = true;
+          try {
+            await addDoc(collection(db, "worksheets"), {
+              schoolId: currentTeacher.schoolId || null, createdBy: currentTeacher.uid, createdByName: currentTeacher.name,
+              subject: src.subject || "", grade: src.grade || "", title: src.title || "", unit: src.unit || "", lesson: src.lesson || "",
+              sourceFileName: src.sourceFileName || "", status: "draft", assignedClassIds: [], assignedStudentIds: [], dueDate: null,
+              createdAt: serverTimestamp(), publishedAt: null, exercises: src.exercises || [], copiedFrom: btn.dataset.copyHere
+            });
+            btn.textContent = "✓ نُسخت إلى المسودات";
+            await loadDrafts();
+          } catch (e) { btn.disabled = false; alert("تعذّر النسخ: " + e.message); }
+        }));
+        otherBox = box;
+      }
+      if (snap.empty) { if (otherBox) listEl.appendChild(otherBox); return; }
+
+      snap.docs.forEach((d) => {
+        const w = d.data();
+        const row = document.createElement("div");
+        row.style.cssText = "padding:10px 0;border-bottom:1px solid var(--line);";
+        row.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+            <div style="flex:1;min-width:0;cursor:pointer;" data-open-ws="${d.id}">
+              <p style="margin:0;font-weight:700;font-size:14px;">${w.title}${w.stopped ? ' <span style="font-size:11px;color:var(--bad);">(منتهي)</span>' : ""}</p>
+              <p style="margin:2px 0 0;font-size:12px;color:var(--ink-soft);">${w.subject ? w.subject + " — " : ""}${w.grade || ""}</p>
+              <p style="margin:2px 0 0;font-size:12px;color:var(--ink-soft);">${w.unit || ""} ${w.lesson ? "— " + w.lesson : ""}</p>
+            </div>
+            <button class="btn btn-secondary small-btn" data-toggle-stop="${d.id}" style="white-space:nowrap;">${w.stopped ? "▶️ إعادة النشر" : "⏸️ إيقاف النشر"}</button>
+          </div>
+          <div id="republish-${d.id}" style="display:none;margin-top:10px;padding:10px;background:var(--paper);border-radius:8px;">
+            <p style="font-size:12px;color:var(--ink-soft);margin:0 0 8px;">اختر طريقة إعادة النشر:</p>
+            <button class="btn btn-primary small-btn" data-republish-all="${d.id}" style="width:100%;margin-bottom:6px;">إعادة النشر لجميع الطلاب (حذف التسليمات الحالية والبدء من جديد)</button>
+            <button class="btn btn-secondary small-btn" data-republish-late="${d.id}" style="width:100%;margin-bottom:6px;">إعادة النشر للطلاب المتأخرين في التسليم فقط (الإبقاء على التسليمات الحالية)</button>
+            <button class="btn btn-secondary small-btn" data-republish-cancel="${d.id}" style="width:100%;">إلغاء</button>
+          </div>
+        `;
+        row.querySelector("[data-open-ws]").addEventListener("click", () => selectWorksheetForSubmissions(d.id, w));
+        listEl.appendChild(row);
+      });
+      if (otherBox) listEl.appendChild(otherBox);
+
+      listEl.querySelectorAll("[data-toggle-stop]").forEach((btn) => {
+        btn.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          const wId = btn.dataset.toggleStop;
+          const wDoc = snap.docs.find((x) => x.id === wId);
+          const w = wDoc.data();
+
+          if (!w.stopped) {
+            if (!await mnConfirm(`هل ترغب في إيقاف نشر «${w.title}»؟ ستبقى الورقة ظاهرة للطلاب، ولكن لن يتمكنوا من التسليم، وستظهر عليها علامة "منتهي".`)) return;
+            await updateDoc(doc(db, "worksheets", wId), { stopped: true });
+            await loadWorksheetsForSubmissions();
+            return;
+          }
+
+          const panel = document.getElementById("republish-" + wId);
+          if (panel) panel.style.display = panel.style.display === "none" ? "block" : "none";
+        });
+      });
+
+      listEl.querySelectorAll("[data-republish-cancel]").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const panel = document.getElementById("republish-" + btn.dataset.republishCancel);
+          if (panel) panel.style.display = "none";
+        });
+      });
+
+      listEl.querySelectorAll("[data-republish-late]").forEach((btn) => {
+        btn.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          const wId = btn.dataset.republishLate;
+          await updateDoc(doc(db, "worksheets", wId), { stopped: false });
+          await loadWorksheetsForSubmissions();
+        });
+      });
+
+      listEl.querySelectorAll("[data-republish-all]").forEach((btn) => {
+        btn.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          const wId = btn.dataset.republishAll;
+          if (!await mnConfirm("سيتم حذف جميع التسليمات الحالية لهذه الورقة نهائياً. هل ترغب في المتابعة؟")) return;
+          const subsDocs = await getSubmissionsFor(wId);
+          await Promise.all(subsDocs.map((sd) => deleteDoc(doc(db, "submissions", sd.id))));
+          await updateDoc(doc(db, "worksheets", wId), { stopped: false });
+          await loadWorksheetsForSubmissions();
+        });
+      });
+    }
+    document.getElementById("refreshWsBtn").addEventListener("click", loadWorksheetsForSubmissions);
+
+    // ---------- عرض طلاب الفصول المعيّنة للورقة (من روستر omr) وحالتهم ----------
+    async function selectWorksheetForSubmissions(worksheetId, w) {
+      currentWorksheet = w;
+      currentWorksheetId = worksheetId;
+      document.getElementById("selectedWsTitle").textContent = w.title;
+      document.getElementById("studentsCard").style.display = "block";
+      document.getElementById("detailCard").style.display = "none";
+      renderWorksheetPreview(w.title, w);
+      document.getElementById("previewWorksheetInner").style.display = "block";
+      document.getElementById("previewWorksheetCard").style.display = "block";
+      document.getElementById("studentsCard").scrollIntoView({ behavior: "smooth" });
+
+      const listEl = document.getElementById("studentsList");
+      listEl.innerHTML = "جاري التحميل...";
+      const cpWrap = document.getElementById("closePublishWrap");
+      const cpStatus = document.getElementById("closePublishStatus");
+      cpStatus.textContent = "";
+      if (w.status === "closed") {
+        cpWrap.style.display = "block";
+        document.getElementById("closePublishBtn").style.display = "none";
+        cpStatus.textContent = "🔒 هذا النشاط مُغلق وتم ترحيل درجاته إلى سجل المتابعة.";
+        cpStatus.style.color = "var(--ok)";
+      } else {
+        cpWrap.style.display = "block";
+        document.getElementById("closePublishBtn").style.display = "inline-block";
+      }
+
+      const classCodes = w.assignedClassIds || [];
+      if (classCodes.length === 0) {
+        listEl.innerHTML = `<p style="font-size:13px;color:var(--ink-soft);">هذه الورقة غير مُسندة لأي فصل.</p>`;
+        return;
+      }
+
+      const rosterSnap = await getDoc(doc(db, "schoolData", rosterDocId()));
+      let rosterStudents = [];
+      try { rosterStudents = (JSON.parse((rosterSnap.exists() ? rosterSnap.data().value : "{}") || "{}").students || []).filter(x=>!x.deleted); } catch (e) { rosterStudents = []; }
+      const students = rosterStudents.filter((s) => classCodes.includes(String(s.classCode)));
+
+      const subsDocs = await getSubmissionsFor(worksheetId);
+      const subByStudent = {};
+      subsDocs.forEach((d) => { subByStudent[d.data().studentId] = { id: d.id, ...d.data() }; });
+
+      if (students.length === 0) {
+        listEl.innerHTML = `<p style="font-size:13px;color:var(--ink-soft);">لا يوجد طلاب في الفصول المحددة.</p>`;
+        return;
+      }
+
+      listEl.innerHTML = "";
+      students.forEach((s) => {
+        const sub = subByStudent[s.seat];
+        const status = sub ? sub.status : "not-started";
+        const row = document.createElement("div");
+        row.style.cssText = "display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer;";
+        row.innerHTML = `
+          <div>
+            <p style="margin:0;font-weight:500;font-size:14px;">${s.name}</p>
+            <p style="margin:2px 0 0;font-size:12px;color:var(--ink-soft);">${sub && sub.totalScore ? sub.totalScore : ""}</p>
+          </div>
+          <span class="status-pill status-${status}">${submissionStatusLabels[status]}</span>
+        `;
+        if (sub) {
+          row.addEventListener("click", () => openSubmissionDetail(s.name, sub));
+        } else {
+          row.style.cursor = "default";
+          row.style.opacity = "0.6";
+        }
+        listEl.appendChild(row);
+      });
+    }
+
+    /* ---------- إغلاق النشر: ترحيل الدرجات إلى سجل المتابعة كملصقات ----------
+       الملصقات خاصة بالنظام ولا تظهر في قائمة الملصقات اليدوية. */
+    const DIGITAL_STICKERS = {
+      part: { name: "مشاركة رقمية", icon: "💻", cat: "part" },
+      hw:   { name: "واجب رقمي",   icon: "💻", cat: "hw"   },
+      proj: { name: "مشروع رقمي",  icon: "💻", cat: "proj" }
+    };
+    document.getElementById("closePublishBtn").addEventListener("click", async () => {
+      if (!currentWorksheetId) return;
+      const btn = document.getElementById("closePublishBtn");
+      const st  = document.getElementById("closePublishStatus");
+      if (!await mnConfirm("إغلاق النشر وترحيل الدرجات إلى سجل المتابعة؟ لا يمكن التراجع.")) return;
+      btn.disabled = true; st.style.color = "var(--ink-soft)"; st.textContent = "جاري الترحيل...";
+      try {
+        const wSnap = await getDoc(doc(db, "worksheets", currentWorksheetId));
+        if (!wSnap.exists()) throw new Error("النشاط غير موجود.");
+        const w = wSnap.data();
+        if (w.status === "closed") throw new Error("هذا النشاط مُغلق بالفعل.");
+
+        const target = w.activityTarget || "hw";
+        const meta = DIGITAL_STICKERS[target] || DIGITAL_STICKERS.hw;
+        const classCodes = w.assignedClassIds || [];
+        if (!classCodes.length) throw new Error("النشاط غير مسند لأي فصل.");
+
+        // طلاب الفصول المستهدفة
+        const rosterSnap = await getDoc(doc(db, "schoolData", rosterDocId()));
+        let rosterStudents = [];
+        try { rosterStudents = (JSON.parse((rosterSnap.exists() ? rosterSnap.data().value : "{}") || "{}").students || []).filter(x=>!x.deleted); } catch (e) {}
+        const students = rosterStudents.filter((x) => classCodes.includes(String(x.classCode)));
+        if (!students.length) throw new Error("لا يوجد طلاب في الفصول المستهدفة.");
+
+        // التسليمات
+        const subsDocs = await getSubmissionsFor(currentWorksheetId);
+        const subBy = {};
+        subsDocs.forEach((d) => { subBy[String(d.data().studentId)] = d.data(); });
+
+        // الدرجة الكاملة للنشاط
+        const maxScore = (w.exercises || []).reduce((sum, ex) => sum + (ex.maxScore ?? 1), 0) || 1;
+
+        // سجل المتابعة يُخزَّن في مجموعة exams بمفتاح followup + namespace المعلم
+        // نطابق نفس صيغة CLS_NS بـomr.html بالضبط: schoolId فارغ (معلم فردي) يصير "admin" لا "null" نصية
+        const ns = "_" + (currentTeacher.schoolId || "admin") + "_" + (CLS_SESSION.period || "first") + "_" + currentTeacher.uid;
+        const fuRef = doc(db, "results", "followup" + ns);
+        const fuSnap = await getDoc(fuRef);
+        let followup = {};
+        try { followup = fuSnap.exists() ? JSON.parse(fuSnap.data().value || "{}") : {}; } catch (e) { followup = {}; }
+
+        const now = Date.now();
+        // مفتاح سجل المتابعة بـomr.html يصير دايمًا "رقم_الهوية::المادة" لأي معلم عادي
+        // (fuKey يعتمد المادة النشطة، وأي معلم غير مدير/أدمن ملزَم بمادة). نطابقها هنا حرفيًا
+        // وإلا الدرجة تُحفظ فعليًا لكن ما تظهر له أبدًا.
+        const fuSeatKey = (seat) => (w.subject ? (seat + "::" + w.subject) : seat);
+        students.forEach((stu) => {
+          const seat = String(stu.seat);
+          const sub = subBy[seat];
+          let earned = 0;
+          if (sub && sub.totalScore != null) {
+            const m = String(sub.totalScore).match(/([\d.]+)\s*\/\s*([\d.]+)/);
+            const got = m ? parseFloat(m[1]) : parseFloat(sub.totalScore);
+            const outOf = m ? parseFloat(m[2]) : maxScore;
+            if (!isNaN(got) && outOf > 0) earned = Math.round((got / outOf) * 10 * 10) / 10;
+          }
+          const fk = fuSeatKey(seat);
+          if (!followup[fk]) followup[fk] = [];
+          followup[fk].push({
+            id: "dg" + now + "_" + seat,
+            sid: "digital_" + currentWorksheetId,
+            icon: meta.icon, name: meta.name,
+            earned, cat: meta.cat, digital: true, ts: now
+          });
+        });
+
+        await setDoc(fuRef, { value: JSON.stringify(followup), updatedAt: now, base: "followup",
+          schoolId: currentTeacher.schoolId, period: (CLS_SESSION.period || "first"), userId: currentTeacher.uid });
+        await updateDoc(doc(db, "worksheets", currentWorksheetId), { status: "closed", closedAt: serverTimestamp() });
+
+        st.style.color = "var(--ok)";
+        st.textContent = `تم الإغلاق وترحيل درجات ${students.length} طالباً إلى سجل المتابعة كـ«${meta.name}».`;
+        btn.style.display = "none";
+      } catch (err) {
+        st.style.color = "var(--bad)";
+        st.textContent = "تعذّر الإغلاق: " + err.message;
+        btn.disabled = false;
+      }
+    });
+
+    // ---------- عرض مقارنة إجابة الطالب بالإجابة الصحيحة لكل نوع تمرين ----------
+    function renderAnswerCompare(ex, ans) {
+      const val = ans ? ans.answer : null;
+      const yn = (v) => (v === true ? "صح" : v === false ? "خطأ" : "—");
+      const row = (student, correct, ok) => `
+        <div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px;">
+          <span style="flex:1;">إجابتك: <b style="color:${ok ? "var(--ok)" : "var(--bad)"}">${escapeHtml(String(student ?? "—"))}</b></span>
+          <span style="flex:1;text-align:left;color:var(--ink-soft);">الصحيحة: <b>${escapeHtml(String(correct ?? "—"))}</b></span>
+        </div>`;
+
+      if (ex.type === "fill-blank") {
+        const items = ex.data.items || [];
+        return items.map((it, i) => {
+          const sVal = (val && val[i]) || "";
+          const ok = normalize2(sVal) === normalize2(it.answer) && it.answer;
+          return `<p style="font-size:12px;color:var(--ink-soft);margin:8px 0 2px;">${escapeHtml(it.prompt)}</p>` + row(sVal, it.answer, ok);
+        }).join("");
+      }
+      if (ex.type === "true-false") {
+        const items = ex.data.items || [];
+        return items.map((it, i) => {
+          const sVal = val ? val[i] : null;
+          const ok = it.answer === null ? null : sVal === it.answer;
+          return `<p style="font-size:12px;color:var(--ink-soft);margin:8px 0 2px;">${escapeHtml(it.statement)}</p>` + row(yn(sVal), yn(it.answer), ok !== false);
+        }).join("");
+      }
+      if (ex.type === "mcq") {
+        const items = ex.data.items || [];
+        return items.map((it, i) => {
+          const sIdx = val ? val[i] : null;
+          const ok = sIdx === it.correctIndex;
+          const sTxt = sIdx != null && it.options[sIdx] != null ? it.options[sIdx] : "—";
+          const cTxt = it.options[it.correctIndex] || "—";
+          return `<p style="font-size:12px;color:var(--ink-soft);margin:8px 0 2px;">${escapeHtml(it.prompt)}</p>` + row(sTxt, cTxt, ok);
+        }).join("");
+      }
+      if (ex.type === "matching") {
+        const pairs = ex.data.pairs || [];
+        return pairs.map((p, i) => {
+          const sVal = (val && val[i]) || "";
+          const ok = normalize2(sVal) === normalize2(p.right);
+          return `<p style="font-size:12px;color:var(--ink-soft);margin:8px 0 2px;">${escapeHtml(p.left)}</p>` + row(sVal, p.right, ok);
+        }).join("");
+      }
+      if (ex.type === "ordering") {
+        const items = ex.data.items || [];
+        return items.map((it, i) => {
+          const sVal = (val && val[i]) || "";
+          const ok = normalize2(sVal) === normalize2(it);
+          return row(sVal, it, ok);
+        }).join("");
+      }
+      if (ex.type === "fill-table") {
+        const cellsMatrix = (ex.data.cells || []).map((r) => r.row || []);
+        const studentGrid = val ? val.map((r) => r.row || []) : [];
+        let out = "";
+        for (let r = 0; r < cellsMatrix.length; r++) {
+          for (let c = 0; c < cellsMatrix[r].length; c++) {
+            const cellData = cellsMatrix[r][c];
+            if (cellData.type === "header") continue;
+            const sVal = (studentGrid[r] && studentGrid[r][c]) || "";
+            const ok = normalize2(sVal) === normalize2(cellData.value) && cellData.value;
+            out += row(sVal, cellData.value, ok);
+          }
+        }
+        return out || `<p style="font-size:12px;color:var(--ink-soft);">لا توجد خانات إجابة في الجدول.</p>`;
+      }
+      return "";
+    }
+    function normalize2(s) { return (s || "").toString().trim().toLowerCase().replace(/\s+/g, ""); }
+
+    // ---------- تفاصيل تسليم طالب ----------
+    let manualScores = {}; // exerciseId -> رقم الدرجة المُعدَّلة يدويًا
+    function defaultScoreFor(ex, ans) {
+      if (ex.type === "open-text") return manualGrades[ex.exerciseId] === true ? 1 : 0;
+      const c = ans ? ans.isCorrect : null;
+      return c === true ? 1 : c === false ? 0 : 0.5;
+    }
+    function updateTotalScoreDisplay() {
+      const el = document.getElementById("detailTotalScore");
+      if (!el) return;
+      const total = (currentWorksheet.exercises || []).reduce((sum, ex) => sum + (manualScores[ex.exerciseId] ?? 0), 0);
+      const max = (currentWorksheet.exercises || []).length;
+      el.textContent = `الدرجة: ${total} / ${max}`;
+    }
+    function openSubmissionDetail(studentName, sub) {
+      currentSubmission = sub;
+      manualGrades = {};
+      manualScores = {};
+      document.getElementById("detailStudentName").textContent = studentName;
+      document.getElementById("detailCard").style.display = "block";
+      document.getElementById("detailCard").scrollIntoView({ behavior: "smooth" });
+
+      const wrap = document.getElementById("answersWrap");
+      wrap.innerHTML = `<p id="detailTotalScore" style="font-weight:800;font-size:16px;color:var(--teal);background:var(--teal-light);padding:10px 14px;border-radius:10px;margin-bottom:14px;"></p>`;
+
+      (currentWorksheet.exercises || []).forEach((ex, idx) => {
+        const ans = (sub.answers || []).find((a) => a.exerciseId === ex.exerciseId);
+        manualScores[ex.exerciseId] = defaultScoreFor(ex, ans);
+        const block = document.createElement("div");
+        block.style.cssText = "border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:12px;";
+
+        let bodyHtml = "";
+        if (ex.type === "open-text") {
+          bodyHtml = `
+            <p style="font-size:13px;background:var(--paper);border-radius:8px;padding:8px;">${escapeHtml((ans && ans.answer) || "(بدون إجابة)")}</p>
+            <div style="margin-top:8px;">
+              <button class="btn btn-secondary small-btn" data-grade="${ex.exerciseId}" data-val="true">صحيح</button>
+              <button class="btn btn-secondary small-btn" data-grade="${ex.exerciseId}" data-val="false">خاطئ</button>
+            </div>`;
+        } else {
+          bodyHtml = renderAnswerCompare(ex, ans);
+        }
+
+        block.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <p style="margin:0;font-weight:700;font-size:13px;color:var(--teal);">تمرين ${idx + 1} — ${typeLabels[ex.type] || ex.type}</p>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-soft);">الدرجة
+              <input type="number" step="0.5" min="0" data-score="${ex.exerciseId}" value="${manualScores[ex.exerciseId]}" style="width:60px;padding:4px 6px;border:1.5px solid var(--line);border-radius:6px;text-align:center;">
+            </label>
+          </div>
+          ${bodyHtml}
+        `;
+        wrap.appendChild(block);
+      });
+
+      wrap.querySelectorAll("[data-grade]").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          const exId = e.target.dataset.grade;
+          const val = e.target.dataset.val === "true";
+          manualGrades[exId] = val;
+          manualScores[exId] = val ? 1 : 0;
+          wrap.querySelector(`[data-score="${exId}"]`).value = manualScores[exId];
+          wrap.querySelectorAll(`[data-grade="${exId}"]`).forEach((b) => {
+            b.classList.remove("btn-primary");
+            b.classList.add("btn-secondary");
+          });
+          e.target.classList.remove("btn-secondary");
+          e.target.classList.add("btn-primary");
+          updateTotalScoreDisplay();
+        });
+      });
+
+      wrap.querySelectorAll("[data-score]").forEach((inp) => {
+        inp.addEventListener("input", (e) => {
+          manualScores[e.target.dataset.score] = parseFloat(e.target.value) || 0;
+          updateTotalScoreDisplay();
+        });
+      });
+
+      updateTotalScoreDisplay();
+    }
+
+    document.getElementById("saveGradingBtn").addEventListener("click", async () => {
+      const statusEl = document.getElementById("gradingStatus");
+      statusEl.textContent = "جاري الحفظ...";
+      statusEl.style.color = "var(--ink-soft)";
+
+      try {
+        const updatedAnswers = (currentSubmission.answers || []).map((a) => {
+          if (manualGrades[a.exerciseId] !== undefined) {
+            return { ...a, isCorrect: manualGrades[a.exerciseId] };
+          }
+          return a;
+        });
+
+        const totalScore = (currentWorksheet.exercises || []).reduce((sum, ex) => sum + (manualScores[ex.exerciseId] ?? 0), 0);
+        const maxScore = (currentWorksheet.exercises || []).length;
+
+        await updateDoc(doc(db, "submissions", currentSubmission.id), {
+          answers: updatedAnswers,
+          status: "corrected",
+          totalScore: `${totalScore} / ${maxScore}`,
+          correctedAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+
+        statusEl.textContent = "تم حفظ التصحيح بنجاح.";
+        statusEl.style.color = "var(--ok)";
+        await selectWorksheetForSubmissions(currentWorksheetId, currentWorksheet);
+      } catch (err) {
+        statusEl.textContent = "حدث خطأ أثناء الحفظ: " + err.message;
+        statusEl.style.color = "var(--bad)";
+      }
+    });
+
+    /* ================= رموز دخول الفصول ================= */
+    async function loadPinsClasses() {
+      const listEl = document.getElementById("pinsList");
+      listEl.innerHTML = "جاري التحميل...";
+      try {
+        const rosterSnap = await getDoc(doc(db, "schoolData", rosterDocId()));
+        let classes = [];
+        try { classes = JSON.parse((rosterSnap.exists() ? rosterSnap.data().value : "{}") || "{}").classes || []; } catch (e) { classes = []; }
+
+        const me = await loadMyCtx();
+        if (!me.isAdmin && !me.isSolo && !me.assigned.includes("__all__")) {
+          classes = classes.filter((c) => me.assigned.includes(String(c.code)) || c.createdBy === currentTeacher.uid);
+        }
+        if (!classes.length) { listEl.innerHTML = `<p style="font-size:13px;color:var(--ink-soft);">لا توجد فصول متاحة لك.</p>`; return; }
+
+        // بادئة الرمز: رمز المدرسة (S1...) أو رمز المعلم الفردي (T1...)
+        let ownerCode = "";
+        try {
+          if (me.isSolo) ownerCode = me.ctx.teacherCode || me.u.teacherCode || "";
+          else {
+            // النموذج الحالي: كل مدرسة مستند مستقل schoolData/{sid} فيه code؛ مع توافق مع القائمة القديمة
+            const sSnap = await getDoc(doc(db, "schoolData", currentTeacher.schoolId));
+            ownerCode = (sSnap.exists() && sSnap.data().code) || "";
+            if (!ownerCode) {
+              const schoolsSnap = await getDoc(doc(db, "schoolData", "schools"));
+              const list = schoolsSnap.exists() ? (schoolsSnap.data().list || {}) : {};
+              ownerCode = (list[currentTeacher.schoolId] && list[currentTeacher.schoolId].code) || "";
+            }
+          }
+        } catch (e3) { ownerCode = ""; }
+
+        listEl.innerHTML = "";
+        classes.forEach((c) => {
+          const full = c.loginCode ? (ownerCode + c.loginCode) : "";
+          const row = document.createElement("div");
+          row.style.cssText = "display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);gap:10px;";
+          row.innerHTML = `
+            <span style="font-size:14px;">${c.name || ""} <span style="color:var(--ink-soft);font-size:12px;">(${c.code})</span></span>
+            ${full
+              ? `<strong style="font-size:17px;letter-spacing:2px;color:var(--teal);">${full}</strong>`
+              : `<span style="font-size:12px;color:var(--bad);">لا يوجد رمز — ولّده من صفحة إدارة الصف</span>`}
+          `;
+          listEl.appendChild(row);
+        });
+      } catch (err) {
+        listEl.innerHTML = `<p style="font-size:13px;color:var(--bad);">تعذّر التحميل: ${err.message}</p>`;
+      }
+    }
+  </script>
+
+</body>
+</html>

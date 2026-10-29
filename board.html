@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<!-- إصدار: 2026-10-29.1 · الاختبار -->
+<!-- [ADMIN-TOOLS] صفحة مستقلة بالكامل — شاشة العرض على التلفاز (ص-٣٧). تُحذف عند إزالة الأدوات الإدارية. -->
+<!-- تعمل داخل تطبيق «شاشة التميز» لأندرويد تي في، وتصلح للتجربة في أي متصفح. دخول مجهول فقط: لا حسابات ولا بيانات شخصية. -->
+<html lang="ar" dir="rtl">
+<head>
+<script src="fb-config.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#000000">
+<title>شاشة التميز — العرض</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;500;600;700&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#000;overflow:hidden;cursor:none}
+body{font-family:'Tajawal',system-ui,sans-serif;color:#eef5f2}
+#root{position:fixed;inset:0}
+#pair{position:fixed;inset:0;z-index:100;display:none;flex-direction:column;align-items:center;justify-content:center;gap:2.2vh;text-align:center;padding:4vh 6vw;
+  background:radial-gradient(60vw 50vh at 50% 40%, rgba(29,106,93,.45), transparent 70%), #061816}
+#pair.on{display:flex}
+#pair .t{font-family:'Readex Pro','Tajawal',sans-serif;font-size:5.2vh;font-weight:600;color:#dfae48}
+#pair .code{font-family:'Readex Pro','Tajawal',sans-serif;font-size:19vh;font-weight:700;letter-spacing:.14em;direction:ltr;background:#fff;color:#0b2523;border-radius:2vh;padding:1vh 4vh 1.4vh;box-shadow:0 2vh 8vh rgba(0,0,0,.5)}
+#pair .s{font-size:3.4vh;color:#cfe3dd;line-height:1.8;max-width:80vw}
+#pair .d{font-size:2.4vh;color:#9db8b1}
+#pair .e{font-size:3vh;color:#f0a36a}
+</style>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-functions-compat.js"></script>
+<script src="ex-render.js?v=2026-10-29.1"></script>
+<script src="nav-back.js?v=2026-10-28.1" defer></script>
+</head>
+<body>
+<div id="root"></div>
+<div id="pair">
+  <div class="t">شاشة التميز</div>
+  <div class="s" id="pInfo">لربط هذه الشاشة: افتح «شاشة التميز» في موقع منجز المدرسي، ثم اكتب الرمز التالي</div>
+  <div class="code" id="pCode">······</div>
+  <div class="d" id="pDev"></div>
+  <div class="e" id="pErr"></div>
+</div>
+<script>
+'use strict';
+const BOARD_VERSION='2026-10-15.1';
+const firebaseConfig = window.FB_CONFIG;
+const $=s=>document.querySelector(s);
+const Q=new URLSearchParams(location.search);
+const MOCK=Q.get('mock')==='1';          // اختبار بلا Firebase: يقرأ من localStorage (bd_mock)
+const ex=ExR.create($('#root'));
+
+/* ===== الحالة ===== */
+let db=null, auth=null, fns=null, UID=null;
+let SCREEN=null, BOARD=null, CAL=null;       // السجلات الثلاثة التي تحدد ما يُعرض
+let unsubBoard=null, unsubCal=null, offlineSince=0;
+
+/* ===== ما يُعرض الآن: أسود (إجازة أو هدوء) > شعار (لا لقطة أو متوقفة) > المحتوى ===== */
+function riyadhNow(){
+  const p=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Riyadh',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date());
+  const g=t=>(p.find(x=>x.type===t)||{}).value;
+  return { key:g('year')+'-'+g('month')+'-'+g('day'), min:(+g('hour')%24)*60+(+g('minute')) };
+}
+const toMin=t=>{ if(!t||!/^\d{1,2}:\d{2}$/.test(t)) return null; const [h,m]=t.split(':').map(Number); return h*60+m; };
+function isHoliday(cal,key){ return ((cal&&cal.holidays)||[]).some(h=>h&&h.from&&h.from<=key&&key<=((h.to&&h.to>=h.from)?h.to:h.from)); }
+function isQuiet(cal,min){
+  const q=(cal&&cal.quiet)||{}; if(!q.on) return false;
+  const f=toMin(q.from), t=toMin(q.to); if(f==null||t==null||f===t) return false;
+  return f<t ? (min>=f&&min<t) : (min>=f||min<t);
+}
+function currentMode(){
+  const forced=Q.get('mode'); if(forced) return forced;
+  const n=riyadhNow();
+  if(isHoliday(CAL,n.key) || isQuiet(CAL,n.min)) return 'black';
+  if(!BOARD || BOARD.live===false) return 'logo';
+  return 'live';
+}
+const mIn=m=>(m||[]).map(r=>[r.v||'',r.l||'',r.i||'']);
+let lastVer=null;
+function applyBoard(){
+  if(BOARD && (BOARD.version+'|'+(BOARD.autoAt||0))!==lastVer){
+    lastVer=BOARD.version+'|'+(BOARD.autoAt||0);
+    ex.setBoard({ channel:BOARD.channel, schoolName:BOARD.schoolName||'', news:BOARD.news||[], extra:BOARD.extra||[], imgs:BOARD.imgs||[],
+      items:(BOARD.items||[]).map(i=>Object.assign({},i,{m:mIn(i.m)})) });
+  }
+  ex.setMode(currentMode());
+}
+function applyOffline(){
+  const off=!navigator.onLine;
+  if(off && !offlineSince) offlineSince=Date.now(); if(!off) offlineSince=0;
+  ex.setOffline(off && Date.now()-offlineSince>180000);
+}
+setInterval(()=>{ applyBoard(); applyOffline(); },30000);
+window.addEventListener('online',applyOffline); window.addEventListener('offline',applyOffline);
+
+/* ===== واجهة الاقتران ===== */
+function showPair(on){ $('#pair').classList.toggle('on',!!on); }
+function pairErr(m){ $('#pErr').textContent=m||''; }
+function deviceInfo(){
+  const ua=navigator.userAgent||''; const m=ua.match(/Android[^;]*;\s*([^)]*?)\s*(?:Build|\))/);
+  const cap=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
+  return { model:(m&&m[1]||'متصفح').slice(0,60), platform:cap?'android-tv':'web', app:BOARD_VERSION };
+}
+let codeTimer=null;
+async function requestCode(){
+  clearTimeout(codeTimer);
+  try{
+    const r=(await fns.httpsCallable('screenRequestCode')({device:deviceInfo()})).data;
+    if(r.paired) return;                                  // اقترنت للتو: مستمع screens سيتولى
+    $('#pCode').textContent=r.code; $('#pDev').textContent=deviceInfo().model+' — صلاحية الرمز ١٠ دقائق'; pairErr('');
+    codeTimer=setTimeout(requestCode,Math.max(30000,r.expiresAt-Date.now()-20000));
+  }catch(e){
+    console.error(e); pairErr('تعذّر الاتصال. تأكد من الإنترنت — إعادة المحاولة تلقائيًا…');
+    codeTimer=setTimeout(requestCode,15000);
+  }
+}
+
+/* ===== الاشتراكات ===== */
+function onScreen(sc){
+  const changed=!SCREEN||!sc||SCREEN.schoolId!==sc.schoolId||SCREEN.channel!==sc.channel;
+  SCREEN=sc;
+  if(!sc){                                                // غير مقترنة (أو فُكّ ارتباطها)
+    if(unsubBoard){unsubBoard();unsubBoard=null;} if(unsubCal){unsubCal();unsubCal=null;}
+    BOARD=null; CAL=null; lastVer=null; ex.setBoard({}); applyBoard();
+    showPair(true); requestCode(); return;
+  }
+  clearTimeout(codeTimer); showPair(false);
+  if(!changed) return;
+  if(unsubBoard) unsubBoard(); if(unsubCal) unsubCal();
+  unsubBoard=db.collection('boards').doc(sc.schoolId+'_'+sc.channel).onSnapshot(s=>{ BOARD=s.exists?s.data():null; lastVer=null; applyBoard(); },e=>{ console.error('board',e); });
+  unsubCal=db.collection('schoolCalendar').doc(sc.schoolId).onSnapshot(s=>{ CAL=s.exists?s.data():null; applyBoard(); },e=>{ console.error('cal',e); });
+}
+function heartbeat(){
+  if(!SCREEN||!UID||!db) return;
+  db.collection('screens').doc(UID).update({lastSeen:Date.now(),appVersion:BOARD_VERSION}).catch(()=>{});
+}
+setInterval(heartbeat,5*60*1000);
+
+async function boot(){
+  if(MOCK){
+    let m={}; try{ m=JSON.parse(localStorage.getItem('bd_mock')||'{}'); }catch(e){}
+    if(!m.screen){ showPair(true); $('#pCode').textContent=m.code||'123456'; $('#pDev').textContent='وضع تجربة'; return; }
+    SCREEN=m.screen; BOARD=m.board||null; CAL=m.cal||null; lastVer=null; applyBoard(); return;
+  }
+  try{
+    firebase.initializeApp(firebaseConfig);
+    db=firebase.firestore(); auth=firebase.auth(); fns=firebase.functions();
+    try{ await db.enablePersistence({synchronizeTabs:false}); }catch(e){}
+  }catch(e){ showPair(true); pairErr('تعذّر تهيئة الاتصال.'); return; }
+  showPair(true); $('#pCode').textContent='······';
+  try{
+    if(!auth.currentUser) await auth.signInAnonymously();
+    UID=auth.currentUser.uid;
+  }catch(e){
+    console.error(e); pairErr('تعذّر تسجيل دخول الشاشة. يلزم تفعيل الدخول المجهول في Firebase.'); return;
+  }
+  db.collection('screens').doc(UID).onSnapshot(s=>{ onScreen(s.exists?s.data():null); if(s.exists) heartbeat(); },e=>{ console.error('screen',e); });
+}
+boot();
+
+/* ===== إبقاء الشاشة مضاءة ===== */
+(async function keepAwake(){
+  try{
+    const P=window.Capacitor&&window.Capacitor.Plugins;
+    if(P&&P.KeepAwake){ await P.KeepAwake.keepAwake(); return; }
+    if(navigator.wakeLock){ const lock=async()=>{ try{ await navigator.wakeLock.request('screen'); }catch(e){} }; lock(); document.addEventListener('visibilitychange',()=>{ if(!document.hidden) lock(); }); }
+  }catch(e){}
+})();
+/* زر الرجوع في الريموت لا يخرج من التطبيق */
+try{ const A=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.App; if(A&&A.addListener) A.addListener('backButton',()=>{}); }catch(e){}
+/* إعادة تحميل ليلية (٤ فجرًا بتوقيت الرياض) تحسبًا لتشغيل الشاشة أيامًا */
+setInterval(()=>{ const n=riyadhNow(); if(n.min===240 && Date.now()-performance.timeOrigin>3600000) location.reload(); },55000);
+</script>
+</body>
+</html>

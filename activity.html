@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<!-- إصدار: 2026-10-29.1 · الاختبار -->
+<!-- [ADMIN-TOOLS] صفحة مستقلة بالكامل — تُحذف عند إزالة الأدوات الإدارية (انظر ADMIN-TOOLS-LOG.md) -->
+<html lang="ar" dir="rtl">
+<head>
+<script src="fb-config.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>منصة النشاط المدرسي</title>
+<meta name="theme-color" content="#0f766e">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<script src="quick-access.js?v=2026-10-28.2"></script>
+<script src="nav-back.js?v=2026-10-28.1" defer></script>
+</head>
+<body>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-functions-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="mn-dialog.js?v=2026-10-06.1"></script>
+<script src="users-api.js"></script>
+<script src="form-header.js?v=2026-10-16.4"></script>
+<script src="sem-guard.js?v=2026-10-14.5"></script>
+<script src="dash-base.js?v=2026-10-15.1"></script>
+<script src="activity-core.js?v=2026-10-17.5"></script>
+<script src="ai-fill.js?v=2026-10-16.7"></script>
+<script>
+(function(){
+const { esc, arN, $, $$, CLUBS_DEFAULT, DOMAINS, GENERAL_TEMPLATE, DAYS, PLAN_ST, ST_CLS } = ACT;
+const N = arN;
+const S = { env:null, canEdit:false, isSA:false, isCoord:false, tab:'quick', qaSub:'i', clubId:null, clubTab:'members', genTab:'events', marks:[], signs:{}, sigImg:{},
+  cfg:null, council:null, meetings:[], clubs:[], events:[], general:[], broadcast:null, assigns:[], opens:[], staff:null, roster:null };
+
+/* ====================== التحميل ====================== */
+const CONF = ()=>ACT.keyOf(S.env.sid, S.env.period);
+async function load(parts){
+  const e = S.env, all = !parts, has = k=>all || parts.includes(k);
+  const jobs = [];
+  if(has('cfg')) jobs.push(ACT.getDoc(e,'activityConfig',CONF()).then(v=>{ S.cfg=v; }));
+  if(has('council')) jobs.push(ACT.getDoc(e,'activityCouncil',CONF()).then(v=>{ S.council=v; }));
+  if(has('meetings')) jobs.push(ACT.list(e,'activityMeetings').then(v=>{ S.meetings=v.sort((a,b)=>(a.meetingNumber||0)-(b.meetingNumber||0)); }));
+  if(has('clubs')) jobs.push(ACT.list(e,'activityClubs').then(v=>{ S.clubs=v.sort((a,b)=>(a.order||0)-(b.order||0)||(a.name||'').localeCompare(b.name||'','ar')); }));
+  if(has('events')) jobs.push(ACT.list(e,'activityEvents').then(v=>{ S.events=v; }));
+  if(has('general')) jobs.push(ACT.list(e,'activityGeneralEvents').then(v=>{ S.general=v.filter(x=>x.templateId!=='school_broadcast').sort((a,b)=>(a.expectedDate||'9').localeCompare(b.expectedDate||'9')); }));
+  if(has('broadcast')) jobs.push(ACT.getDoc(e,'activityBroadcast',CONF()).then(v=>{ S.broadcast=v; }));
+  if(has('assigns')) jobs.push(ACT.list(e,'actAssignments').then(v=>{ S.assigns=v; }));
+  if(has('opens')) jobs.push(ACT.list(e,'actOpenEvents').then(v=>{ S.opens=v; }));
+  if(has('marks')) jobs.push(ACT.list(e,'actOpenMarks').then(v=>{ S.marks=v; }));
+  if(has('signs')) jobs.push(ACT.sigPointers(e).then(async v=>{ S.signs=v; S.sigImg={}; for(const k of Object.keys(v)){ S.sigImg[k]=await ACT.sigVerData(e, v[k].verId); } }).catch(()=>{ S.signs={}; S.sigImg={}; }));
+  await Promise.all(jobs);
+}
+async function ensurePeople(){
+  if(!S.staff) S.staff = await ACT.loadStaff(S.env);
+  if(!S.roster) S.roster = await ACT.loadRoster(S.env);
+}
+const clubById = id=>S.clubs.find(c=>c.id===id);
+const activeClubs = ()=>S.clubs.filter(c=>c.status!=='inactive');
+const E = h=>S.canEdit ? h : '';            // عناصر التحرير
+const P = h=>S.isSA ? h : '';                // عناصر المدير فقط
+const approvedEvents = ()=>S.events.filter(x=>x.approvalStatus==='approved' && x.status!=='cancelled');
+const pendingDocs = ()=>S.events.filter(x=>x.approvalStatus==='pending' && (x.sourceType==='assignment'||x.sourceType==='open'||(x.sourceType==='club'&&x.viaTeacher)));
+const pendingAssigns = ()=>S.assigns.filter(a=>a.status==='pending');
+const chip = (t,c)=>'<span class="dh-chip '+(c||'')+'">'+esc(t)+'</span>';
+const fmtD = k=>k?(ACT.hijri(k)+' <span class="dh-sub">('+N(k)+')</span>'):'—';
+const staffName = id=>((S.staff||[]).find(s=>s.id===id)||{}).name||'';
+
+/* ====================== الهيكل والتبويبات ====================== */
+function tabsDef(){
+  const bClubs = S.isSA ? pendingAssigns().length : 0;          // اعتماد التكليفات صار داخل بطاقة «التكليفات الرسمية»
+  const bDocs = S.canEdit ? pendingDocs().length : 0;
+  const pb = S.isSA ? submittedCount() : 0;
+  return [['quick','الوصول السريع'],['council','مجلس النشاط'],['clubs','التكليفات والأندية',bClubs],['general','الأنشطة والمسار العام'],['plan','الخطة العامة',pb],['docs','التوثيقات',bDocs],['broadcast','الإذاعة'],['reports','التقارير']];
+}
+function barHtml(){
+  return tabsDef().map(x=>'<button class="ac-tab'+(S.tab===x[0]?' on':'')+'" data-a="tab" data-v="'+x[0]+'">'+x[1]+(x[2]?'<span class="n">'+N(x[2])+'</span>':'')+'</button>').join('');
+}
+function shell(){
+  return '<div class="ac-tabs" id="acMainBar">'+barHtml()+'</div>'
+    +(S.canEdit?'':(S.isSA?'<div class="dh-card" style="background:#eef6f8;border-color:#cfe2e8">أنت تطّلع على المنصة؛ ويبقى لك: تشكيل مجلس النشاط، واعتماد الخطط، واعتماد التكليفات. وبقية الأعمال لرائد النشاط.</div>':'<div class="dh-card" style="background:#fff8e6;border-color:#f0d9a0">وضع الاطلاع: لديك صلاحية العرض فقط دون التعديل.</div>'))
+    +'<div id="acBody"></div>';
+}
+function saveUi(){ ACT.saveState(S.env,'main',{ tab:S.tab, clubId:S.clubId, clubTab:S.clubTab, genTab:S.genTab }); }
+function paint(){
+  /* شريط التبويبات الرئيسي يُرسم مرة واحدة ثم يُحدَّث موضعه فقط، فلا يرجع إلى بدايته */
+  let bar = document.getElementById('acMainBar');
+  if(!bar || !S.env.main.contains(bar)){ S.env.main.innerHTML = shell(); bar = document.getElementById('acMainBar'); S._ctab = null; }
+  else { const sl = bar.scrollLeft; bar.innerHTML = barHtml(); bar.scrollLeft = sl; }
+  if(S._ctab !== S.tab){ ACT.centerTab(bar, S._ctab !== null); S._ctab = S.tab; }
+  const body = $('#acBody');
+  if(!S.cfg || !S.cfg.active){ body.innerHTML = activationView(); return; }
+  const fn = { quick:vQuick, summary:vSummary, council:vCouncil, clubs:vClubs, plan:vPlan, general:vGeneral, docs:aDocs, broadcast:vBroadcast, reports:vReports }[S.tab];
+  body.innerHTML = fn();
+  $$('#acBody .ac-tabs').forEach(b=>ACT.centerTab(b,false));
+  if(S.tab==='clubs' && S.clubId) afterClubPaint();
+  if(S.tab==='reports') ACT.pickInit(document,'rp_att_p');
+  saveUi();
+}
+async function refresh(parts){ await load(parts); paint(); }
+
+function activationView(){
+  const c = S.council;
+  const cardCouncil = '<div class="dh-card"><div class="ac-row sb"><h3 style="margin:0">مجلس النشاط</h3>'+(c?chip('مُشكَّل','ok'):chip('لم يُشكَّل','warn'))+'</div>'
+    +(c?'<div class="dh-sub" style="margin-top:6px">رئيس المجلس: '+esc(c.chairName)+' — رائد النشاط (المقرر): <b>'+esc(c.secretaryName||'—')+'</b></div>':'')
+    +P('<div class="ac-row" style="margin-top:8px"><button class="ac-btn" data-a="council-form">'+(c?'✏ تعديل التشكيل':'تشكيل مجلس النشاط')+'</button></div>')+'</div>';
+  if(S.isSA) return '<div class="dh-card dh-soon"><div class="ic">🎯</div><h2>تفعيل منصة النشاط المدرسي</h2><p>الخطوة الأولى: شكّل مجلس النشاط وحدّد رائد النشاط (مقرر المجلس). يحصل رائد النشاط تلقائيًا على كامل صلاحيات المنصة ويفعّلها وينشئ الأندية، وتبقى لك الاعتمادات: الخطة العامة والتكليفات.</p></div>'+cardCouncil;
+  if(!S.canEdit) return '<div class="dh-card dh-soon"><div class="ic">🎯</div><h2>لم تُفعَّل المنصة بعد</h2><p>لم يفعّل رائد النشاط منصة النشاط لهذا الفصل الدراسي بعد.</p></div>';
+  if(!c) return '<div class="dh-card dh-soon"><div class="ic">🏛️</div><h2>بانتظار تشكيل مجلس النشاط</h2><p>يشكّل قائد المدرسة مجلس النشاط ويحدّد رائد النشاط أولًا، ثم تُفعَّل المنصة.</p></div>';
+  return '<div class="dh-card dh-soon"><div class="ic">🎯</div><h2>تفعيل منصة النشاط المدرسي</h2><p>عند التفعيل تُنشأ الأندية الوزارية السبعة لهذا الفصل الدراسي، وتظهر معها بطاقة «التكليفات الرسمية» في أول القائمة، وبعدها يمكنك إضافة أندية جديدة أو تعديل الأندية أو حذف ما لا تحتاجه المدرسة.</p>'
+    +'<button class="ac-btn" data-a="activate">تفعيل المنصة وإنشاء الأندية السبعة</button></div>';
+}
+
+/* ====================== الملخص ====================== */
+function planStats(){
+  let total=0, done=0; const per = [];
+  activeClubs().forEach(c=>{ const it=(c.plan||[]).filter(x=>x.status!=='cancelled'); const d=it.filter(x=>x.status==='executed').length; total+=it.length; done+=d; per.push({club:c, total:it.length, done:d}); });
+  return { total, done, per, pct: total?done/total:0 };
+}
+/* حالة اعتماد الخطط: لكل نادٍ planState، وللمسار العام cfg.generalState */
+const clubPS = c=>c.planState||'draft';
+const genPS = ()=>(S.cfg&&S.cfg.generalState)||'draft';
+const genItems = ()=>S.general.filter(g=>g.status!=='cancelled');
+const submittedCount = ()=>activeClubs().filter(c=>clubPS(c)==='submitted').length + (genPS()==='submitted'?1:0);
+const PS_NAME = {draft:'مسودة',submitted:'مُقدَّمة للاعتماد',approved:'مُعتمدة',returned:'أُعيدت للتعديل'};
+const PS_CLS = {draft:'',submitted:'warn',approved:'ok',returned:'bad'};
+const psChip = (st,ret)=>chip(PS_NAME[ret?'returned':st]||'مسودة', PS_CLS[ret?'returned':st]);
+
+/* معلمو التوثيق المعتمد: الموثِّق + المشاركون المعلمون (يبقى بعد الاعتماد المؤكِّدون فقط) — كلهم يُحسب لهم التوثيق بالصيغة نفسها */
+function evTeachers(x){
+  const out = [{ uid:x.documentedBy, name:x.documentedByName||'' }];
+  (x.participants||[]).filter(p=>p.type==='staff' && p.uid && p.uid!==x.documentedBy).forEach(p=>out.push({ uid:p.uid, name:p.name||'' }));
+  return out;
+}
+function vSummary(){
+  const ac = activeClubs(), ps = planStats();
+  const students = ac.reduce((n,c)=>n+stuMembers(c).length,0);
+  const evs = approvedEvents().length;
+  // ملخص الأنشطة الموثّقة: باسم النشاط وعدد المعلمين
+  const grp = {};
+  S.events.filter(x=>(x.sourceType==='assignment'||x.sourceType==='open') && x.approvalStatus==='approved').forEach(x=>{
+    const k = (x.title||'').trim(); evTeachers(x).forEach(u=>{ (grp[k]=grp[k]||new Set()).add(u.uid); });
+  });
+  const docs = Object.keys(grp).map(k=>[k,grp[k].size]).sort((a,b)=>b[1]-a[1]);
+  const todayK = ACT.today(), in14 = ACT.addDays(todayK,14);
+  const alerts = [];
+  ac.filter(c=>!(c.plan||[]).length).forEach(c=>alerts.push('⚠ '+c.name+' بدون خطة فصلية'));
+  ac.forEach(c=>(c.plan||[]).filter(x=>x.status==='planned' && x.expectedDate && x.expectedDate<=in14).forEach(x=>alerts.push((x.expectedDate<todayK?'⏰ متأخرة: ':'📅 قادمة: ')+x.title+' — '+c.name+' ('+ACT.hijri(x.expectedDate)+')')));
+  if(S.isSA && pendingAssigns().length) alerts.push('📝 '+N(pendingAssigns().length)+' تكليف بانتظار اعتمادك');
+  if(S.isSA && submittedCount()) alerts.push('📋 '+N(submittedCount())+' من الخطط بانتظار اعتمادك (تبويب الخطة العامة)');
+  if(S.canEdit && pendingDocs().length) alerts.push('🗂 '+N(pendingDocs().length)+' توثيق بانتظار اعتماد رائد النشاط');
+  if(!S.council) alerts.push('⚠ لم يُشكَّل مجلس النشاط بعد');
+  return '<div class="dh-stats">'
+    +'<div class="dh-stat"><b>'+N(ac.length)+'</b><span>نادٍ مفعّل</span></div>'
+    +'<div class="dh-stat"><b>'+N(students)+'</b><span>طالب مسجّل بالأندية</span></div>'
+    +'<div class="dh-stat"><b>'+N(evs)+'</b><span>فعالية معتمدة</span></div></div>'
+    +'<div class="dh-card"><h3>نسبة تنفيذ الخطة: '+N(Math.round(ps.pct*100))+'٪</h3><div class="ac-bar"><i style="width:'+Math.round(ps.pct*100)+'%"></i></div><div class="dh-sub" style="margin-top:4px">'+N(ps.done)+' من '+N(ps.total)+' بنود منفَّذة</div></div>'
+    +'<div class="dh-grid"><div class="dh-card"><h3>التنبيهات</h3><div class="dh-list">'+(alerts.length?alerts.map(a=>'<div class="dh-item">'+esc(a)+'</div>').join(''):'<div class="dh-empty">لا توجد تنبيهات.</div>')+'</div></div>'
+    +'<div class="dh-card"><h3>الأنشطة الموثّقة</h3><div class="dh-list">'+(docs.length?docs.map(d=>'<div class="dh-item"><span>'+esc(d[0])+'</span>'+chip('وثّقه '+N(d[1])+' معلم')+'</div>').join(''):'<div class="dh-empty">لا توجد توثيقات بعد.</div>')+'</div><div class="dh-sub" style="margin-top:6px">تفاصيل المعلمين في تبويب التقارير.</div></div></div>';
+}
+
+
+/* ====================== الوصول السريع ====================== */
+function qaCards(){
+  const ac = activeClubs(), ps = planStats();
+  const goT = (t,fn)=>()=>{ S.tab=t; S.clubId = t==='clubs'?S.clubId:null; if(fn) fn(); paint(); };
+  const pendEv = S.events.filter(x=>x.approvalStatus==='pending').length;
+  return [
+    {t:'مجلس النشاط', n:S.council ? 2+(S.council.members||[]).length : 0, l:'الإجمالي', go:goT('council')},
+    {t:'التكليفات والأندية', n:ac.length, p:S.isSA?pendingAssigns().length:null, l:'بانتظار الاعتماد', go:goT('clubs')},
+    {t:'الأنشطة والمسار العام', n:S.events.length, p:pendEv, l:'بانتظار', go:goT('general'), tabs:[['الأنشطة',goT('general',()=>{S.genTab='events';})],['المتاح للمعلمين',goT('general',()=>{S.genTab='open';})]]},
+    {t:'الخطة العامة', n:ps.total, p:S.isSA?submittedCount():null, l:'بانتظار الاعتماد', go:goT('plan')},
+    {t:'التوثيقات', n:S.events.length, p:S.canEdit?pendingDocs().length:null, l:'بانتظار الاعتماد', go:goT('docs')},
+    {t:'الإذاعة', n:((S.broadcast&&S.broadcast.weeks)||[]).length, l:'الإجمالي', go:goT('broadcast')},
+    {t:'التقارير', n:'—', l:'', go:goT('reports')}
+  ];
+}
+let QA_CUR = [];
+function vQuick(){
+  QA.css();
+  QA_CUR = qaCards();
+  return '<div class="ac-tabs sub"><button class="ac-tab'+(S.qaSub==='i'?' on':'')+'" data-a="qa-sub" data-v="i">المؤشرات</button><button class="ac-tab'+(S.qaSub==='q'?' on':'')+'" data-a="qa-sub" data-v="q">الوصول السريع</button></div>'
+    + (S.qaSub==='q' ? QA.html('bar', QA_CUR) : vSummary());
+}
+
+/* ====================== مجلس النشاط ====================== */
+function vCouncil(){
+  const c = S.council;
+  if(!c) return '<div class="dh-card dh-soon"><div class="ic">🏛️</div><h2>مجلس النشاط</h2><p>لم يُشكَّل المجلس بعد.</p>'+P('<button class="ac-btn" data-a="council-form">تشكيل مجلس النشاط</button>')+(S.isSA?'':'<p class="dh-sub">تشكيل المجلس من صلاحية قائد المدرسة.</p>')+'</div>';
+  return '<div class="dh-card"><div class="ac-row sb"><h3 style="margin:0">مجلس النشاط</h3><div class="ac-row"><button class="ac-btn sec sm" data-a="print-council">🖨 طباعة القرار</button>'+P('<button class="ac-btn sm" data-a="council-form">✏ تعديل التشكيل</button>')+'</div></div>'
+    +'<div class="dh-list" style="margin-top:8px"><div class="dh-item"><span>الرئيس</span><b>'+esc(c.chairName)+'</b>'+chip('قائد المدرسة')+'</div>'
+    +'<div class="dh-item"><span>المقرر</span><b>'+esc(c.secretaryName||'—')+'</b>'+chip('رائد النشاط')+'</div>'
+    +(c.members||[]).map(m=>'<div class="dh-item"><span>عضو</span><b>'+esc(m.name)+'</b>'+chip(m.role||'عضو')+'</div>').join('')+'</div></div>'
+    +'<div class="dh-card"><div class="ac-row sb"><h3 style="margin:0">محاضر الاجتماعات</h3>'+E('<button class="ac-btn sm" data-a="meeting-add">+ إضافة اجتماع</button>')+'</div>'
+    +(S.meetings.length?meetingGroups().map(gr=>'<h4 style="margin:14px 0 2px;color:#17475e">'+esc(gr.title||'بدون عنوان')+' <span class="dh-sub">('+N(gr.list.length)+' اجتماع)</span></h4>'+gr.list.map(m=>'<div class="dh-card" style="margin:8px 0 0"><div class="ac-row sb"><b>الاجتماع '+N(m.meetingNumber)+' — '+fmtD(m.date)+'</b><div class="ac-row"><button class="ac-btn sec sm" data-a="meeting-print" data-id="'+m.id+'">🖨 طباعة المحضر</button>'+E('<button class="ac-btn sec sm" data-a="meeting-edit" data-id="'+m.id+'">تعديل</button>')+'</div></div>'
+      +'<p style="margin:6px 0">'+esc(m.summary)+'</p>'
+      +((m.decisions||[]).length?'<ol style="margin:0 18px">'+(m.decisions||[]).map(d=>'<li>'+esc(d)+'</li>').join('')+'</ol>':'')
+      +'<div class="dh-sub">الحضور: '+N((m.attendees||[]).length)+' من '+N((m.attendees||[]).length+(m.absentees||[]).length)+'</div></div>').join('')).join(''):'<div class="dh-empty">لا توجد محاضر بعد.</div>')+'</div>'
+    +sigCard();
+}
+/* الاجتماعات مجمَّعة تحت عنوانها (العنوان الواحد يضم أكثر من اجتماع)، والترقيم متسلسل للمجلس */
+function meetingGroups(){
+  const map = new Map();
+  S.meetings.forEach(m=>{ const k=(m.title||'').trim(); if(!map.has(k)) map.set(k,[]); map.get(k).push(m); });
+  return Array.from(map, ([title,list])=>({ title, list:list.sort((a,b)=>(a.meetingNumber||0)-(b.meetingNumber||0)) }))
+    .sort((a,b)=>Math.max(...b.list.map(m=>m.meetingNumber||0))-Math.max(...a.list.map(m=>m.meetingNumber||0)));
+}
+/* الختم والتوقيعان: لكل مدرسة ثلاث خانات؛ تُنسخ لحظة الاعتماد فتبقى النماذج القديمة ثابتة */
+function sigCard(){
+  const p = S.signs||{}, img = S.sigImg||{}, c = S.council;
+  const isSecretary = !!(c && c.secretaryId===S.env.me.id);
+  const rows = [['coord',isSecretary,'يرفعه رائد النشاط من حسابه'],['principal',S.isSA,'يرفعه قائد المدرسة من حسابه'],['stamp',S.isSA,'يرفعه قائد المدرسة']].map(([k,can,hint])=>{
+    let x = p[k], stale = false;
+    if(k==='coord' && x && c && x.uid!==c.secretaryId){ stale = true; }
+    if(k==='principal' && x && c && c.chairId && x.uid!==c.chairId){ stale = true; }
+    const ok = x && !stale && img[k];
+    return '<div class="dh-item" style="align-items:center"><div style="flex:1"><b>'+esc(ACT.SIG_NAMES[k])+'</b><div class="dh-sub">'+(stale?(k==='coord'?'مرتبط برائد سابق ولن يُستعمل — يرفع رائد النشاط الحالي توقيعه':'مرتبط بقائد سابق ولن يُستعمل — يرفع القائد الحالي توقيعه'):(ok?'مرفوع'+(x.name?' — '+esc(x.name):'')+' ('+(x.mode==='draw'?'رسم باليد':'صورة')+')':'غير مرفوع — '+hint))+'</div></div>'
+      +(ok?'<img src="'+img[k]+'" alt="" style="height:44px;background:#fff;border:1px solid #dde4e7;border-radius:6px;padding:2px;margin:0 8px">':'')
+      +(can?'<button class="ac-btn sec sm" data-a="sig-set" data-k="'+k+'">'+(ok?'استبدال':'رفع')+'</button>'+(ok?'<button class="ac-btn bad sm" data-a="sig-clear" data-k="'+k+'" style="margin-inline-start:6px">حذف</button>':''):'')+'</div>';
+  }).join('');
+  return '<div class="dh-card"><h3 style="margin:0 0 4px">الختم والتوقيعان</h3><div class="dh-sub" style="margin-bottom:6px">تُطبع تلقائيًا في نماذج التوثيق بعد اعتماد رائد النشاط. تبقى النماذج المعتمدة سابقًا بتواقيعها كما اعتُمدت ولو تغيّر الشخص.</div><div class="dh-list">'+rows+'</div></div>';
+}
+async function councilForm(){
+  await ensurePeople();
+  const ex = S.council, staff = S.staff;
+  let mem = (ex&&ex.members||[]).map(m=>Object.assign({},m));
+  const opt = (sel,noSA)=>'<option value="">— اختر —</option>'+staff.filter(s=>!(noSA&&s.role==='schoolAdmin')).map(s=>'<option value="'+esc(s.id)+'"'+(sel===s.id?' selected':'')+'>'+esc(s.name)+'</option>').join('');
+  const rowsHtml = ()=>mem.map((m,i)=>'<div class="ac-row" style="margin-bottom:6px"><select class="ac-sel" style="flex:2" data-mi="'+i+'" data-f="id">'+opt(m.id)+'</select><input class="ac-in" style="flex:2" data-mi="'+i+'" data-f="role" placeholder="الصفة (مثال: رئيس النادي الرياضي)" value="'+esc(m.role||'')+'"><button type="button" class="ac-btn bad sm" data-mdel="'+i+'">×</button></div>').join('');
+  const body = '<div class="ac-f"><label>الرئيس</label><div class="ac-in" style="background:#f4f7f6">'+esc(S.env.me.name)+' (قائد المدرسة)</div></div>'
+    +'<div class="ac-f"><label>المقرر (رائد النشاط) *</label><select class="ac-sel" id="cn_sec">'+opt(ex&&ex.secretaryId,true)+'</select><div class="dh-sub">يحصل رائد النشاط تلقائيًا على كامل صلاحيات المنصة (عدا الاعتمادات التي تبقى لك). وعند تغييره تُفعَّل له صلاحية «منصة النشاط المدرسي» في الصلاحيات الخاصة، وتُلغى عن رائد النشاط السابق.</div></div>'
+    +'<div class="ac-f"><label>الأعضاء (رؤساء الأندية وغيرهم)</label><div id="cn_rows"></div><button type="button" class="ac-btn sec sm" id="cn_add">+ إضافة عضو</button></div>';
+  ACT.modal({ title: ex?'تعديل تشكيل مجلس النشاط':'تشكيل مجلس النشاط', body, wide:true, noDismiss:true,
+    onOpen: api=>{
+      const draw = ()=>{ api.q('#cn_rows').innerHTML = rowsHtml(); };
+      draw();
+      api.q('#cn_add').onclick = ()=>{ mem.push({id:'',role:''}); draw(); };
+      api.el.addEventListener('input', e=>{ const i=e.target.dataset.mi; if(i!=null) mem[i][e.target.dataset.f] = e.target.value; });
+      api.el.addEventListener('click', e=>{ const d=e.target.dataset.mdel; if(d!=null){ mem.splice(Number(d),1); draw(); } });
+    },
+    buttons:[{ label:'حفظ التشكيل', onClick: async api=>{
+      const secId = api.q('#cn_sec').value; if(!secId){ ACT.toast('اختر مقرر المجلس (رائد النشاط)'); return false; }
+      const members = mem.filter(m=>m.id).map(m=>({ id:m.id, uid:m.id, name:staffName(m.id), role:(m.role||'').trim()||'عضو' }));
+      const data = { chairId:S.env.me.id, chairName:S.env.me.name, secretaryId:secId, secretaryName:staffName(secId), members, formedBy:S.env.me.id };
+      if(ex) await ACT.patch(S.env,'activityCouncil',CONF(),data); else await ACT.create(S.env,'activityCouncil',Object.assign(data,{formedAt:Date.now()}),CONF());
+      const oldSec = ex ? ex.secretaryId : null;
+      if(secId !== oldSec){ const bad = await coordPerms(oldSec, secId); if(bad.length) ACT.toast('حُفظ التشكيل، وتعذّر تحديث الصلاحيات الخاصة لـ: '+bad.join('، ')+' — عدّلها من شاشة الصلاحيات.'); }
+      await refresh(['council']); return true; } },{ label:'إلغاء', cls:'sec' }] });
+}
+/* تغيير رائد النشاط: تُلغى صلاحية «منصة النشاط المدرسي» الخاصة عن السابق وتُفعَّل للجديد (بقية صلاحياته كما هي).
+   الكتابة بحساب قائد المدرسة على سياق مدرسته فقط (schools.{sid}.permissions مع _editCtx) — كما في شاشة الصلاحيات. */
+async function coordPerms(oldId, newId){
+  const sid = S.env.sid, bad = [];
+  const setP = async (uid, val)=>{
+    if(!uid) return;
+    try{
+      const ref = S.env.db.collection('users').doc(uid), d = await ref.get(); if(!d.exists) throw new Error('no user');
+      const ctx = ((d.data().schools||{})[sid]); if(!ctx) throw new Error('no ctx');
+      const perms = Object.assign({}, ctx.permissions||{}); perms['tools.activity'] = val;
+      await ref.update({ ['schools.'+sid+'.permissions']:perms, _editCtx:sid, updatedAt:Date.now() });
+    }catch(e){ console.warn('coordPerms', uid, e); bad.push(staffName(uid)||uid); }
+  };
+  if(oldId && oldId!==newId) await setP(oldId, { access:false, edit:false });
+  if(newId) await setP(newId, { access:true, edit:true });
+  return bad;
+}
+async function meetingForm(id){
+  await ensurePeople();
+  const ex = id ? S.meetings.find(x=>x.id===id) : null;
+  const mem = S.council ? [{id:S.council.chairId,name:S.council.chairName},{id:S.council.secretaryId,name:S.council.secretaryName}].concat(S.council.members||[]) : [];
+  const seen = new Set(); const people = mem.filter(m=>m.id && !seen.has(m.id) && seen.add(m.id));
+  const att = new Set(ex?ex.attendees:people.map(p=>p.id));
+  const titles = Array.from(new Set(S.meetings.map(m=>(m.title||'').trim()).filter(Boolean)));
+  const body = '<div class="ac-f"><label>عنوان الاجتماع *</label><input class="ac-in" id="mt_title" list="mt_titles" maxlength="80" placeholder="اكتب عنوانًا جديدًا أو اختر عنوانًا سابقًا" value="'+esc(ex?(ex.title||''):'')+'"><datalist id="mt_titles">'+titles.map(x=>'<option value="'+esc(x)+'"></option>').join('')+'</datalist></div>'
+    +'<div class="ac-2c"><div class="ac-f"><label>رقم الاجتماع</label><input type="number" class="ac-in" id="mt_no" value="'+(ex?ex.meetingNumber:(S.meetings.length+1))+'"></div><div class="ac-f"><label>التاريخ *</label><input type="date" class="ac-in" id="mt_date" value="'+esc(ex?ex.date:ACT.today())+'"></div></div>'
+    +'<div class="ac-f"><label>الملخص *</label><textarea class="ac-ta" id="mt_sum">'+esc(ex?ex.summary:'')+'</textarea></div>'
+    +'<div class="ac-f"><label>القرارات (قرار في كل سطر)</label><textarea class="ac-ta" id="mt_dec">'+esc(ex?(ex.decisions||[]).join('\n'):'')+'</textarea></div>'
+    +'<div class="ac-f"><label>الحضور</label>'+people.map(p=>'<label style="display:block"><input type="checkbox" data-att="'+esc(p.id)+'"'+(att.has(p.id)?' checked':'')+'> '+esc(p.name)+'</label>').join('')+'</div>';
+  ACT.modal({ title: ex?'تعديل الاجتماع':'إضافة اجتماع', body, noDismiss:true, onOpen: api=>{
+    if(!window.AIFill) return;
+    AIFill.attach({ field:api.q('#mt_sum'), kind:'meeting_summary', schoolId:S.env.sid, title:'اقترح ملخصًا بالذكاء الاصطناعي', getCtx:()=>({ number: (api.q('#mt_no')||{}).value||'', title: (api.q('#mt_title')||{}).value||'' }),
+      need:c=>!!String(c.title).trim(), needMsg:'اكتب عنوان الاجتماع أولًا.' });
+    AIFill.attach({ field:api.q('#mt_dec'), kind:'meeting_decisions', schoolId:S.env.sid, title:'اقترح قرارات من الملخص بالذكاء الاصطناعي', getCtx:()=>({ summary: (api.q('#mt_sum')||{}).value||'', title: (api.q('#mt_title')||{}).value||'' }),
+      need:c=>!!String(c.summary).trim(), needMsg:'اكتب ملخص الاجتماع أولًا ليُستخرج منه القرارات.' });
+  }, buttons:[{ label:'حفظ', onClick: async api=>{
+    const mtitle = api.q('#mt_title').value.trim(), date = api.q('#mt_date').value, sum = api.q('#mt_sum').value.trim(); if(!mtitle||!date||!sum){ ACT.toast('أكمل العنوان والتاريخ والملخص'); return false; }
+    const present = ACT.$$('[data-att]',api.el).filter(c=>c.checked).map(c=>c.dataset.att), absent = people.map(p=>p.id).filter(i=>!present.includes(i));
+    const data = { title:mtitle, meetingNumber:Number(api.q('#mt_no').value)||1, date, summary:sum, decisions:api.q('#mt_dec').value.split('\n').map(s=>s.trim()).filter(Boolean), attendees:present, absentees:absent };
+    if(ex) await ACT.patch(S.env,'activityMeetings',ex.id,data); else await ACT.create(S.env,'activityMeetings',data);
+    await refresh(['meetings']); return true; } },{ label:'إلغاء', cls:'sec' }] });
+}
+
+/* ---------- مساعدات الأندية ---------- */
+const isStaffM = m=>m.type==='staff';
+const stuMembers = c=>(c.members||[]).filter(m=>!isStaffM(m));
+const memClass = m=>isStaffM(m) ? 'معلم' : (m.className||m.classCode||'');
+/* المعلم المسؤول: respUids (كل بنود غير ملغاة) للقراءة، وrespMap (بنود مخططة فقط: بند←معلم) لصلاحية التوثيق */
+const respFields = plan=>{
+  const it = (plan||[]).filter(x=>x.status!=='cancelled' && x.responsibleId), map = {};
+  it.filter(x=>x.status==='planned').forEach(x=>{ map[x.id]=x.responsibleId; });
+  return { respUids:Array.from(new Set(it.map(x=>x.responsibleId))), respMap:map };
+};
+const sameArr = (a,b)=>JSON.stringify((a||[]).slice().sort())===JSON.stringify((b||[]).slice().sort());
+const sameMap = (a,b)=>JSON.stringify(Object.keys(a||{}).sort().map(k=>[k,a[k]]))===JSON.stringify(Object.keys(b||{}).sort().map(k=>[k,b[k]]));
+/* توثيق معلم مسؤول قيد الاعتماد لبند: يُغلق على الرائد حتى يُعتمد أو يُعاد */
+const teacherPending = (cid,pid)=>S.events.find(x=>x.sourceType==='club' && x.viaTeacher && x.clubId===cid && x.planItemId===pid && x.approvalStatus==='pending');
+/* ترحيل بيانات قديمة: يُكتب respUids/respMap للأندية التي خططها قبل هذه الميزة */
+async function backfillResp(){
+  if(!S.canEdit) return;
+  let n = 0;
+  for(const c of S.clubs){
+    const f = respFields(c.plan);
+    if(!sameArr(f.respUids,c.respUids) || !sameMap(f.respMap,c.respMap)){ try{ await ACT.patch(S.env,'activityClubs',c.id,f); Object.assign(c,f); n++; }catch(e){ console.warn('backfill', e); } }
+  }
+  return n;
+}
+
+/* ====================== التكليفات والأندية ====================== */
+function vClubs(){
+  if(S.clubId==='__asg') return vAsgPage();
+  if(S.clubId){ const c = clubById(S.clubId); if(c) return vClubDetail(c); S.clubId=null; }
+  const na = S.assigns.filter(a=>a.status!=='cancelled').length, np = pendingAssigns().length;
+  const asgCard = '<div class="ac-club" data-asg-card="1"><div class="ic">📌</div><h4>التكليفات الرسمية</h4><div class="dh-sub">تكليفات المعلمين وتوثيقها</div>'
+    +'<div style="margin:6px 0">'+chip(N(na)+' تكليف')+(np?' '+chip(N(np)+' بانتظار الاعتماد','warn'):'')+'</div>'
+    +'<div class="dh-sub">&nbsp;</div><div style="margin-top:8px"><button class="ac-btn sm" data-a="club-open" data-id="__asg">فتح</button></div></div>';
+  return '<div class="ac-row sb" style="margin-bottom:10px"><h3 style="margin:0">التكليفات والأندية</h3>'+E('<button class="ac-btn" data-a="club-add">+ إضافة نادٍ</button>')+'</div>'
+    +'<div class="ac-grid">'+asgCard+S.clubs.map(c=>{
+      const ev = approvedEvents().filter(x=>x.clubId===c.id).length;
+      return '<div class="ac-club"><div class="ic">'+esc(c.icon||'🏷️')+'</div><h4>'+esc(c.name)+'</h4><div class="dh-sub">'+esc(c.domain||'')+'</div>'
+        +'<div style="margin:6px 0">'+chip(N(stuMembers(c).length)+' طالب')+' '+chip(N(ev)+' فعالية')+(c.status==='inactive'?' '+chip('موقوف','warn'):'')+'</div>'
+        +'<div class="dh-sub">المشرف: '+esc(c.headName||'—')+'</div><div style="margin-top:8px"><button class="ac-btn sm" data-a="club-open" data-id="'+c.id+'">فتح</button></div></div>';
+    }).join('')+'</div>'+(S.clubs.length?'':'<div class="dh-empty">لا توجد أندية.</div>');
+}
+function vAsgPage(){
+  return '<div class="dh-card"><div class="ac-row sb"><div><button class="ac-btn sec sm" data-a="club-back">← رجوع</button> <b style="font-size:16px">📌 التكليفات الرسمية</b></div></div></div>'+aAssign();
+}
+const CT = [['members','الأعضاء'],['plan','الخطة'],['exec','التنفيذ'],['att','الحضور']];
+function vClubDetail(c){
+  return '<div class="dh-card"><div class="ac-row sb"><div><button class="ac-btn sec sm" data-a="club-back">← رجوع</button> <b style="font-size:16px">'+esc(c.icon||'')+' '+esc(c.name)+'</b> '+(c.status==='inactive'?chip('موقوف','warn'):'')+'</div>'
+    +E('<div class="ac-row"><button class="ac-btn sec sm" data-a="club-edit" data-id="'+c.id+'">✏ تعديل البيانات</button><button class="ac-btn bad sm" data-a="club-del" data-id="'+c.id+'">'+(clubUsed(c)?'⏸ إيقاف النادي':'🗑 حذف النادي')+'</button>'+(c.status==='inactive'?'<button class="ac-btn sm" data-a="club-react" data-id="'+c.id+'">▶ إعادة تفعيل</button>':'')+'</div>')+'</div>'
+    +'<div class="dh-sub" style="margin-top:6px">المجال: '+esc(c.domain||'—')+' — المشرف: '+esc(c.headName||'—')+' — المناوبون: '+esc((c.supervisors||[]).map(x=>x.name).join('، ')||'—')+'</div></div>'
+    +'<div class="ac-tabs sub">'+CT.map(t=>'<button class="ac-tab'+(S.clubTab===t[0]?' on':'')+'" data-a="club-tab" data-v="'+t[0]+'">'+t[1]+'</button>').join('')+'</div>'
+    +'<div id="clubBody">'+({members:cMembers,plan:cPlan,exec:cExec,att:cAtt}[S.clubTab])(c)+'</div>';
+}
+function afterClubPaint(){}
+function clubUsed(c){
+  return !!c.locked || (c.members||[]).length>0 || (c.plan||[]).length>0 || S.events.some(x=>x.clubId===c.id) || S.assigns.some(a=>a.clubId===c.id && a.status!=='cancelled');
+}
+function cMembers(c){
+  const m = c.members||[], stu = stuMembers(c), tch = m.filter(isStaffM);
+  const ord = {}; ((S.roster&&S.roster.classes)||[]).forEach((k,i)=>{ ord[k.code]=i; });
+  /* المعلمون دائمًا في أعلى القائمة، ثم الطلاب مرتَّبين بالفصول */
+  const rows = tch.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||'','ar')).concat(stu.slice().sort((a,b)=>((ord[a.classCode]==null?9999:ord[a.classCode])-(ord[b.classCode]==null?9999:ord[b.classCode]))||(a.name||'').localeCompare(b.name||'','ar')));
+  return '<div class="dh-card"><div class="ac-row sb"><h3 style="margin:0">أعضاء النادي ('+N(m.length)+')</h3>'+E('<button class="ac-btn sm" data-a="mem-add" data-id="'+c.id+'">+ إضافة أعضاء</button>')+'</div>'
+    +(m.length?'<div class="ac-wrap"><table class="ac-tbl" style="margin-top:8px"><tr><th>م</th><th>الاسم</th><th>الفصل</th><th>تاريخ التسجيل</th>'+E('<th></th>')+'</tr>'
+    +rows.map((x,i)=>'<tr><td>'+N(i+1)+'</td><td>'+esc(isStaffM(x)?ACT.ustaz(x.name):x.name)+'</td><td>'+(isStaffM(x)?chip('معلم','info'):esc(memClass(x)))+'</td><td>'+(x.at?ACT.hijri(new Date(x.at).toISOString().slice(0,10)):'')+'</td>'+E('<td><button class="ac-btn bad sm" data-a="mem-del" data-id="'+c.id+'" data-seat="'+esc(x.seat)+'">حذف</button></td>')+'</tr>').join('')+'</table></div>':'<div class="dh-empty">لم يُسجَّل أعضاء بعد.</div>')+'</div>';
+}
+function cPlan(c){
+  const pl = c.plan||[];
+  const note = (clubPS(c)==='draft' && c.planReturnNote) ? '<div class="dh-card" style="background:#fff0ee;border-color:#f0b8b0;margin-bottom:8px">أعاد قائد المدرسة الخطة للتعديل: '+esc(c.planReturnNote)+'</div>' : '';
+  return note+'<div class="dh-card"><div class="ac-row sb"><h3 style="margin:0">خطة النادي الفصلية '+psChip(clubPS(c),!!c.planReturnNote&&clubPS(c)==='draft')+'</h3><div class="ac-row"><button class="ac-btn sec sm" data-a="print-clubplan" data-id="'+c.id+'">🖨 طباعة الخطة</button>'+E('<button class="ac-btn sm" data-a="plan-add" data-id="'+c.id+'">+ إضافة بند</button>')+'</div></div>'
+    +(pl.length?'<div class="ac-wrap"><table class="ac-tbl" style="margin-top:8px"><tr><th>م</th><th>الفعالية</th><th>التاريخ المتوقع</th><th>المسؤول</th><th>الحالة</th>'+E('<th></th>')+'</tr>'
+    +pl.map((x,i)=>{ const lk = teacherPending(c.id,x.id);
+      return '<tr><td>'+N(i+1)+'</td><td>'+esc(x.title)+'</td><td>'+(x.expectedDate?ACT.hijri(x.expectedDate):'—')+'</td><td>'+esc(ACT.ustaz(x.responsible||'')||'—')+'</td><td>'+chip(PLAN_ST[x.status]||x.status,ST_CLS[x.status])
+      +(lk?'<div class="dh-sub" style="color:#b45309;margin-top:3px">وثّقه '+esc(ACT.ustaz(lk.documentedByName||''))+' — بانتظار اعتماد رائد النشاط</div>':'')+'</td>'
+      +E('<td>'+(x.status==='executed'?'':'<button class="ac-btn sec sm" data-a="plan-edit" data-id="'+c.id+'" data-pid="'+x.id+'">تعديل</button> <button class="ac-btn bad sm" data-a="plan-del" data-id="'+c.id+'" data-pid="'+x.id+'">حذف</button>')+'</td>')+'</tr>'; }).join('')+'</table></div>':'<div class="dh-empty">لا توجد بنود في الخطة بعد.</div>')+'</div>';
+}
+function cExec(c){
+  const ev = S.events.filter(x=>x.clubId===c.id && x.approvalStatus!=='returned').sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  return '<div class="dh-card"><h3 style="margin:0">الفعاليات المنفَّذة ('+N(ev.length)+')</h3></div>'
+    +E('<div class="dh-card"><button class="ac-btn" data-a="exec-add" data-id="'+c.id+'">+ تسجيل فعالية منفَّذة</button></div>')
+    +'<div class="dh-card">'+(ev.length?'<div class="dh-list">'+ev.map(x=>'<div class="dh-item"><div><b>'+esc(x.title)+'</b><div class="m">'+fmtD(x.date)+' — '+N(x.participantCount||0)+' مشارك — '+N((x.photos||[]).length)+' صورة'+(x.viaTeacher?' — وثّقه '+esc(ACT.ustaz(x.documentedByName||'')):'')+'</div></div><div class="ac-row">'+(x.approvalStatus==='approved'?chip('معتمد','ok'):chip('بانتظار الاعتماد','warn'))
+      +'<button class="ac-btn sec sm" data-a="ev-print" data-id="'+x.id+'">معاينة</button>'
+      +(S.canEdit && x.approvalStatus==='pending' ? (approveGate(x).ok?'<button class="ac-btn sm" data-a="ev-approve" data-id="'+x.id+'">اعتماد</button>':'')+'<button class="ac-btn bad sm" data-a="ev-return" data-id="'+x.id+'">إعادة للتعديل</button>':'')+'</div></div>').join('')+'</div>':'<div class="dh-empty">لا توجد فعاليات مسجَّلة.</div>')+'</div>';
+}
+function cAtt(c){
+  const ev = S.events.filter(x=>x.clubId===c.id && x.approvalStatus==='approved').sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  if(!ev.length) return '<div class="dh-card"><div class="dh-empty">سجّل فعالية معتمدة أولًا لتتمكن من رصد الحضور.</div></div>';
+  const sel = S.attEv && ev.find(x=>x.id===S.attEv) ? S.attEv : ev[0].id, e = ev.find(x=>x.id===sel), att = e.attendance||{};
+  const mem = (c.members||[]).filter(isStaffM).concat(stuMembers(c));
+  return '<div class="dh-card"><div class="ac-f"><label>الفعالية</label><select class="ac-sel" id="attSel" data-a-change="att-sel">'+ev.map(x=>'<option value="'+x.id+'"'+(x.id===sel?' selected':'')+'>'+esc(x.title)+' — '+N(x.date)+'</option>').join('')+'</select></div>'
+    +(mem.length?'<div class="ac-wrap"><table class="ac-tbl"><tr><th>الاسم</th><th>الفصل</th><th>حاضر</th></tr>'+mem.map(m=>'<tr><td>'+esc(isStaffM(m)?ACT.ustaz(m.name):m.name)+'</td><td>'+(isStaffM(m)?chip('معلم','info'):esc(memClass(m)))+'</td><td><input type="checkbox" data-seat="'+esc(m.seat)+'"'+((att[m.seat]?att[m.seat].status==='present':false)?' checked':'')+(S.canEdit?'':' disabled')+'></td></tr>').join('')+'</table></div>'+E('<div style="margin-top:8px"><button class="ac-btn" data-a="att-save" data-id="'+c.id+'" data-ev="'+sel+'">حفظ الحضور</button> <button class="ac-btn sec" data-a="print-att" data-id="'+c.id+'" data-ev="'+sel+'">🖨 سجل الحضور</button></div>'):'<div class="dh-empty">لا يوجد أعضاء في النادي.</div>')+'</div>';
+}
+async function clubForm(id){
+  await ensurePeople();
+  const ex = id ? clubById(id) : null;
+  const opt = sel=>'<option value="">— اختر —</option>'+S.staff.map(s=>'<option value="'+esc(s.id)+'"'+(sel===s.id?' selected':'')+'>'+esc(s.name)+'</option>').join('');
+  const body = '<div class="ac-f"><label>اسم النادي *</label><input class="ac-in" id="cl_name" value="'+esc(ex?ex.name:'')+'"></div>'
+    +'<div class="ac-2c"><div class="ac-f"><label>المجال</label><input class="ac-in" id="cl_dom" value="'+esc(ex?ex.domain:'')+'" placeholder="مثال: الرياضة والصحة"></div><div class="ac-f"><label>رمز</label><input class="ac-in" id="cl_ic" maxlength="3" value="'+esc(ex?ex.icon:'🏷️')+'"></div></div>'
+    +'<div class="ac-f"><label>رئيس النادي (المشرف الرئيسي)</label><select class="ac-sel" id="cl_head">'+opt(ex&&ex.headId)+'</select></div>'
+    +'<div class="ac-f"><label>المشرفون المناوبون</label>'+ACT.pickHtml('cl_sup', S.staff.map(s=>({id:s.id,name:s.name,sub:ACT.ROLE_NAMES[s.role]||''})), (ex&&ex.supervisors||[]).map(s=>s.id))+'</div>';
+  ACT.modal({ title: ex?'تعديل بيانات النادي':'إضافة نادٍ', body, noDismiss:true, onOpen:api=>ACT.pickInit(api.el,'cl_sup'),
+    buttons:[{ label:'حفظ', onClick: async api=>{
+      const name = api.q('#cl_name').value.trim(); if(!name){ ACT.toast('أدخل اسم النادي'); return false; }
+      const headId = api.q('#cl_head').value;
+      const data = { name, domain:api.q('#cl_dom').value.trim(), icon:api.q('#cl_ic').value.trim()||'🏷️', headId:headId||null, headName:headId?staffName(headId):'', supervisors:ACT.pickGet(api.el,'cl_sup').map(i=>({id:i,name:staffName(i)})) };
+      if(ex) await ACT.patch(S.env,'activityClubs',ex.id,data);
+      else await ACT.create(S.env,'activityClubs',Object.assign(data,{ key:'custom_'+Date.now(), isDefault:false, status:'active', members:[], plan:[], locked:false, order:100+S.clubs.length }));
+      await refresh(['clubs']); return true; } },{ label:'إلغاء', cls:'sec' }] });
+}
+async function clubDelete(id){
+  const c = clubById(id); if(!c) return;
+  if(clubUsed(c)){
+    if(!await ACT.confirmBox('هذا النادي له أعضاء أو خطة أو أنشطة، فلا يمكن حذفه حفاظًا على السجلات والتقارير. هل تريد إيقافه؟ (يمكن إعادة تفعيله لاحقًا)')) return;
+    await ACT.patch(S.env,'activityClubs',id,{status:'inactive'});
+  } else {
+    if(!await ACT.confirmBox('سيُحذف النادي «'+c.name+'» نهائيًا. هل أنت متأكد؟')) return;
+    await S.env.db.collection('activityClubs').doc(id).delete(); S.clubId=null;
+  }
+  await refresh(['clubs']);
+}
+async function memAdd(id){
+  await ensurePeople();
+  const c = clubById(id), r = S.roster, inClub = new Set((c.members||[]).map(m=>m.seat));
+  const other = {}; S.clubs.forEach(x=>{ if(x.id!==id) (x.members||[]).forEach(m=>{ (other[m.seat]=other[m.seat]||[]).push(x.name); }); });
+  const tag = {}; Object.keys(other).forEach(k=>{ tag[k] = '⚠ مسجَّل في '+other[k].join('، '); });
+  const body = '<div class="ac-f"><label>طريقة الإضافة</label><select class="ac-sel" id="ma_mode"><option value="cls">فصل كامل بجميع طلابه</option><option value="stu">طلاب محدَّدون من فصولهم</option><option value="tch">معلمون</option></select></div><div id="ma_list"></div>';
+  const draw = api=>{
+    const mode = api.q('#ma_mode').value; let items = [];
+    if(mode==='cls') items = r.classes.map(k=>{ const st = r.students.filter(s=>s.classCode===k.code && !inClub.has(s.seat)); const w = st.filter(s=>other[s.seat]).length; return { id:k.code, name:k.name||k.code, sub:N(st.length)+' طالب متاح'+(w?' — ⚠ '+N(w)+' مسجَّلون في نادٍ آخر':'') }; }).filter(x=>!/^٠ |^0 /.test(x.sub));
+    else if(mode==='stu') items = ACT.studentItems(r,{ skip:inClub, tag });
+    else items = S.staff.filter(s=>!inClub.has('u:'+s.id)).map(s=>({ id:s.id, name:ACT.ustaz(s.name), sub:ACT.ROLE_NAMES[s.role]||'' }));
+    api.q('#ma_list').innerHTML = ACT.pickHtml('ma_p', items, [], { ph: mode==='cls'?'بحث باسم الفصل...':'بحث بالاسم...' }); ACT.pickInit(api.el,'ma_p');
+  };
+  ACT.modal({ title:'إضافة أعضاء إلى '+c.name, body, noDismiss:true,
+    onOpen: api=>{ api.q('#ma_mode').onchange = ()=>draw(api); draw(api); },
+    buttons:[{ label:'إضافة المحدَّدين', onClick: async api=>{
+      const mode = api.q('#ma_mode').value, sel = ACT.pickGet(api.el,'ma_p'); if(!sel.length){ ACT.toast('حدّد عنصرًا واحدًا على الأقل'); return false; }
+      const now = Date.now(), mk = st=>({ seat:st.seat, name:st.name, classCode:st.classCode, className:ACT.classLabel(r,st.classCode), at:now });
+      let add = [];
+      if(mode==='cls') add = r.students.filter(s=>sel.includes(s.classCode) && !inClub.has(s.seat)).map(mk);
+      else if(mode==='stu') add = sel.map(s=>r.students.find(x=>x.seat===s)).filter(Boolean).map(mk);
+      else add = sel.map(u=>({ seat:'u:'+u, uid:u, type:'staff', name:staffName(u), className:'معلم', at:now }));
+      if(!add.length){ ACT.toast('لا يوجد من يمكن إضافته (جميع الطلاب مسجَّلون بالفعل)'); return false; }
+      const dup = add.filter(a=>other[a.seat]).length;
+      if(dup && !await ACT.confirmBox('تنبيه: '+N(dup)+' من المضافين مسجَّلون أيضًا في نادٍ آخر (مسموح). هل تتابع الإضافة؟')) return false;
+      await ACT.patch(S.env,'activityClubs',id,{ members:(c.members||[]).concat(add), locked:true });
+      ACT.toast('تمت إضافة '+N(add.length)+' عضوًا');
+      await refresh(['clubs']); return true; } },{ label:'إلغاء', cls:'sec' }] });
+}
+async function planForm(cid, pid){
+  await ensurePeople();
+  const c = clubById(cid), ex = pid ? (c.plan||[]).find(x=>x.id===pid) : null;
+  const supers = (c.supervisors||[]).concat(c.headId?[{id:c.headId,name:c.headName}]:[]);
+  const seen = new Set(); const list = supers.filter(s=>!seen.has(s.id)&&seen.add(s.id));
+  const exec = ex && ex.status==='executed';
+  const body = '<div class="ac-f"><label>الفعالية *</label><input class="ac-in" id="pl_t" value="'+esc(ex?ex.title:'')+'"></div>'
+    +'<div class="ac-2c"><div class="ac-f"><label>التاريخ المتوقع *</label><input type="date" class="ac-in" id="pl_d" value="'+esc(ex?ex.expectedDate:'')+'"></div>'
+    +(ex?'<div class="ac-f"><label>الحالة</label>'+(exec?'<div class="ac-in" style="background:#f1f5f7">'+PLAN_ST.executed+' (تلقائي بعد اعتماد التنفيذ)</div>':'<select class="ac-sel" id="pl_s">'+['planned','cancelled'].map(k=>'<option value="'+k+'"'+(ex.status===k?' selected':'')+'>'+PLAN_ST[k]+'</option>').join('')+'</select>')+'</div>':'')+'</div>'
+    +'<div class="ac-f"><label>المسؤول *</label><select class="ac-sel" id="pl_r"><option value="">— اختر من مشرفي النادي —</option>'+list.map(s=>'<option value="'+esc(s.id)+'"'+(ex&&ex.responsibleId===s.id?' selected':'')+'>'+esc(s.name)+'</option>').join('')+'</select>'+(list.length?'<div class="dh-sub">يظهر البند للمسؤول مباشرة في «تكاليفي» ليوثّقه.</div>':'<div class="dh-sub">حدّد مشرفي النادي أولًا من «تعديل البيانات».</div>')+'</div>';
+  ACT.modal({ title: ex?'تعديل بند الخطة':'إضافة بند للخطة', body, noDismiss:true, buttons:[{ label:'حفظ', onClick: async api=>{
+    const t = api.q('#pl_t').value.trim(), d = api.q('#pl_d').value, r = api.q('#pl_r').value;
+    if(!t||!d||!r){ ACT.toast('أكمل الفعالية والتاريخ والمسؤول'); return false; }
+    const st = !ex ? 'planned' : (exec ? 'executed' : api.q('#pl_s').value);
+    if(ex && teacherPending(cid,ex.id) && (st!==ex.status || r!==ex.responsibleId)){ ACT.toast('يوجد توثيق من المعلم المسؤول بانتظار اعتماد رائد النشاط؛ اعتمده أو أعده أولًا قبل تغيير المسؤول أو الحالة.'); return false; }
+    if(clubPS(c)==='approved' && !await ACT.confirmBox('خطة هذا النادي معتمدة؛ تعديلها سيعيدها إلى «مسودة» وتحتاج اعتمادًا جديدًا من قائد المدرسة. متابعة؟')) return false;
+    const item = Object.assign({}, ex||{}, { id: ex?ex.id:'p'+Date.now().toString(36), title:t, expectedDate:d, responsible:list.find(s=>s.id===r).name, responsibleId:r, status:st });
+    const plan = (c.plan||[]).slice(); if(ex) plan[plan.findIndex(x=>x.id===ex.id)] = item; else plan.push(item);
+    await ACT.patch(S.env,'activityClubs',cid,Object.assign({ plan, locked:true }, respFields(plan), clubPS(c)==='approved'?{planState:'draft',planReturnNote:''}:{})); await refresh(['clubs']); return true; } },{ label:'إلغاء', cls:'sec' }] });
+}
+/* أثر التنفيذ المعتمد لفعالية نادٍ (من الرائد مباشرة أو بعد اعتماد توثيق المعلم المسؤول):
+   حضور تلقائي لأعضاء النادي المذكورين في التوثيق، وتحويل بند الخطة إلى «مُنفَّذ» */
+async function clubExecuted(cid, pid, evId, ev){
+  const cur = (await ACT.getDoc(S.env,'activityClubs',cid)) || clubById(cid); if(!cur) return;
+  const stuP = new Set((ev.participants||[]).filter(p=>p.type==='student').map(p=>p.uid));
+  const stfP = new Set((ev.participants||[]).filter(p=>p.type==='staff').map(p=>p.uid).concat((ev.executors||[]).map(e=>e.uid)));
+  const att = Object.assign({}, ev.attendance||{});
+  (cur.members||[]).forEach(m=>{
+    if(isStaffM(m) ? stfP.has(m.uid) : stuP.has(m.seat)) att[m.seat] = { name:m.name, class:m.classCode||'', type:isStaffM(m)?'staff':'student', status:'present', auto:true };
+  });
+  await ACT.patch(S.env,'activityEvents',evId,{ attendance:att, attendanceBy:S.env.me.id });
+  if(pid){
+    const plan = (cur.plan||[]).map(x=>x.id===pid?Object.assign({},x,{status:'executed',evId}):x);
+    await ACT.patch(S.env,'activityClubs',cid,Object.assign({ plan, locked:true }, respFields(plan)));
+  }
+}
+async function execForm(cid){
+  await ensurePeople(); await load(['clubs','events']);
+  const c = clubById(cid), open = (c.plan||[]).filter(x=>x.status==='planned');
+  if(!open.length){ ACT.toast('لا توجد بنود مخططة؛ أضف بندًا في تبويب «الخطة» أولًا.'); return; }
+  const opt = x=>{ const lk = teacherPending(cid,x.id); return '<option value="'+x.id+'"'+(lk?' disabled':'')+'>'+esc(x.title)+(lk?' — وثّقه '+esc(ACT.ustaz(lk.documentedByName||''))+' بانتظار اعتماد رائد النشاط':'')+'</option>'; };
+  const m = ACT.modal({ title:'تسجيل فعالية منفَّذة — '+c.name, noDismiss:true,
+    body:'<div class="ac-f"><label>الفعالية من خطة النادي *</label><select class="ac-sel" id="ex_pi"><option value="">— اختر —</option>'+open.map(opt).join('')+'</select></div><div class="dh-sub">تظهر هنا البنود المخططة فقط. بعد الاختيار اضغط «متابعة» لتعبئة نموذج التوثيق؛ اسم الفعالية ومجالها يؤخذان من الخطة ولا يُعدَّلان.</div>',
+    buttons:[{ label:'متابعة', onClick: async api=>{
+      const pid = api.q('#ex_pi').value, it = open.find(x=>x.id===pid);
+      if(!it){ ACT.toast('اختر الفعالية من الخطة'); return false; }
+      const domOk = ACT.DOMAINS.includes(c.dom);
+      setTimeout(()=>ACT.openDocForm({ env:S.env, staff:S.staff, roster:S.roster, autoApprove:true, council:S.council, clubMode:true,
+        lockTitle:true, lockDomain:domOk, clubMemberSeats:stuMembers(c).map(x=>x.seat), eventId:'cl_'+cid+'_'+pid,
+        prefill:{ title:it.title, domain: domOk?c.dom:'', date: it.expectedDate?it.expectedDate:ACT.today() }, dateMin:ACT.planItemDate(it),
+        dateHint:'لا يسبق تاريخ إنشاء البند في الخطة، ولا يتجاوز اليوم.', minMsg:'لا يمكن أن يسبق تاريخ التنفيذ تاريخ إنشاء البند في الخطة',
+        source:{ type:'club', clubId:cid, planItemId:pid },
+        beforeSave: async ()=>{
+          const cur = await ACT.getDoc(S.env,'activityClubs',cid), item = cur && (cur.plan||[]).find(x=>x.id===pid);
+          if(!item || item.status!=='planned') return 'تغيّر هذا البند (نُفِّذ أو أُلغي أو حُذف) — لم يُحفظ التوثيق. حدّث الصفحة وراجع الخطة.';
+          const evs = await ACT.list(S.env,'activityEvents',[['clubId','==',cid]]);
+          const dup = evs.find(x=>x.planItemId===pid && x.approvalStatus!=='returned');
+          if(dup) return 'سبق توثيق هذه الفعالية ('+ACT.ustaz(dup.documentedByName||'')+') — لم يُحفظ توثيقك. حدّث الصفحة.';
+          return null; },
+        afterSave: (evId, data)=>clubExecuted(cid, pid, evId, data),
+        onSaved: ()=>refresh(['clubs','events']) }), 30);
+      return true; } },{ label:'إلغاء', cls:'sec' }] });
+}
+
+/* ====================== الخطة العامة (اعتماد انتقائي لكل نادٍ وللمسار العام) ====================== */
+function planRows(){
+  const rows = activeClubs().map(c=>({ key:'c:'+c.id, name:(c.icon||'')+' '+c.name, n:(c.plan||[]).length, st:clubPS(c), note:c.planReturnNote||'', at:c.planApprovedAt, by:c.planApprovedByName, club:c }));
+  rows.push({ key:'gen', name:'🧭 فعاليات المسار العام', n:genItems().length, st:genPS(), note:(S.cfg&&S.cfg.generalReturnNote)||'', at:S.cfg&&S.cfg.generalApprovedAt, by:S.cfg&&S.cfg.generalApprovedByName });
+  return rows;
+}
+function vPlan(){
+  const rows = planRows(), ps = planStats();
+  const selOk = r => S.canEdit ? (r.st==='draft' && r.n>0) : (S.isSA ? r.st==='submitted' : false);
+  const anySel = rows.some(selOk);
+  const tr = rows.map(r=>{
+    const ret = r.st==='draft' && !!r.note;
+    return '<tr><td style="width:34px">'+(selOk(r)?'<input type="checkbox" data-psel="'+esc(r.key)+'">':'')+'</td><td><b>'+esc(r.name)+'</b>'+(ret?'<div class="dh-sub" style="color:#b3261e">سبب الإعادة: '+esc(r.note)+'</div>':'')+(r.st==='approved'&&r.at?'<div class="dh-sub">اعتُمدت '+ACT.hijri(new Date(r.at).toISOString().slice(0,10))+(r.by?' — '+esc(r.by):'')+'</div>':'')+'</td>'
+      +'<td>'+(r.n?chip(N(r.n)+' بنود'):chip('بدون بنود','warn'))+'</td><td>'+psChip(r.st,ret)+'</td>'
+      +'<td><div class="ac-row">'+(r.club?'<button class="ac-btn sec sm" data-a="club-open-plan" data-id="'+r.club.id+'">عرض</button>':'<button class="ac-btn sec sm" data-a="tab" data-v="general">عرض</button>')
+      +(S.canEdit && r.st==='submitted' ? '<button class="ac-btn sec sm" data-a="plan-withdraw" data-k="'+esc(r.key)+'">سحب</button>':'')
+      +(S.isSA && r.st==='approved' ? '<button class="ac-btn sec sm" data-a="plan-reopen" data-k="'+esc(r.key)+'">إعادة فتح</button>':'')+'</div></td></tr>';
+  }).join('');
+  const done = rows.filter(r=>r.st==='approved').length;
+  return '<div class="dh-card"><div class="ac-row sb"><h3 style="margin:0">الخطة العامة للنشاط الطلابي</h3>'+chip(N(done)+' من '+N(rows.length)+' معتمدة', done===rows.length?'ok':'')+'</div>'
+    +'<div class="dh-sub" style="margin:6px 0">'+(S.canEdit?'حدّد ما تريد تقديمه للاعتماد (فبعض الأندية قد تتأخر خططها)، ويعتمد قائد المدرسة ما يراه مكتملًا.':(S.isSA?'حدّد الخطط المُقدَّمة التي تريد اعتمادها أو إعادتها للتعديل.':'الخطط المعتمدة وحدها تُطبع ضمن الخطة العامة.'))+'</div>'
+    +'<div class="ac-wrap"><table class="ac-tbl"><tr><th></th><th>الخطة</th><th>البنود</th><th>الحالة</th><th></th></tr>'+tr+'</table></div>'
+    +'<div class="ac-row" style="margin-top:10px">'
+    +(S.canEdit && anySel ? '<button class="ac-btn" data-a="plan-submit-sel">تقديم المحدد للاعتماد</button>':'')
+    +(S.isSA && anySel ? '<button class="ac-btn" data-a="plan-approve-sel">اعتماد المحدد</button><button class="ac-btn bad" data-a="plan-return-sel">إعادة المحدد للتعديل</button>':'')
+    +'<button class="ac-btn sec" data-a="print-genplan">🖨 طباعة الخطة العامة (المعتمد فقط)</button></div></div>'
+    +'<div class="dh-card"><div class="dh-sub">نسبة تنفيذ بنود الأندية: '+N(Math.round(ps.pct*100))+'٪</div></div>';
+}
+
+/* ====================== الأنشطة والمسار العام ====================== */
+function vGeneral(){
+  const openN = S.opens.filter(o=>o.status==='open').length;
+  const subs = [['events','فعاليات المسار العام'],['open','الأنشطة المتاحة'+(openN?' ('+N(openN)+')':'')]];
+  return '<div class="ac-tabs sub">'+subs.map(t=>'<button class="ac-tab'+(S.genTab===t[0]?' on':'')+'" data-a="gen-tab" data-v="'+t[0]+'">'+t[1]+'</button>').join('')+'</div>'
+    + (S.genTab==='open' ? aOpen() : aGenEvents());
+}
+function aGenEvents(){
+  return '<div class="ac-row sb" style="margin-bottom:10px"><h3 style="margin:0">فعاليات المسار العام</h3><div class="ac-row">'+E('<button class="ac-btn sm" data-a="gen-add">+ إضافة فعالية</button><button class="ac-btn sec sm" data-a="gen-tpl">تحميل القالب الوزاري</button>')+'</div></div>'
+    +(S.general.length?S.general.map(g=>{
+      const ev = g.executionEventId ? S.events.find(x=>x.id===g.executionEventId) : null;
+      const st = g.status==='executed' ? chip('✅ مُنفَّذ','ok') : g.status==='cancelled' ? chip('ملغى','bad') : g.openEventId ? chip('📣 منشور للتوثيق','warn') : chip('🔵 مخطط','');
+      return '<div class="dh-card" style="margin-bottom:8px"><div class="ac-row sb"><b>'+esc(g.title)+'</b>'+st+'</div>'
+        +'<div class="dh-sub">النادي المسؤول: '+esc(g.responsibleClubName||'—')+' — التاريخ: '+(g.expectedDate?ACT.hijri(g.expectedDate):'غير محدد')+'</div>'
+        +'<div class="ac-row" style="margin-top:6px">'+(ev?'<button class="ac-btn sec sm" data-a="ev-print" data-id="'+ev.id+'">عرض التفاصيل</button>':'')
+        +(g.status==='planned' && !g.openEventId ? E('<button class="ac-btn sm" data-a="gen-pub" data-id="'+g.id+'">📣 نشر نشاط متاح</button>'):'')
+        +(g.openEventId ? '<button class="ac-btn sec sm" data-a="gen-goopen">عرض في الأنشطة المتاحة</button>':'')
+        +(g.status!=='executed' ? E('<button class="ac-btn sec sm" data-a="gen-edit" data-id="'+g.id+'">تعديل</button>'):'')+'</div></div>';
+    }).join(''):'<div class="dh-empty">لا توجد فعاليات. استخدم «تحميل القالب الوزاري» لإنشاء الفعاليات الأربع عشرة دفعة واحدة.</div>');
+}
+function clubOpts(sel){ return '<option value="">— بدون —</option>'+activeClubs().map(c=>'<option value="'+c.id+'"'+(sel===c.id?' selected':'')+'>'+esc(c.name)+'</option>').join(''); }
+async function genForm(id){
+  const ex = id ? S.general.find(x=>x.id===id) : null;
+  const body = '<div class="ac-f"><label>العنوان *</label><input class="ac-in" id="ge_t" value="'+esc(ex?ex.title:'')+'"'+(ex&&ex.openEventId?' readonly style="background:#f1f5f7"':'')+'></div>'
+    +'<div class="ac-2c"><div class="ac-f"><label>النادي المسؤول</label><select class="ac-sel" id="ge_c">'+clubOpts(ex&&ex.responsibleClubId)+'</select></div><div class="ac-f"><label>التاريخ المتوقع</label><input type="date" class="ac-in" id="ge_d" value="'+esc(ex?ex.expectedDate:'')+'"></div></div>'
+    +'<div class="ac-f"><label>الحالة</label><select class="ac-sel" id="ge_s">'+['planned','cancelled'].map(k=>'<option value="'+k+'"'+((ex?ex.status:'planned')===k?' selected':'')+'>'+({planned:'مخطط',cancelled:'ملغى'})[k]+'</option>').join('')+'</select></div>';
+  ACT.modal({ title: ex?'تعديل فعالية':'إضافة فعالية للمسار العام', body, noDismiss:true, buttons:[{ label:'حفظ', onClick: async api=>{
+    const t = api.q('#ge_t').value.trim(); if(!t){ ACT.toast('أدخل العنوان'); return false; }
+    const cid = api.q('#ge_c').value, data = { title:t, responsibleClubId:cid||null, responsibleClubName:cid?clubById(cid).name:'', expectedDate:api.q('#ge_d').value, status:api.q('#ge_s').value };
+    if(ex && genPS()==='approved' && !await ACT.confirmBox('فعاليات المسار العام معتمدة؛ تعديلها سيعيدها إلى «مسودة» وتحتاج اعتمادًا جديدًا. متابعة؟')) return false;
+    if(ex) await ACT.patch(S.env,'activityGeneralEvents',ex.id,data); else await ACT.create(S.env,'activityGeneralEvents',Object.assign(data,{templateId:null,executionEventId:null,openEventId:null}));
+    if(genPS()==='approved') await ACT.patch(S.env,'activityConfig',CONF(),{ generalState:'draft', generalReturnNote:'' });
+    await refresh(['general','cfg']); return true; } },{ label:'إلغاء', cls:'sec' }] });
+}
+async function genTemplate(){
+  const have = new Set(S.general.map(g=>g.templateId).filter(Boolean));
+  const todo = GENERAL_TEMPLATE.filter(t=>!have.has(t.id));
+  if(!todo.length){ ACT.toast('القالب الوزاري محمَّل بالكامل'); return; }
+  if(!await ACT.confirmBox('سيُضاف '+N(todo.length)+' فعالية من القالب الوزاري مع تعيين الأندية المسؤولة افتراضيًا. متابعة؟')) return;
+  const byKey = {}; S.clubs.forEach(c=>{ byKey[c.key]=c; });
+  const b = S.env.db.batch(), now = Date.now();
+  todo.forEach(t=>{
+    const c = t.clubs.map(k=>byKey[k]).find(Boolean);
+    b.set(S.env.db.collection('activityGeneralEvents').doc(), { schoolId:S.env.sid, period:S.env.period, title:t.title, templateId:t.id, freq:t.freq, responsibleClubId:c?c.id:null, responsibleClubName:c?c.name:'', expectedDate:'', status:'planned', executionEventId:null, openEventId:null, createdBy:S.env.me.id, createdAt:now, updatedAt:now });
+  });
+  await b.commit();
+  if(genPS()==='approved') await ACT.patch(S.env,'activityConfig',CONF(),{ generalState:'draft', generalReturnNote:'' });
+  await refresh(['general','cfg']);
+}
+/* نشر فعالية المسار العام كنشاط متاح للمعلمين: الاسم والمجال معبّآن، يبقى الوصف وآخر موعد */
+const endOfDayMs = k=>new Date(k+'T23:59:59').getTime();
+const isExpired = o=>o.deadlineMs ? o.deadlineMs < Date.now() : (o.deadline ? o.deadline < ACT.today() : false);
+async function genPublish(id){
+  const g = S.general.find(x=>x.id===id); if(!g) return;
+  const c = g.responsibleClubId ? clubById(g.responsibleClubId) : null, preDom = c&&c.dom ? c.dom : '';
+  const body = '<div class="ac-f"><label>اسم النشاط</label><div class="ac-in" style="background:#f1f5f7">'+esc(g.title)+'</div></div>'
+    +'<div class="ac-f"><label>المجال'+(preDom?'':' *')+'</label>'+(preDom?'<div class="ac-in" style="background:#f1f5f7">'+esc(preDom)+'</div>':'<select class="ac-sel" id="pb_m"><option value="">— اختر —</option>'+DOMAINS.map(d=>'<option>'+d+'</option>').join('')+'</select>')+'</div>'
+    +'<div class="ac-f"><label>الوصف *</label><textarea class="ac-ta" id="pb_d" placeholder="ما المطلوب من المعلم تنفيذه وتوثيقه؟"></textarea></div>'
+    +'<div class="ac-f"><label>آخر موعد للتوثيق *</label><input type="date" class="ac-in" id="pb_dl" min="'+ACT.today()+'"><div class="dh-sub">بعد هذا الموعد يُغلق التوثيق على المعلمين تلقائيًا.</div></div>';
+  const mAi = ACT.modal({ title:'نشر نشاط متاح', body, noDismiss:true, onOpen: api=>{
+    if(window.AIFill) AIFill.attach({ field:api.q('#pb_d'), kind:'open_activity_description', schoolId:S.env.sid, title:'اقترح وصفًا بالذكاء الاصطناعي',
+      getCtx:()=>({ title:g.title, domain: preDom || (api.q('#pb_m')||{}).value || '' }) });
+  }, buttons:[{ label:'نشر للمعلمين', onClick: async api=>{
+    const dom = preDom || (api.q('#pb_m')||{}).value, desc = api.q('#pb_d').value.trim(), dl = api.q('#pb_dl').value;
+    if(!dom || !desc || !dl){ ACT.toast('أكمل المجال والوصف وآخر موعد'); return false; }
+    if(dl < ACT.today()){ ACT.toast('آخر موعد لا يمكن أن يكون في الماضي'); return false; }
+    const oid = await ACT.create(S.env,'actOpenEvents',{ title:g.title, description:desc, domain:dom, deadline:dl, deadlineMs:endOfDayMs(dl), status:'open', generalEventId:g.id, clubId:g.responsibleClubId||null, ts:Date.now(), publishDate:ACT.today(), createdByName:S.env.me.name });
+    await ACT.patch(S.env,'activityGeneralEvents',g.id,{ openEventId:oid });
+    S.genTab = 'open'; ACT.toast('نُشر النشاط وأصبح متاحًا للمعلمين');
+    await refresh(['general','opens']); return true; } },{ label:'إلغاء', cls:'sec' }] });
+}
+
+/* ====================== التكليفات (داخل بطاقة «التكليفات الرسمية») ====================== */
+const asStChip = a=>({pending:chip('بانتظار اعتماد قائد المدرسة','warn'),approved:chip('معتمد','ok'),cancelled:chip('ملغى','bad'),returned:chip('أعاده قائد المدرسة للتعديل','bad')})[a.status]||'';
+function progDone(a, idx){ return S.events.find(x=>x.assignmentId===a.id && x.programIdx===idx && x.approvalStatus!=='returned'); }
+/* تاريخ انتهاء برنامج التكليف (endDate)؛ التكليفات القديمة ذات الموعد النصي (timeline) لا تنتهي */
+const progExpired = p=>!!(p && p.endDate && p.endDate < ACT.today());
+const progAll = (a,i)=>S.events.find(x=>x.assignmentId===a.id && x.programIdx===i);              // أي توثيق (حتى المعاد)
+const progApproved = (a,i)=>{ const d = progDone(a,i); return !!(d && d.approvalStatus==='approved'); };
+const asgAllApproved = a=>(a.programs||[]).length>0 && (a.programs||[]).every((p,i)=>progApproved(a,i));
+function asgProgLine(a,p,i){
+  const d = progDone(a,i);
+  const when = p.endDate ? 'تاريخ انتهاء التكليف: '+ACT.hijri(p.endDate) : (p.timeline ? 'الموعد: '+esc(p.timeline) : '');
+  const st = d ? (d.approvalStatus==='approved' ? chip('وُثِّق واعتُمد','ok') : chip('وُثِّق — بانتظار اعتماد رائد النشاط','warn'))
+    : (a.status==='approved' ? (progExpired(p) ? chip('منتهي — لم يُوثَّق','bad') : chip('لم يُوثَّق','bad')) : '');
+  const acts = d ? '<button class="ac-btn sec sm" data-a="ev-print" data-id="'+d.id+'">معاينة</button>'
+      +(S.canEdit && d.approvalStatus==='pending' ? '<button class="ac-btn sm" data-a="ev-approve" data-id="'+d.id+'">اعتماد</button><button class="ac-btn bad sm" data-a="ev-return" data-id="'+d.id+'">إعادة للتعديل</button>' : '') : '';
+  return '<div class="dh-item" style="margin-top:4px;flex-wrap:wrap;gap:6px"><div><b>'+N(i+1)+'. '+esc(p.name)+'</b> '+st
+    +'<div class="dh-sub">'+[p.target?'الفئة: '+esc(p.target):'', when].filter(Boolean).join(' — ')+'</div></div>'+(acts?'<div class="ac-row">'+acts+'</div>':'')+'</div>';
+}
+function aAssign(){
+  /* بطاقة لكل معلم باسمه، وتحتها تكليفاته من كل الأندية قابلة للطي؛ وفي رأسها «مطلوب اعتماده» */
+  const byT = {};
+  S.assigns.forEach(a=>{ (byT[a.teacherId] = byT[a.teacherId] || { id:a.teacherId, name:a.teacherName, list:[] }).list.push(a); });
+  const ts = Object.values(byT).sort((x,y)=>(x.name||'').localeCompare(y.name||'','ar'));
+  const needOf = t=>t.list.reduce((n,a)=>n+(a.status==='pending'?1:0)+(a.programs||[]).filter((p,i)=>{ const d = progDone(a,i); return d && d.approvalStatus==='pending'; }).length,0);
+  const card = t=>{
+    const need = needOf(t), open = (S.asgOpen && t.id in S.asgOpen) ? S.asgOpen[t.id] : need>0;
+    const blocks = t.list.slice().sort((a,b)=>(b.ts||0)-(a.ts||0)).map(a=>{
+      const lockAll = asgAllApproved(a);
+      return '<div class="dh-card" style="margin:6px 0;padding:10px'+(a.status==='cancelled'?';opacity:.6':'')+'"><div class="ac-row sb"><b>'+esc(a.clubName||'')+'</b>'+asStChip(a)+'</div>'
+        +(a.programs||[]).map((p,i)=>asgProgLine(a,p,i)).join('')
+        +'<div class="ac-row" style="margin-top:6px">'+P(a.status==='pending'?'<button class="ac-btn sm" data-a="asg-approve" data-id="'+a.id+'">اعتماد التكليف</button>':'')
+        +(S.canEdit && a.status!=='cancelled' && !lockAll ? '<button class="ac-btn sec sm" data-a="asg-edit" data-id="'+a.id+'">تعديل</button><button class="ac-btn bad sm" data-a="asg-cancel" data-id="'+a.id+'">إلغاء التكليف</button>':'')+'</div></div>';
+    }).join('');
+    return '<details class="ac-acc" data-asg-t="'+esc(t.id)+'"'+(open?' open':'')+'><summary><span>'+esc(ACT.ustaz(t.name||''))+'</span><span>'+(need?chip('مطلوب اعتماده: '+N(need),'warn'):chip('لا يوجد مطلوب للاعتماد','ok'))+'</span></summary><div class="in">'+blocks+'</div></details>';
+  };
+  return '<div class="ac-row sb" style="margin-bottom:8px"><h3 style="margin:0">تكليفات المعلمين</h3>'+E('<button class="ac-btn sm" data-a="asg-add">+ تكليف جديد</button>')+'</div>'
+    +'<div class="dh-card" style="background:#fff8e6;border-color:#f0d9a0;margin-bottom:8px;font-weight:700">⚠ يجب اعتماد قائد المدرسة للتكليف لكي يظهر للمعلم.</div>'
+    +(ts.length ? ts.map(card).join('') : '<div class="dh-empty">لا توجد تكليفات بعد.</div>');
+}
+async function asgForm(id){
+  await ensurePeople();
+  const ex = id ? S.assigns.find(x=>x.id===id) : null;
+  /* البرنامج الموثَّق المعتمد لا يُعدَّل؛ والموثَّق (بأي حالة) لا يُحذف؛ ولا يُحذف برنامج يسبق برنامجًا موثَّقًا (حفاظًا على ترتيب البرامج المرتبط بالتوثيقات) */
+  let progs = ex ? (ex.programs||[]).map((p,i)=>Object.assign({},p,{ _lk:progApproved(ex,i), _doc:!!progAll(ex,i), _end0:p.endDate||'' })) : [{name:'',target:'',endDate:''}];
+  const lastDoc = ()=>progs.reduce((m,p,i)=>p._doc?i:m,-1);
+  const body = '<div class="ac-2c"><div class="ac-f"><label>المعلم المكلَّف *</label><select class="ac-sel" id="as_t"'+(ex&&progs.some(p=>p._doc)?' disabled':'')+'><option value="">— اختر —</option>'+S.staff.map(s=>'<option value="'+esc(s.id)+'"'+(ex&&ex.teacherId===s.id?' selected':'')+'>'+esc(s.name)+'</option>').join('')+'</select></div>'
+    +'<div class="ac-f"><label>النادي *</label><select class="ac-sel" id="as_c"'+(ex&&progs.some(p=>p._doc)?' disabled':'')+'>'+clubOpts(ex&&ex.clubId)+'</select></div></div><div class="ac-f"><label>البرامج *</label><div id="as_rows"></div><button type="button" class="ac-btn sec sm" id="as_add">+ إضافة برنامج</button></div>'
+    +(ex&&ex.status==='approved'?'<div class="dh-sub">تنبيه: تعديل تكليف معتمد يعيده إلى حالة «بانتظار اعتماد قائد المدرسة».</div>':'');
+  ACT.modal({ title: ex?'تعديل التكليف':'تكليف جديد', body, wide:true, noDismiss:true,
+    onOpen: api=>{
+      const draw = ()=>{ const ld = lastDoc(); api.q('#as_rows').innerHTML = progs.map((p,i)=>{ const ro = p._lk ? ' readonly style="background:#f1f5f7"' : '';
+        return '<div class="dh-card" style="padding:8px;margin-bottom:6px">'+(p._lk?'<div class="dh-sub" style="color:#0a7a3d;font-weight:700;margin-bottom:4px">✅ وُثِّق واعتُمد — لا يُعدَّل</div>':'')
+          +'<div class="ac-2c"><input class="ac-in" data-pi="'+i+'" data-f="name" placeholder="اسم البرنامج" value="'+esc(p.name||'')+'"'+ro+'><input class="ac-in" data-pi="'+i+'" data-f="target" placeholder="الفئة المستهدفة" value="'+esc(p.target||'')+'"'+ro+'>'
+          +'<div class="ac-f" style="margin:0"><label class="dh-sub">تاريخ انتهاء التكليف *</label><input type="date" class="ac-in" data-pi="'+i+'" data-f="endDate" min="'+ACT.today()+'" value="'+esc(p.endDate||'')+'"'+ro+'>'+(!p.endDate&&p.timeline?'<div class="dh-sub">الموعد السابق: '+esc(p.timeline)+'</div>':'')+'</div></div>'
+          +((progs.length>1 && !p._doc && i>ld)?'<button type="button" class="ac-btn bad sm" data-pdel="'+i+'" style="margin-top:6px">حذف البرنامج</button>':'')+'</div>'; }).join(''); };
+      draw();
+      api.q('#as_add').onclick = ()=>{ progs.push({name:'',target:'',endDate:''}); draw(); };
+      api.el.addEventListener('input', e=>{ const i=e.target.dataset.pi; if(i!=null && !progs[i]._lk) progs[i][e.target.dataset.f]=e.target.value; });
+      api.el.addEventListener('change', e=>{ const i=e.target.dataset.pi; if(i!=null && !progs[i]._lk) progs[i][e.target.dataset.f]=e.target.value; });
+      api.el.addEventListener('click', e=>{ const d=e.target.dataset.pdel; if(d!=null){ progs.splice(Number(d),1); draw(); } });
+    },
+    buttons:[{ label:'حفظ', onClick: async api=>{
+      const tid = api.q('#as_t').value, cid = api.q('#as_c').value;
+      if(!tid||!cid){ ACT.toast('اختر المعلم والنادي'); return false; }
+      if(!progs.length || progs.some(p=>!(p.name||'').trim())){ ACT.toast('أدخل اسم كل برنامج، أو احذف البرنامج الفارغ'); return false; }
+      if(progs.some(p=>!p._lk && !p.endDate)){ ACT.toast('حدّد «تاريخ انتهاء التكليف» لكل برنامج'); return false; }
+      /* لا تكليف ليوم مضى: يُرفض أي تاريخ ماضٍ جديد أو معدَّل (التاريخ الماضي الباقي كما هو دون تغيير يُقبل) */
+      if(progs.some(p=>!p._lk && p.endDate < ACT.today() && p.endDate !== p._end0)){ ACT.toast('لا يمكن إنشاء تكليف ليوم مضى؛ اختر تاريخ انتهاء من اليوم فصاعدًا'); return false; }
+      const c = clubById(cid), dom = c && ACT.DOMAINS.includes(c.dom) ? c.dom : '';
+      const data = { teacherId:tid, teacherName:staffName(tid), clubId:cid, clubName:c.name, domain:dom,
+        programs:progs.map(p=>{ const o = { name:p.name.trim(), target:(p.target||'').trim(), endDate:p.endDate||'' }; if(p.timeline) o.timeline = p.timeline; return o; }),
+        status:'pending', approvedBy:null, approvedByName:null, approvedAt:null };
+      if(ex) await ACT.patch(S.env,'actAssignments',ex.id,data); else await ACT.create(S.env,'actAssignments',Object.assign(data,{ ts:Date.now(), createdByName:S.env.me.name }));
+      await ACT.patch(S.env,'activityClubs',cid,{ locked:true });
+      await refresh(['assigns','clubs']); return true; } },{ label:'إلغاء', cls:'sec' }] });
+}
+function aOpen(){
+  const fmtMark = {pending:'بانتظار الاعتماد',approved:'معتمد',returned:'أُعيد للتعديل'};
+  return '<div class="ac-row sb" style="margin-bottom:8px"><h3 style="margin:0">الأنشطة المتاحة للتوثيق</h3></div>'
+    +'<div class="dh-sub" style="margin-bottom:8px">تُنشر من «فعاليات المسار العام» بزر «نشر نشاط متاح»، وتظهر لجميع موظفي المدرسة ليوثّق كلٌّ منهم عن نفسه حتى آخر موعد.</div>'
+    +(S.opens.length?S.opens.slice().sort((a,b)=>(b.ts||0)-(a.ts||0)).map(o=>{
+      const allMk = S.marks.filter(m=>m.openEventId===o.id), mk = allMk.filter(ACT.markDone), inv = allMk.filter(ACT.markPartPending), exp = isExpired(o);
+      const U = ACT.ustaz;
+      const names = mk.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||'','ar')).map(m=>'<div class="dh-item"><span>✅ '+esc(U(m.name||''))+((m.role||'owner')==='participant'?' <span class="dh-sub">(مشارك مع '+esc(U(m.ownerName||''))+')</span>':'')+'</span>'+chip(fmtMark[m.state]||'', m.state==='approved'?'ok':(m.state==='returned'?'bad':'warn'))+'</div>').join('')
+        +inv.map(m=>'<div class="dh-item"><span>○ '+esc(U(m.name||''))+' <span class="dh-sub">(مدعو مشاركًا مع '+esc(U(m.ownerName||''))+' — لم يؤكد)</span></span></div>').join('');
+      const tone = o.status!=='open' ? 'mute' : exp ? 'bad' : 'ok';
+      const status = (o.status!=='open' ? 'مغلق' : exp ? 'انتهى الموعد' : 'متاح')+' — وثّقه '+N(mk.length)+' من العاملين'+(inv.length?' ('+N(inv.length)+' بانتظار تأكيد المشاركة)':'');
+      const body = '<div>'+esc(o.description||'')+'</div><div class="dh-sub">المجال: '+esc(o.domain||'—')+' — آخر موعد: '+(o.deadline?ACT.hijri(o.deadline):'غير محدد')+'</div>'
+        +((mk.length||inv.length)?'<details class="ac-acc" style="margin-top:6px"><summary><span>من وثّق</span></summary><div class="in">'+names+'</div></details>':'');
+      const actions = E('<button class="ac-btn sec sm" data-a="open-edit" data-id="'+o.id+'">تعديل الوصف والموعد</button><button class="ac-btn sec sm" data-a="open-toggle" data-id="'+o.id+'">'+(o.status==='open'?'إغلاق':'إعادة فتح')+'</button>');
+      return ACT.foldCard({ title:o.title, tone, status, body, actions }); }).join(''):'<div class="dh-empty">لا توجد أنشطة متاحة. انشر فعالية من تبويب «فعاليات المسار العام».</div>');
+}
+async function openForm(id){
+  const ex = S.opens.find(x=>x.id===id); if(!ex) return;
+  const body = '<div class="ac-f"><label>اسم النشاط</label><div class="ac-in" style="background:#f1f5f7">'+esc(ex.title)+'</div></div><div class="ac-f"><label>المجال</label><div class="ac-in" style="background:#f1f5f7">'+esc(ex.domain||'—')+'</div></div>'
+    +'<div class="ac-f"><label>الوصف *</label><textarea class="ac-ta" id="op_d">'+esc(ex.description||'')+'</textarea></div>'
+    +'<div class="ac-f"><label>آخر موعد للتوثيق *</label><input type="date" class="ac-in" id="op_dl" min="'+ACT.today()+'" value="'+esc(ex.deadline||'')+'"></div>';
+  ACT.modal({ title:'تعديل النشاط المتاح', body, noDismiss:true, onOpen: api=>{
+    if(window.AIFill) AIFill.attach({ field:api.q('#op_d'), kind:'open_activity_description', schoolId:S.env.sid, title:'اقترح وصفًا بالذكاء الاصطناعي', getCtx:()=>({ title:ex.title, domain:ex.domain||'' }) });
+  }, buttons:[{ label:'حفظ', onClick: async api=>{
+    const d = api.q('#op_d').value.trim(), dl = api.q('#op_dl').value; if(!d||!dl){ ACT.toast('أكمل الوصف وآخر موعد'); return false; }
+    if(dl !== ex.deadline && dl < ACT.today()){ ACT.toast('آخر موعد لا يمكن أن يكون في الماضي'); return false; }
+    await ACT.patch(S.env,'actOpenEvents',ex.id,{ description:d, deadline:dl, deadlineMs:endOfDayMs(dl) });
+    await refresh(['opens']); return true; } },{ label:'إلغاء', cls:'sec' }] });
+}
+function partLine(x){
+  if(x.sourceType!=='open' || !(x.partUids||[]).length) return '';
+  const ms = S.marks.filter(m=>m.openEventId===x.openEventId && (m.role||'owner')==='participant' && m.evId===x.id);
+  const byU = {}; ms.forEach(m=>{ byU[m.uid]=m; });
+  return '<div class="dh-sub">المشاركون: '+(x.participants||[]).filter(p=>p.type==='staff').map(p=>{ const m = byU[p.uid]; const cf = m?m.confirm:''; return esc(ACT.ustaz(p.name))+' '+chip(cf==='confirmed'?'أكّد':(cf==='invited'?'لم يؤكد':(cf==='declined'?'اعتذر':'—')), cf==='confirmed'?'ok':(cf==='invited'?'warn':'bad')); }).join(' ')+'</div>';
+}
+/* شروط اعتماد توثيق نشاط متاح فيه معلمون مشاركون: لا ينتظر أحد ردًّا، أو انتهى آخر موعد للتوثيق */
+function approveGate(x){
+  if(x.sourceType!=='open') return { ok:true };
+  const stf = (x.participants||[]).filter(p=>p.type==='staff');
+  if(!stf.length) return { ok:true };
+  const byU = {}; S.marks.filter(m=>m.openEventId===x.openEventId && (m.role||'owner')==='participant' && m.evId===x.id).forEach(m=>{ byU[m.uid]=m; });
+  const waiting = stf.filter(p=>{ const m = byU[p.uid]; return !m || m.confirm==='invited'; });
+  /* يتفعّل الاعتماد من يوم «آخر موعد للتوثيق» نفسه (لا ينتظر اليوم التالي) */
+  const o = S.opens.find(v=>v.id===x.openEventId), expired = !!(o && o.deadline && o.deadline <= ACT.today());
+  return { ok: !waiting.length || expired, waiting, expired };
+}
+function docCard(x){
+  /* النشاط المتاح: آخر موعد للتوثيق بعد اسمه ليعرف رائد النشاط متى يتفعّل الاعتماد */
+  const o = x.sourceType==='open' ? S.opens.find(v=>v.id===x.openEventId) : null, dl = o && o.deadline ? ACT.hijri(o.deadline) : '';
+  return '<div class="dh-card" style="margin-bottom:8px"><div class="ac-row sb"><div><b>'+esc(x.title)+'</b>'+(dl?' <span class="dh-sub" style="color:#b45309;font-weight:700">— آخر موعد للتوثيق: '+dl+'</span>':'')+'<div class="dh-sub">'+esc(ACT.ustaz(x.documentedByName||''))+' — '+fmtD(x.date)+' — '+(x.sourceType==='assignment'?'تكليف رسمي':(x.sourceType==='club'?'فعالية نادٍ — '+esc((clubById(x.clubId)||{}).name||''):'نشاط متاح'))+'</div>'+partLine(x)+'</div>'
+    +({pending:chip('بانتظار اعتماد رائد النشاط','warn'),approved:chip('معتمد','ok'),returned:chip('أُعيد للتعديل','bad')})[x.approvalStatus]+'</div>'
+    +'<div class="ac-row" style="margin-top:6px"><button class="ac-btn sec sm" data-a="ev-print" data-id="'+x.id+'">معاينة النموذج</button>'
+    +(S.canEdit && x.approvalStatus==='pending' ? (approveGate(x).ok ? '<button class="ac-btn sm" data-a="ev-approve" data-id="'+x.id+'">اعتماد</button>' : '<button class="ac-btn sm" disabled style="opacity:.45;cursor:not-allowed">اعتماد</button>')+'<button class="ac-btn bad sm" data-a="ev-return" data-id="'+x.id+'">إعادة للتعديل</button>':'')+'</div>'
+    +(S.canEdit && x.approvalStatus==='pending' && !approveGate(x).ok ? '<div class="dh-sub" style="color:#b45309;margin-top:4px">يتفعّل الاعتماد عند رد جميع المشاركين أو في يوم آخر موعد للتوثيق'+(dl?' ('+dl+')':'')+'. بانتظار: '+approveGate(x).waiting.map(p=>esc(p.name)).join('، ')+'</div>':'')+'</div>';
+}
+function aDocs(){
+  const all = S.events.filter(x=>x.sourceType==='assignment'||x.sourceType==='open'||(x.sourceType==='club'&&x.viaTeacher));
+  const byDate = (a,b)=>(b.date||'').localeCompare(a.date||'');
+  /* المنتظر ثم المعاد في الأعلى؛ والمعتمد كله مجمَّع في بطاقة واحدة قابلة للطي */
+  const open = all.filter(x=>x.approvalStatus!=='approved').sort((a,b)=>(a.approvalStatus==='pending'?0:1)-(b.approvalStatus==='pending'?0:1)||byDate(a,b));
+  const apr = all.filter(x=>x.approvalStatus==='approved').sort(byDate);
+  return '<h3 style="margin:0 0 8px">توثيقات المعلمين</h3><div class="dh-sub" style="margin-bottom:8px">تظهر هنا توثيقات التكليفات الرسمية والأنشطة المتاحة وفعاليات الأندية التي وثّقها المعلم المسؤول، لاعتمادها أو إعادتها.</div>'
+    +(all.length ? (open.map(docCard).join('') || '<div class="dh-empty" style="margin-bottom:8px">لا توجد توثيقات بانتظار الاعتماد.</div>')
+      +(apr.length?'<details class="ac-acc" id="docsApr"'+(S.docsAprOpen?' open':'')+'><summary><span>✅ توثيقات معتمدة</span>'+chip(N(apr.length),'ok')+'</summary><div class="in">'+apr.map(docCard).join('')+'</div></details>':'')
+    : '<div class="dh-empty">لم يوثّق أحد بعد.</div>');
+}
+
+/* ====================== الإذاعة ====================== */
+function vBroadcast(){
+  const weeks = (S.broadcast&&S.broadcast.weeks)||[];
+  return '<div class="ac-row sb" style="margin-bottom:10px"><h3 style="margin:0">جدول الإذاعة المدرسية</h3>'+E('<button class="ac-btn sm" data-a="bc-add">+ إضافة أسبوع</button>')+'</div>'
+    +(weeks.length?weeks.map((w,wi)=>'<div class="dh-card"><div class="ac-row sb"><b>الأسبوع '+N(w.weekNumber)+' ('+fmtD(w.startDate)+')</b>'+E('<button class="ac-btn bad sm" data-a="bc-delweek" data-w="'+wi+'">حذف الأسبوع</button>')+'</div>'
+      +'<div class="ac-wrap"><table class="ac-tbl" style="margin-top:6px"><tr><th>اليوم</th><th>المسؤول</th><th>الموضوع</th><th>المكلَّف</th>'+E('<th></th>')+'</tr>'
+      +w.days.map((d,di)=>'<tr><td>'+esc((DAYS.find(x=>x[0]===d.day)||[])[1])+'</td><td>'+esc(d.responsibleName||'—')+'</td><td>'+esc(d.topic||'')+'</td><td>'+esc(d.assignedToName||'')+'</td>'+E('<td><button class="ac-btn sec sm" data-a="bc-edit" data-w="'+wi+'" data-d="'+di+'">تعديل</button></td>')+'</tr>').join('')+'</table></div></div>').join(''):'<div class="dh-empty">لم يُضف جدول للإذاعة بعد.</div>');
+}
+async function saveBroadcast(weeks){
+  if(S.broadcast) await ACT.patch(S.env,'activityBroadcast',CONF(),{weeks}); else await ACT.create(S.env,'activityBroadcast',{weeks},CONF());
+  await refresh(['broadcast']);
+}
+async function bcAdd(){
+  const weeks = ((S.broadcast&&S.broadcast.weeks)||[]).slice();
+  const last = weeks.length ? weeks[weeks.length-1].startDate : null;
+  let start = last ? ACT.addDays(last,7) : ACT.today();
+  const dow = new Date(start+'T12:00:00').getDay(); start = ACT.addDays(start, -dow);      // أقرب أحد سابق
+  ACT.modal({ title:'إضافة أسبوع', body:'<div class="ac-f"><label>بداية الأسبوع (الأحد)</label><input type="date" class="ac-in" id="bc_s" value="'+start+'"></div>', buttons:[{label:'إضافة', onClick: async api=>{
+    const s = api.q('#bc_s').value; if(!s) return false;
+    weeks.push({ weekNumber:weeks.length+1, startDate:s, days:DAYS.map(d=>({day:d[0],responsibleType:'',responsibleId:'',responsibleName:'',topic:'',assignedToUid:null,assignedToName:null})) });
+    await saveBroadcast(weeks); return true; } },{label:'إلغاء',cls:'sec'}] });
+}
+async function bcEdit(wi, di){
+  await ensurePeople();
+  const weeks = S.broadcast.weeks.slice(), d = weeks[wi].days[di];
+  const resp = ['club:'+''].slice(0,0);
+  const opts = '<option value="">— اختر —</option><optgroup label="الأندية">'+activeClubs().map(c=>'<option value="club:'+c.id+'"'+(d.responsibleType==='club'&&d.responsibleId===c.id?' selected':'')+'>'+esc(c.name)+'</option>').join('')+'</optgroup><optgroup label="الفصول">'+S.roster.classes.map(k=>'<option value="class:'+esc(k.code)+'"'+(d.responsibleType==='class'&&d.responsibleId===k.code?' selected':'')+'>'+esc(k.name||k.code)+'</option>').join('')+'</optgroup>';
+  const body = '<div class="ac-f"><label>الجهة المسؤولة</label><select class="ac-sel" id="bc_r">'+opts+'</select></div><div class="ac-f"><label>الموضوع</label><input class="ac-in" id="bc_t" value="'+esc(d.topic||'')+'"></div>'
+    +'<div class="ac-f"><label>المعلم المكلَّف</label><select class="ac-sel" id="bc_a"><option value="">— بدون —</option>'+S.staff.map(s=>'<option value="'+esc(s.id)+'"'+(d.assignedToUid===s.id?' selected':'')+'>'+esc(s.name)+'</option>').join('')+'</select></div>';
+  ACT.modal({ title:'يوم '+(DAYS.find(x=>x[0]===d.day)||[])[1], body, buttons:[{label:'حفظ', onClick: async api=>{
+    const r = api.q('#bc_r').value, a = api.q('#bc_a').value; let rt='', rid='', rn='';
+    if(r){ rt=r.split(':')[0]; rid=r.slice(rt.length+1); rn = rt==='club' ? clubById(rid).name : ACT.classLabel(S.roster,rid); }
+    weeks[wi].days[di] = Object.assign({}, d, { responsibleType:rt, responsibleId:rid, responsibleName:rn, topic:api.q('#bc_t').value.trim(), assignedToUid:a||null, assignedToName:a?staffName(a):null });
+    await saveBroadcast(weeks); return true; } },{label:'إلغاء',cls:'sec'}] });
+}
+
+/* ====================== التقارير ====================== */
+function attEvPick(cid){
+  const evs = S.events.filter(x=>x.approvalStatus==='approved' && x.clubId && clubById(x.clubId) && (!cid || x.clubId===cid)).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  return '<label>الفعاليات</label>'+ACT.pickHtml('rp_att_p', evs.map(x=>({ id:x.id, name:x.title, sub:(clubById(x.clubId).name||'')+' — '+N(x.date||'') })), [], { ph:'بحث باسم الفعالية...' });
+}
+/* إحصاء توثيقات المعلمين (تقارير المعلمين):
+   - التكليفات = التكليفات الرسمية المعتمدة من قائد المدرسة + بنود خطط الأندية المسندة للمعلم:
+     معتمدة ← «موثّق»؛ مرسَلة بانتظار الاعتماد ← لا تُعدّ (تظهر ⏳)؛ غير مرسَلة أو معادة أو انتهت ← «تكليف غير موثّق».
+   - الأنشطة المتاحة اختيارية: المعتمد (موثِّقًا أو مشاركًا مؤكِّدًا) ← «موثّق»؛ والمهمَل فقط ← «تكليف غير موثّق»
+     (مدعو لم يؤكد حتى انتهى الموعد، أو توثيق أُعيد للتعديل ولم يُعد إرساله حتى انتهى الموعد). */
+function teacherStats(){
+  const T = {}, tOf = (id,name)=>{ const t = T[id] = T[id] || { id, name:name||'', asg:[], club:[], open:[] }; if(!t.name && name) t.name = name; return t; };
+  const stOf = ev=>!ev ? 'miss' : ev.approvalStatus==='approved' ? 'ok' : ev.approvalStatus==='pending' ? 'wait' : 'miss';
+  S.assigns.filter(a=>a.status==='approved').forEach(a=>(a.programs||[]).forEach((p,i)=>{
+    const ev = progDone(a,i); let st = stOf(ev); if(st==='miss' && progExpired(p)) st = 'exp';
+    tOf(a.teacherId,a.teacherName).asg.push({ t:p.name, sub:a.clubName||'', ev, st });
+  }));
+  activeClubs().forEach(c=>(c.plan||[]).forEach(it=>{
+    if(!it.responsibleId || it.status==='cancelled') return;
+    const ev = S.events.find(x=>x.sourceType==='club' && x.clubId===c.id && x.planItemId===it.id && x.viaTeacher && x.documentedBy===it.responsibleId);
+    if(it.status==='executed' && !ev) return;             // نفّذه رائد النشاط بنفسه: لا يُحسب على المعلم
+    tOf(it.responsibleId,it.responsible).club.push({ t:it.title, sub:c.name||'', ev, st:stOf(ev) });
+  }));
+  S.events.filter(x=>x.sourceType==='open' && x.approvalStatus==='approved').forEach(x=>evTeachers(x).forEach(u=>tOf(u.uid,u.name).open.push({ t:x.title, ev:x, st:'ok' })));
+  S.opens.filter(o=>isExpired(o)).forEach(o=>{
+    S.marks.filter(m=>m.openEventId===o.id && m.role==='participant' && (m.confirm==='invited'||m.confirm==='released')).forEach(m=>tOf(m.uid,m.name).open.push({ t:o.title, sub:'لم يؤكد مشاركته', ev:null, st:'exp' }));
+    S.events.filter(x=>x.openEventId===o.id && x.approvalStatus==='returned').forEach(x=>tOf(x.documentedBy,x.documentedByName).open.push({ t:o.title, sub:'أُعيد ولم يُرسَل', ev:x, st:'exp' }));
+  });
+  return Object.values(T).map(t=>{
+    const all = t.asg.concat(t.club, t.open);
+    t.done = all.filter(x=>x.st==='ok').length; t.wait = all.filter(x=>x.st==='wait').length; t.miss = all.filter(x=>x.st==='miss'||x.st==='exp').length;
+    return t;
+  }).filter(t=>t.asg.length||t.club.length||t.open.length).sort((a,b)=>(a.name||'').localeCompare(b.name||'','ar'));
+}
+function vReports(){
+  const copt = '<select class="ac-sel" id="rp_club">'+activeClubs().map(c=>'<option value="'+c.id+'">'+esc(c.name)+'</option>').join('')+'</select>';
+  const tl = teacherStats();
+  return '<div class="dh-card"><h3>📄 القرارات</h3><div class="ac-row ac-rep"><button class="ac-btn sec" data-a="print-council">🖨 قرار تشكيل مجلس النشاط</button><button class="ac-btn sec" data-a="print-clubsdec">🖨 قرار تشكيل الأندية وتعيين المشرفين</button></div></div>'
+    +'<div class="dh-card"><h3>📋 الخطط والتقارير</h3><div class="ac-row ac-rep" style="margin-bottom:8px"><button class="ac-btn sec" data-a="print-genplan">🖨 الخطة العامة للنشاط</button><button class="ac-btn sec" data-a="print-genreport">🖨 التقرير العام للنشاط</button></div>'
+    +'<div class="ac-row ac-rep"><label class="dh-sub" style="width:100%">اختيار النادي:</label>'+copt+'<button class="ac-btn sec" data-a="rp-clubplan">🖨 خطة النادي</button><button class="ac-btn sec" data-a="rp-clubreport">🖨 تقرير النادي</button></div></div>'
+    +'<div class="dh-card"><h3>🧑‍🎓 تقرير الطلاب الحاضرين</h3><div class="dh-sub" style="margin-bottom:6px">الطلاب الذين سُجّل حضورهم في الفعاليات المعتمدة (الطلاب فقط دون المعلمين): اسم الطالب، الصف، اسم الفعالية. اختر ناديًا أو «كل الأندية»، ثم حدّد الفعاليات (وإن لم تحدّد شيئًا فتُحسب كل فعالياته).</div>'
+    +'<div class="ac-f"><label>النادي</label><select class="ac-sel" id="rp_att_club"><option value="">كل الأندية</option>'+activeClubs().map(c=>'<option value="'+c.id+'">'+esc(c.name)+'</option>').join('')+'</select></div>'
+    +'<div class="ac-f" id="rp_att_host">'+attEvPick('')+'</div><button class="ac-btn sec" data-a="rp-attstu">🖨 طباعة تقرير الطلاب الحاضرين</button></div>'
+    +'<div class="dh-card"><h3>📝 توثيقات المعلمين</h3><div class="dh-sub" style="margin-bottom:6px">«موثّق»: كل توثيق اعتمده رائد النشاط (تكليف رسمي، أو بند نادٍ، أو نشاط متاح موثِّقًا أو مشاركًا). «تكليف غير موثّق»: كل تكليف من الأندية أو التكليفات الرسمية لم يُوثَّق بعد أو انتهى قبل توثيقه، وكل نشاط متاح أُهمل. والمرسَل المنتظر لا يُعدّ في أيٍّ منهما.</div>'+(tl.length?tl.map(t=>{
+      const ic = x=>x.st==='ok'?'✅':(x.st==='wait'?'⏳':(x.st==='exp'?'⛔':'❌'));
+      const lbl = x=>x.st==='ok'?'':(x.st==='wait'?'<span class="dh-sub">بانتظار اعتماد رائد النشاط</span>':(x.st==='exp'?'<span class="dh-sub" style="color:#b42318">منتهي — لم يُوثَّق</span>':'<span class="dh-sub">غير موثّق</span>'));
+      const line = x=>'<div class="dh-item" style="margin-top:4px;flex-wrap:wrap"><span>'+ic(x)+' '+esc(x.t)+(x.sub?' <span class="dh-sub">('+esc(x.sub)+')</span>':'')+'</span><span class="ac-row">'+lbl(x)+(x.ev?'<button class="ac-btn sec sm" data-a="ev-print" data-id="'+x.ev.id+'">👁 معاينة</button>':'')+'</span></div>';
+      const sec = (h,arr,empty)=>'<div style="margin-top:8px"><b>'+h+'</b></div>'+(arr.length?arr.map(line).join(''):'<div class="dh-empty">'+empty+'</div>');
+      return '<details class="ac-acc"><summary><span>'+esc(ACT.ustaz(t.name))+'</span><span>'+chip('موثّق: '+N(t.done),'ok')+' '+chip('تكليف غير موثّق: '+N(t.miss), t.miss?'bad':'')+(t.wait?' '+chip('بانتظار الاعتماد: '+N(t.wait),'warn'):'')+'</span></summary><div class="in">'
+        +sec('التكليفات الرسمية',t.asg,'لا توجد تكليفات رسمية معتمدة.')
+        +sec('بنود خطط الأندية',t.club,'لا توجد بنود أندية مسندة.')
+        +sec('الأنشطة المتاحة',t.open,'لا توجد أنشطة متاحة معتمدة أو مهملة.')+'</div></details>';
+    }).join(''):'<div class="dh-empty">لا توجد تكليفات أو توثيقات بعد.</div>')+'</div>';
+}
+
+/* ====================== الطباعة ====================== */
+const tbl = (heads, rows)=>'<table class="pt"><tr>'+heads.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr>'+rows.map(r=>'<tr>'+r.map(c=>'<td>'+esc(c)+'</td>').join('')+'</tr>').join('')+'</table>';
+const termLine = ()=>'للعام الدراسي '+esc(FormHdr.yearTxt(S._ctx&&S._ctx.year)||'')+' — '+esc(FormHdr.termName(S.env.period));
+const sigBlock = (a,b)=>'<div class="fh-sig" style="margin-top:34px"><span>'+a+'<br><br>التوقيع: ____________</span><span>'+b+'<br><br>التوقيع: ____________</span></div>';
+async function printKind(kind, id, evId){
+  const e = S.env, hij = ACT.hijri(ACT.today());
+  const pr = (title, body, opts)=>ACT.printPage(e, title, body, opts);
+  if(kind==='council'){
+    if(!S.council){ ACT.toast('شكّل المجلس أولًا'); return; }
+    const c = S.council, rows = [[c.chairName,'رئيس المجلس (قائد المدرسة)'],[c.secretaryName,'المقرر (رائد النشاط)']].concat((c.members||[]).map(m=>[m.name,'عضو ('+m.role+')']));
+    await pr('قرار تشكيل مجلس النشاط الطلابي','<p class="pp">بناءً على التعليمات الواردة من وزارة التعليم بشأن تفعيل برنامج النشاط الطلابي، تقرر تشكيل مجلس النشاط على النحو التالي:</p>'+tbl(['م','الاسم','الصفة في المجلس'],rows.map((r,i)=>[N(i+1)].concat(r)))+sigBlock('قائد المدرسة: '+esc(c.chairName),'التاريخ: '+hij));
+  } else if(kind==='meeting'){
+    const m = S.meetings.find(x=>x.id===id); if(!m) return;
+    const c = S.council||{}, ppl = [{id:c.chairId,name:c.chairName,role:'رئيس المجلس'},{id:c.secretaryId,name:c.secretaryName,role:'المقرر (رائد النشاط)'}].concat((c.members||[]).map(x=>({id:x.id,name:x.name,role:x.role||'عضو'}))).filter(x=>x.id);
+    const seen = new Set(), list = ppl.filter(x=>!seen.has(x.id)&&seen.add(x.id));
+    await pr('محضر اجتماع مجلس النشاط الطلابي',(m.title?'<p class="pp">العنوان: <b>'+esc(m.title)+'</b></p>':'')+'<p class="pp">الاجتماع رقم <b>'+N(m.meetingNumber)+'</b> — بتاريخ <b>'+ACT.hijri(m.date)+'</b> (الموافق '+N(m.date)+')</p>'
+      +'<h3 style="margin:10px 0 2px">ملخص الاجتماع</h3><p class="pp">'+esc(m.summary).replace(/\n/g,'<br>')+'</p>'
+      +((m.decisions||[]).length?'<h3 style="margin:10px 0 2px">القرارات والتوصيات</h3><ol class="pp">'+(m.decisions||[]).map(d=>'<li>'+esc(d)+'</li>').join('')+'</ol>':'')
+      +'<h3 style="margin:10px 0 2px">الحضور</h3>'+tbl(['م','الاسم','الصفة','الحضور'],list.map((x,i)=>[N(i+1),x.name,x.role,(m.attendees||[]).includes(x.id)?'حاضر':'غائب']))
+      +sigBlock('مقرر المجلس: '+esc(c.secretaryName||''),'رئيس المجلس: '+esc(c.chairName||'')));
+  } else if(kind==='clubsdec'){
+    await pr('قرار تشكيل الأندية المدرسية للنشاط الطلابي','<p class="pp">تقرر تشكيل الأندية المدرسية للنشاط الطلابي وتعيين مشرفيها على النحو التالي:</p>'+tbl(['م','النادي','المشرف','المشرفون المناوبون'],activeClubs().map((c,i)=>[N(i+1),c.name,c.headName||'—',(c.supervisors||[]).map(s=>s.name).join('، ')||'—']))+sigBlock('رائد النشاط: '+esc((S.council&&S.council.secretaryName)||''),'قائد المدرسة'));
+  } else if(kind==='clubplan'){
+    const c = clubById(id); const pl = c.plan||[];
+    await pr('خطة '+c.name,'<p class="pp">المشرف: <b>'+esc(c.headName||'—')+'</b> — عدد الأعضاء: <b>'+N(stuMembers(c).length)+'</b></p>'+tbl(['م','الفعالية','التاريخ المتوقع','المسؤول','الحالة'],pl.map((x,i)=>[N(i+1),x.title,ACT.hijri(x.expectedDate),x.responsible||'',PLAN_ST[x.status]||'']))+sigBlock('رائد النشاط: '+esc((S.council&&S.council.secretaryName)||''),'قائد المدرسة'));
+  } else if(kind==='genplan'){
+    const okC = activeClubs().filter(c=>clubPS(c)==='approved'), genOk = genPS()==='approved';
+    if(!okC.length && !genOk){ ACT.toast('لا توجد خطط معتمدة للطباعة بعد'); return; }
+    const body = okC.map(c=>'<h3 style="margin:14px 0 4px">'+esc(c.name)+' — المشرف: '+esc(c.headName||'—')+'</h3>'+tbl(['م','الفعالية','التاريخ المتوقع','المسؤول'],(c.plan||[]).filter(x=>x.status!=='cancelled').map((x,i)=>[N(i+1),x.title,ACT.hijri(x.expectedDate),x.responsible||'']))).join('')
+      +(genOk?'<h3 style="margin:14px 0 4px">فعاليات المسار العام</h3>'+tbl(['م','الفعالية','النادي المسؤول','التاريخ'],genItems().map((g,i)=>[N(i+1),g.title,g.responsibleClubName||'',g.expectedDate?ACT.hijri(g.expectedDate):''])):'');
+    await pr('الخطة العامة للنشاط الطلابي', body+sigBlock('رائد النشاط: '+esc((S.council&&S.council.secretaryName)||''),'قائد المدرسة'));
+  } else if(kind==='clubreport'){
+    const c = clubById(id), ev = S.events.filter(x=>x.clubId===c.id && x.approvalStatus==='approved'), ps = (c.plan||[]).filter(x=>x.status!=='cancelled');
+    await pr('تقرير '+c.name,'<p class="pp">المشرف: <b>'+esc(c.headName||'—')+'</b> — الأعضاء: <b>'+N(stuMembers(c).length)+'</b> — بنود الخطة: <b>'+N(ps.length)+'</b> — المنفَّذ: <b>'+N(ps.filter(x=>x.status==='executed').length)+'</b></p>'
+      +'<h3>الفعاليات المنفَّذة</h3>'+tbl(['م','الفعالية','التاريخ','المشاركون','الصور'],ev.map((x,i)=>[N(i+1),x.title,ACT.hijri(x.date),N(x.participantCount||0),N((x.photos||[]).length)]))+sigBlock('رائد النشاط','قائد المدرسة'));
+  } else if(kind==='genreport'){
+    const ps = planStats(), gi = genItems(), docsEv = S.events.filter(x=>(x.sourceType==='assignment'||x.sourceType==='open') && x.approvalStatus==='approved');
+    const teachersN = new Set([].concat(...docsEv.map(x=>evTeachers(x).map(u=>u.uid)))).size;
+    await pr('التقرير العام للنشاط الطلابي','<p class="pp">عدد الأندية: <b>'+N(activeClubs().length)+'</b> — الطلاب المسجَّلون: <b>'+N(activeClubs().reduce((n,c)=>n+stuMembers(c).length,0))+'</b> — الفعاليات المعتمدة: <b>'+N(approvedEvents().length)+'</b></p>'
+      +'<h3>الأندية</h3>'+tbl(['النادي','المشرف','الأعضاء','بنود الخطة','المنفَّذ','الفعاليات'],activeClubs().map(c=>{ const p=(c.plan||[]).filter(x=>x.status!=='cancelled'); return [c.name,c.headName||'—',N(stuMembers(c).length),N(p.length),N(p.filter(x=>x.status==='executed').length),N(approvedEvents().filter(x=>x.clubId===c.id).length)]; }))
+      +'<h3>ملخص رقمي</h3>'+tbl(['المؤشر','القيمة'],[
+        ['نسبة تنفيذ خطط الأندية',N(Math.round(ps.pct*100))+'٪ ('+N(ps.done)+' من '+N(ps.total)+')'],
+        ['فعاليات المسار العام المنفَّذة',N(gi.filter(g=>g.status==='executed').length)+' من '+N(gi.length)],
+        ['الأنشطة المتاحة المنشورة',N(S.opens.length)],
+        ['توثيقات المعلمين المعتمدة',N(docsEv.length)+' (لدى '+N(teachersN)+' معلم)'],
+        ['التكليفات المعتمدة',N(S.assigns.filter(a=>a.status==='approved').length)]
+      ])+sigBlock('رائد النشاط','قائد المدرسة'),{ landscape:false });
+  } else if(kind==='attstu'){
+    const sel = evId||[];
+    let evs = S.events.filter(x=>x.approvalStatus==='approved' && x.clubId && clubById(x.clubId) && (!id || x.clubId===id));
+    if(sel.length) evs = evs.filter(x=>sel.includes(x.id));
+    evs.sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+    const ord = {}; ((S.roster&&S.roster.classes)||[]).forEach((k,i)=>{ ord[k.code]=i; });
+    const rows = [];
+    evs.forEach(x=>{ const att = x.attendance||{}; const part = [];
+      Object.keys(att).forEach(k=>{ const a = att[k]; if(a.status!=='present' || a.type==='staff' || String(k).indexOf('u:')===0) return; part.push({ n:a.name||'', cc:a.class||'', c:a.class?ACT.classLabel(S.roster||{classes:[]},a.class):'', e:x.title }); });
+      part.sort((p,q)=>((ord[p.cc]==null?9999:ord[p.cc])-(ord[q.cc]==null?9999:ord[q.cc]))||p.n.localeCompare(q.n,'ar')); part.forEach(r=>rows.push(r)); });
+    if(!rows.length){ ACT.toast('لا يوجد طلاب حاضرون في الفعاليات المحدَّدة'); return; }
+    /* منفِّذ البرنامج لكل فعالية: المنفِّذون من المدرسة ثم المنفِّذ الخارجي (الاسم والجهة) */
+    const execOf = x=>(x.executors&&x.executors.length?x.executors:[{name:x.documentedByName}]).map(p=>ACT.ustaz(p.name)).filter(Boolean)
+      .concat(x.extExecutor&&x.extExecutor.name?[x.extExecutor.name+(x.extExecutor.entity?' ('+x.extExecutor.entity+')':'')]:[]).join('، ')||'—';
+    await pr('تقرير الطلاب الحاضرين','<p class="pp">النادي: <b>'+esc(id?(clubById(id)||{}).name:'كل الأندية')+'</b> — عدد الفعاليات: <b>'+N(evs.length)+'</b> — عدد سجلات الحضور: <b>'+N(rows.length)+'</b></p>'
+      +tbl(['م','الفعالية','التاريخ','منفِّذ البرنامج'],evs.map((x,i)=>[N(i+1),x.title,ACT.hijri(x.date),execOf(x)]))
+      +tbl(['م','اسم الطالب','الصف','اسم الفعالية'],rows.map((r,i)=>[N(i+1),r.n,r.c,r.e]))+sigBlock('رائد النشاط: '+esc((S.council&&S.council.secretaryName)||''),'قائد المدرسة'));
+  } else if(kind==='att'){
+    const c = clubById(id), ev = S.events.find(x=>x.id===evId), att = ev.attendance||{};
+    await pr('سجل حضور فعالية','<p class="pp">النادي: <b>'+esc(c.name)+'</b> — الفعالية: <b>'+esc(ev.title)+'</b> — التاريخ: <b>'+ACT.hijri(ev.date)+'</b></p>'+tbl(['م','الاسم','الفصل','الحضور'],(c.members||[]).filter(isStaffM).concat(stuMembers(c)).map((m,i)=>[N(i+1),isStaffM(m)?ACT.ustaz(m.name):m.name,memClass(m),att[m.seat]?(att[m.seat].status==='present'?'حاضر':'غائب'):'—']))+sigBlock('المشرف','رائد النشاط'));
+  }
+}
+async function evPrint(id){
+  const ev = S.events.find(x=>x.id===id); if(!ev) return;
+  await ACT.printDoc(S.env, ev, { coordinator:(S.council&&S.council.secretaryName)||'' });
+}
+
+/* ====================== الإجراءات ====================== */
+async function activate(){
+  if(!await ACT.confirmBox('ستُنشأ الأندية الوزارية السبعة لهذا الفصل الدراسي. متابعة؟')) return;
+  const e = S.env, b = e.db.batch(), now = Date.now();
+  b.set(e.db.collection('activityConfig').doc(CONF()), { schoolId:e.sid, period:e.period, active:true, generalState:'draft', createdBy:e.me.id, createdAt:now, updatedAt:now });
+  CLUBS_DEFAULT.forEach((c,i)=>b.set(e.db.collection('activityClubs').doc(), { schoolId:e.sid, period:e.period, key:c.key, name:c.name, domain:c.domain, icon:c.icon, dom:c.dom, isDefault:true, headId:null, headName:'', supervisors:[], members:[], plan:[], planState:'draft', status:'active', locked:false, order:i, createdBy:e.me.id, createdAt:now, updatedAt:now }));
+  await b.commit(); ACT.toast('تم تفعيل المنصة'); await refresh();
+}
+const selKeys = ()=>$$('#acBody [data-psel]').filter(x=>x.checked).map(x=>x.dataset.psel);
+/* كتابة حالة الخطط: المفتاح c:<id> لنادٍ، وgen للمسار العام */
+async function planWrite(keys, mode, note){
+  const me = S.env.me, now = Date.now();
+  for(const k of keys){
+    const isGen = k==='gen';
+    let d;
+    if(mode==='submitted') d = isGen ? { generalState:'submitted', generalReturnNote:'', generalSubmittedAt:now } : { planState:'submitted', planReturnNote:'', planSubmittedAt:now };
+    else if(mode==='approved') d = isGen ? { generalState:'approved', generalApprovedBy:me.id, generalApprovedByName:me.name, generalApprovedAt:now, generalReturnNote:'' } : { planState:'approved', planApprovedBy:me.id, planApprovedByName:me.name, planApprovedAt:now, planReturnNote:'' };
+    else if(mode==='returned') d = isGen ? { generalState:'draft', generalReturnNote:note||'', generalReturnedAt:now } : { planState:'draft', planReturnNote:note||'', planReturnedAt:now };
+    else d = isGen ? { generalState:'draft', generalReturnNote:'' } : { planState:'draft', planReturnNote:'' };
+    if(isGen) await ACT.patch(S.env,'activityConfig',CONF(),d); else await ACT.patch(S.env,'activityClubs',k.slice(2),d);
+  }
+  ACT.toast(mode==='approved'?'تم الاعتماد':mode==='submitted'?'تم التقديم للاعتماد':mode==='returned'?'أُعيدت للتعديل':'تم');
+  await refresh(['clubs','cfg']);
+}
+/* اعتماد/إعادة توثيق معلم: يحدّث علامته، وأول اعتماد لنشاط من المسار العام يجعله «مُنفَّذًا» تلقائيًا */
+async function reviewDoc(id, st, note){
+  const x = S.events.find(v=>v.id===id); if(!x) return;
+  const me = S.env.me;
+  if(st==='approved'){
+    if(!approveGate(x).ok){ ACT.toast('لا يمكن الاعتماد قبل رد المشاركين أو حلول آخر موعد للتوثيق'); return; }
+    // المشاركون المعتمدون: المؤكِّدون فقط؛ يُحذف من اعتذر أو لم يؤكد من النموذج ويتحدّث عند الجميع دون إشعار
+    let extra = {};
+    if(x.sourceType==='open' && (x.partUids||[]).length){
+      const conf = new Set(S.marks.filter(m=>m.openEventId===x.openEventId && (m.role||'owner')==='participant' && m.evId===id && m.confirm==='confirmed').map(m=>m.uid));
+      const keep = (x.participants||[]).filter(p=>p.type!=='staff' || conf.has(p.uid));
+      extra = { participants:keep, partUids:keep.filter(p=>p.type==='staff').map(p=>p.uid) };
+      for(const m of S.marks.filter(m=>m.openEventId===x.openEventId && (m.role||'owner')==='participant' && m.evId===id && m.confirm==='invited')){
+        try{ await S.env.db.collection('actOpenMarks').doc(m.id).update({ confirm:'released', updatedAt:Date.now() }); }catch(err){ console.warn('release mark', err); }
+      }
+    }
+    const stamp = await ACT.approvalStamp(S.env, S.council);
+    await ACT.patch(S.env,'activityEvents',id,Object.assign({ approvalStatus:'approved', approvedBy:me.id, approvedByName:me.name, approvedAt:Date.now(), returnNote:'' }, stamp, extra));
+    /* فعالية نادٍ وثّقها المعلم المسؤول: عند الاعتماد يتحقق ما يتحقق عند تنفيذ الرائد (حضور تلقائي + بند الخطة مُنفَّذ) */
+    if(x.sourceType==='club') await clubExecuted(x.clubId, x.planItemId, id, x);
+  }
+  else await ACT.patch(S.env,'activityEvents',id,{ approvalStatus:'returned', returnNote:note||'' });
+  if(x.sourceType==='open' && x.openEventId){
+    for(const m of S.marks.filter(m=>m.openEventId===x.openEventId && (m.role||'owner')==='participant' && m.evId===id && m.confirm==='confirmed')){
+      try{ await S.env.db.collection('actOpenMarks').doc(m.id).update({ state:st, updatedAt:Date.now() }); }catch(err){ console.warn('part mark', err); }
+    }
+    await S.env.db.collection('actOpenMarks').doc(x.openEventId+'_'+x.documentedBy).set({ schoolId:S.env.sid, period:S.env.period, openEventId:x.openEventId, uid:x.documentedBy, name:x.documentedByName||'', state:st, updatedAt:Date.now() },{ merge:true });
+    const o = S.opens.find(v=>v.id===x.openEventId), g = o && o.generalEventId ? S.general.find(v=>v.id===o.generalEventId) : null;
+    if(st==='approved' && g && g.status!=='executed') await ACT.patch(S.env,'activityGeneralEvents',g.id,{ status:'executed', executionEventId:id });
+  }
+  await refresh(['events','marks','general','clubs']);
+}
+const H = {
+  'qa-sub': el=>{ S.qaSub=el.dataset.v; paint(); },
+  'qa-c': el=>{ const c=QA_CUR[+el.dataset.v]; if(c&&c.go) c.go(); },
+  'qa-t': el=>{ const p=el.dataset.v.split('|'); const c=QA_CUR[+p[0]]; if(c&&c.tabs) c.tabs[+p[1]][1](); },
+  'tab': el=>{ S.tab=el.dataset.v; S.clubId = S.tab==='clubs'?S.clubId:null; paint(); },
+  'activate': activate,
+  'council-form': councilForm,
+  'sig-set': el=>ACT.sigDialog(S.env, el.dataset.k, ()=>refresh(['signs'])),
+  'sig-clear': async el=>{ if(!await ACT.confirmBox('حذف '+ACT.SIG_NAMES[el.dataset.k]+'؟ لا يؤثر على النماذج المعتمدة سابقًا.')) return; try{ await ACT.sigClear(S.env, el.dataset.k); }catch(e){ ACT.toast('تعذّر الحذف'); return; } await refresh(['signs']); },
+  'meeting-add': ()=>meetingForm(null), 'meeting-edit': el=>meetingForm(el.dataset.id), 'meeting-print': el=>printKind('meeting',el.dataset.id),
+  'print-council': ()=>printKind('council'), 'print-clubsdec': ()=>printKind('clubsdec'), 'print-genplan': ()=>printKind('genplan'), 'print-genreport': ()=>printKind('genreport'),
+  'club-add': ()=>clubForm(null), 'club-edit': el=>clubForm(el.dataset.id), 'club-del': el=>clubDelete(el.dataset.id),
+  'club-react': async el=>{ await ACT.patch(S.env,'activityClubs',el.dataset.id,{status:'active'}); await refresh(['clubs']); },
+  'club-open': el=>{ S.clubId=el.dataset.id; S.clubTab='members'; paint(); },
+  'club-open-plan': el=>{ S.tab='clubs'; S.clubId=el.dataset.id; S.clubTab='plan'; paint(); },
+  'club-back': ()=>{ S.clubId=null; paint(); },
+  'club-tab': el=>{ S.clubTab=el.dataset.v; paint(); },
+  'mem-add': el=>memAdd(el.dataset.id),
+  'mem-del': async el=>{ const c=clubById(el.dataset.id); if(!await ACT.confirmBox('حذف الطالب من النادي؟')) return; await ACT.patch(S.env,'activityClubs',c.id,{ members:(c.members||[]).filter(m=>m.seat!==el.dataset.seat) }); await refresh(['clubs']); },
+  'plan-add': el=>planForm(el.dataset.id,null), 'plan-edit': el=>{ const c=clubById(el.dataset.id), it=c&&(c.plan||[]).find(x=>x.id===el.dataset.pid); if(it&&it.status==='executed'){ ACT.toast('البند المنفَّذ لا يُعدَّل.'); return; } planForm(el.dataset.id,el.dataset.pid); },
+  'plan-del': async el=>{ const c=clubById(el.dataset.id); const it=(c.plan||[]).find(x=>x.id===el.dataset.pid); if(it&&it.status==='executed'){ ACT.toast('لا يُحذف بند مُنفَّذ؛ يبقى في السجل.'); return; } if(teacherPending(c.id,el.dataset.pid)){ ACT.toast('يوجد توثيق من المعلم المسؤول بانتظار اعتماد رائد النشاط؛ اعتمده أو أعده أولًا.'); return; } const ap = clubPS(c)==='approved'; if(!await ACT.confirmBox(ap?'خطة هذا النادي معتمدة؛ حذف بند منها يعيدها إلى «مسودة» وتحتاج اعتمادًا جديدًا. متابعة؟':'حذف هذا البند من الخطة؟')) return; const np=(c.plan||[]).filter(x=>x.id!==el.dataset.pid); await ACT.patch(S.env,'activityClubs',c.id,Object.assign({ plan:np }, respFields(np), ap?{planState:'draft',planReturnNote:''}:{})); await refresh(['clubs']); },
+  'print-clubplan': el=>printKind('clubplan',el.dataset.id),
+  'rp-attstu': ()=>printKind('attstu',$('#rp_att_club').value,ACT.pickGet(document,'rp_att_p')),
+  'rp-clubplan': ()=>printKind('clubplan',$('#rp_club').value), 'rp-clubreport': ()=>printKind('clubreport',$('#rp_club').value),
+  'exec-add': el=>execForm(el.dataset.id),
+  'ev-print': el=>evPrint(el.dataset.id),
+  'att-save': async el=>{
+    const c = clubById(el.dataset.id), att = {};
+    $$('#clubBody input[data-seat]').forEach(i=>{ const m=(c.members||[]).find(x=>x.seat===i.dataset.seat); att[i.dataset.seat]={ name:m.name, class:m.classCode||'', type:isStaffM(m)?'staff':'student', status:i.checked?'present':'absent' }; });
+    await ACT.patch(S.env,'activityEvents',el.dataset.ev,{ attendance:att, attendanceBy:S.env.me.id }); ACT.toast('تم حفظ الحضور'); await refresh(['events']);
+  },
+  'print-att': el=>printKind('att',el.dataset.id,el.dataset.ev),
+  'plan-submit-sel': async ()=>{ const ks = selKeys(); if(!ks.length){ ACT.toast('حدّد خطة واحدة على الأقل'); return; } if(!await ACT.confirmBox('تقديم '+N(ks.length)+' من الخطط المحدَّدة لقائد المدرسة للاعتماد؟')) return; await planWrite(ks,'submitted'); },
+  'plan-approve-sel': async ()=>{ const ks = selKeys(); if(!ks.length){ ACT.toast('حدّد خطة واحدة على الأقل'); return; } if(!await ACT.confirmBox('اعتماد '+N(ks.length)+' من الخطط المحدَّدة؟')) return; await planWrite(ks,'approved'); },
+  'plan-return-sel': async ()=>{ const ks = selKeys(); if(!ks.length){ ACT.toast('حدّد خطة واحدة على الأقل'); return; } const n = await (window.mnPrompt?window.mnPrompt('سبب الإعادة للتعديل (يظهر لرائد النشاط):',''):Promise.resolve('')); if(n===null) return; await planWrite(ks,'returned',n); },
+  'plan-withdraw': async el=>{ await planWrite([el.dataset.k],'withdraw'); },
+  'plan-reopen': async el=>{ if(!await ACT.confirmBox('إعادة فتح هذه الخطة للتعديل؟')) return; await planWrite([el.dataset.k],'reopen'); },
+  'gen-tab': el=>{ S.genTab=el.dataset.v; paint(); },
+  'gen-goopen': ()=>{ S.genTab='open'; paint(); },
+  'gen-pub': el=>genPublish(el.dataset.id),
+  'gen-add': ()=>genForm(null), 'gen-edit': el=>genForm(el.dataset.id), 'gen-tpl': genTemplate,
+  'asg-add': ()=>asgForm(null), 'asg-edit': el=>asgForm(el.dataset.id),
+  'asg-approve': async el=>{ await ACT.patch(S.env,'actAssignments',el.dataset.id,{ status:'approved', approvedBy:S.env.me.id, approvedByName:S.env.me.name, approvedAt:Date.now() }); await refresh(['assigns']); },
+  'asg-cancel': async el=>{ if(!await ACT.confirmBox('إلغاء هذا التكليف؟')) return; await ACT.patch(S.env,'actAssignments',el.dataset.id,{status:'cancelled'}); await refresh(['assigns']); },
+  'open-edit': el=>openForm(el.dataset.id),
+  'open-toggle': async el=>{ const o=S.opens.find(x=>x.id===el.dataset.id); await ACT.patch(S.env,'actOpenEvents',o.id,{status:o.status==='open'?'closed':'open'}); await refresh(['opens']); },
+  'ev-approve': async el=>{ await reviewDoc(el.dataset.id,'approved'); },
+  'ev-return': async el=>{ const n = await (window.mnPrompt?window.mnPrompt('سبب الإعادة للمعلم (يظهر له):',''):Promise.resolve('')); if(n===null) return; await reviewDoc(el.dataset.id,'returned',n); },
+  'bc-add': bcAdd, 'bc-edit': el=>bcEdit(Number(el.dataset.w),Number(el.dataset.d)),
+  'bc-delweek': async el=>{ if(!await ACT.confirmBox('حذف هذا الأسبوع من جدول الإذاعة؟')) return; const w=S.broadcast.weeks.slice(); w.splice(Number(el.dataset.w),1); w.forEach((x,i)=>x.weekNumber=i+1); await saveBroadcast(w); }
+};
+function bind(){
+  S.env.main.addEventListener('click', async e=>{
+    const el = e.target.closest('[data-a]'); if(!el || !S.env.main.contains(el)) return;
+    const f = H[el.dataset.a]; if(!f) return;
+    el.disabled = true;
+    try{ await f(el); }catch(err){ console.error(err); ACT.toast(err&&err.message?err.message:'تعذّر تنفيذ العملية'); }
+    el.disabled = false;
+  });
+  /* تذكّر فتح/طي البطاقات المجمَّعة بين إعادات الرسم */
+  S.env.main.addEventListener('toggle', e=>{ const t = e.target; if(t && t.id==='docsApr') S.docsAprOpen = t.open; else if(t && t.dataset && t.dataset.asgT) (S.asgOpen = S.asgOpen||{})[t.dataset.asgT] = t.open; }, true);
+  S.env.main.addEventListener('change', async e=>{
+    if(e.target.id==='attSel'){ S.attEv = e.target.value; paint(); }
+    if(e.target.id==='rp_att_club'){ $('#rp_att_host').innerHTML = attEvPick(e.target.value); ACT.pickInit(document,'rp_att_p'); }
+  });
+}
+
+Dash.boot({
+  title:'منصة النشاط المدرسي',
+  allow:()=>true,
+  render: async env=>{
+    ACT.injectCss();
+    S.env = env; S.isSA = !!env.isSA;
+    const p = ((env.ctx&&env.ctx.permissions)||{})['tools.activity']||{};
+    env.main.innerHTML = '<div class="dh-empty">جارٍ التحميل...</div>';
+    /* رائد النشاط = مقرر مجلس النشاط، ويُعرف من وثيقة المجلس (قراءتها متاحة لموظفي المدرسة) */
+    await load(['council']);
+    S.isCoord = !!(S.council && S.council.secretaryId === env.me.id);
+    S.canEdit = !S.isSA && (S.isCoord || p.edit===true);
+    if(!S.isSA && !S.isCoord && p.access!==true && p.edit!==true){ env.main.innerHTML = '<div class="dh-card dh-soon"><div class="ic">🔒</div><h2>ليست لديك صلاحية «منصة النشاط المدرسي»</h2><p>تُمنح الصلاحية لرائد النشاط (مقرر المجلس) أو بتفويض من قائد المدرسة.</p></div>'; return; }
+    if(!S.canEdit) env.main.classList.add('ac-ro');
+    await load();
+    await ensurePeople().catch(()=>{});
+    await backfillResp();
+    const u = ACT.loadState(env,'main');
+    /* ترحيل الحالة المحفوظة: تبويب «التكليف والتوثيق» القديم */
+    if(u.tab==='assign'){ if(u.asTab==='docs'){ u.tab='docs'; } else { u.tab='clubs'; u.clubId='__asg'; } }
+    if(u.tab && tabsDef().some(t=>t[0]===u.tab)) S.tab = u.tab;
+    if(u.clubTab && CT.some(t=>t[0]===u.clubTab)) S.clubTab = u.clubTab;
+    if(['events','open'].includes(u.genTab)) S.genTab = u.genTab;
+    if(S.tab==='clubs' && u.clubId && (u.clubId==='__asg' || S.clubs.some(c=>c.id===u.clubId))) S.clubId = u.clubId;
+    bind(); paint();
+    window.__ACT = S;
+  }
+});
+})();
+</script>
+</body>
+</html>

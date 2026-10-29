@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<!-- إصدار: 2026-10-29.1 · الاختبار -->
+<!-- [ADMIN-TOOLS] صفحة مستقلة بالكامل — تُحذف عند إزالة الأدوات الإدارية (انظر ADMIN-TOOLS-LOG.md) -->
+<html lang="ar" dir="rtl">
+<head>
+<script src="fb-config.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>الزيارات الصفية</title>
+<meta name="theme-color" content="#3f6659">
+<link rel="stylesheet" href="theme.css?v=2026-10-05.1">
+<script src="mn-dialog.js?v=2026-10-06.1"></script>
+<script src="theme.js?v=2026-10-05.1"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f7f6; --surface:#ffffff; --surface-2:#eef4f3; --surface-3:#e3ecea;
+  --brand:#0f766e; --brand-2:#0b5a54; --brand-l:#d5ece9;
+  --ink:#15242b; --muted:#5b6f76; --line:#d8e2e0;
+  --danger:#c0392b; --warn:#b7791f; --ok:#1f9d55;
+  --r:14px; --shadow:0 1px 2px rgba(16,40,40,.06),0 8px 24px rgba(16,40,40,.06);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:'Tajawal',"Segoe UI",Tahoma,system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14.5px;line-height:1.55;min-height:100vh}
+button{font-family:inherit;cursor:pointer;border:none}
+input,select,textarea{font-family:inherit;font-size:14px;padding:9px 10px;border-radius:10px;border:1px solid var(--line);color:var(--ink);background:var(--bg-ffffff,#fff);width:100%}
+.hidden{display:none !important}
+.boot{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:var(--muted);text-align:center;padding:20px}
+.spin{display:inline-block;width:22px;height:22px;border:3px solid var(--line);border-top-color:var(--brand);border-radius:50%;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.topbar{position:sticky;top:0;z-index:40;background:var(--brand);color:var(--fg-ffffff,#fff);padding:10px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.topbar h1{margin:0;font-size:17px;font-weight:800;white-space:nowrap}
+.tb-badge{background:rgba(255,255,255,.15);padding:5px 12px;border-radius:20px;font-size:13px;font-weight:600;white-space:nowrap}
+.tb-spacer{flex:1}
+.tb-btn{background:rgba(255,255,255,.17);color:var(--fg-ffffff,#fff);padding:7px 14px;border-radius:10px;font-weight:700;font-size:13px;white-space:nowrap}
+main{max-width:1240px;margin:0 auto;padding:18px 16px 60px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:14px;box-shadow:var(--shadow)}
+.sub{color:var(--muted);font-size:12.5px}
+.btn{font-weight:700;font-size:13.5px;padding:9px 14px;border-radius:10px;border:1.5px solid var(--brand);background:var(--bg-ffffff,#fff);color:var(--brand);min-height:38px;white-space:nowrap}
+.btn.pri{background:var(--brand);color:var(--fg-ffffff,#fff)}
+.btn.ghost{border-color:var(--line);color:var(--muted)}
+.btn.sm{min-height:32px;padding:5px 10px;font-size:12.5px}
+.btn:disabled{opacity:.55}
+.chip{display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table.v{border-collapse:collapse;width:100%;font-size:12.5px;min-width:1000px}
+table.v th,table.v td{border:1px solid var(--bd-cfdcd9,#cfdcd9);padding:7px 5px;text-align:center}
+table.v thead th{background:var(--bg-0d9488,#0d9488);color:var(--fg-ffffff,#fff);font-weight:700}
+table.v thead tr.sub th{background:var(--bg-2f6fb3,#2f6fb3)}
+table.v td.nm{text-align:right;font-weight:700}
+table.v tbody tr{cursor:pointer}
+table.v tbody tr:nth-child(even){background:var(--bg-f3f6f5,#f3f6f5)}
+table.v tbody tr:hover{background:var(--bg-e6f3f1,#e6f3f1)}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.field label{font-size:12.5px;font-weight:700;color:var(--muted)}
+.overlay{position:fixed;inset:0;background:rgba(10,30,30,.45);z-index:80;display:flex;align-items:flex-start;justify-content:center;padding:24px 12px;overflow-y:auto}
+.modal{background:var(--bg-ffffff,#fff);border-radius:16px;width:100%;max-width:520px;padding:18px;box-shadow:0 20px 50px rgba(0,0,0,.2)}
+.modal h2{margin:0 0 10px;font-size:18px}
+.seg{display:flex;gap:6px;margin-bottom:12px}
+.seg button{flex:1;padding:9px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg-ffffff,#fff);font-weight:700;color:var(--muted)}
+.seg button.on{border-color:var(--brand);background:var(--brand-l);color:var(--brand-2)}
+.lsn{display:flex;gap:6px;flex-wrap:wrap}
+.alert{padding:9px 12px;border-radius:10px;font-size:13px;margin:8px 0}
+.alert.err{background:var(--bg-fdecec,#fdecec);color:var(--fg-b42318,#b42318)}
+.empty{color:var(--muted);text-align:center;padding:40px 10px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--bg-15242b,#15242b);color:var(--fg-ffffff,#fff);padding:10px 18px;border-radius:12px;z-index:99;font-size:14px}
+</style>
+<script src="nav-back.js?v=2026-10-28.1" defer></script>
+</head>
+<body>
+<div id="bootView" class="boot"><span class="spin"></span><div>جارٍ التحميل…</div></div>
+<div id="app" class="hidden">
+  <div class="topbar">
+    <h1>👁 خطة الزيارات الصفية</h1>
+    <span class="tb-badge" id="tbSchool">—</span>
+    <span class="tb-badge" id="tbPeriod">—</span>
+    <span class="tb-spacer"></span>
+    <button class="tb-btn" id="tbBack">→ الرئيسية</button>
+  </div>
+  <main id="main"></main>
+</div>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-auth-compat.js"></script>
+<script src="users-api.js"></script>
+<script src="form-header.js?v=2026-10-15.2"></script>
+<script>
+'use strict';
+/* =========================================================================
+   الزيارات الصفية — نموذج رقم (٤٩) «خطة الزيارات الصفية لمدير المدرسة»
+   أداة من «أدوات إدارية»: مدير المدرسة والوكيل (بالدور)، أو من فُوِّض ببند «الزيارات الصفية» من «الصلاحيات الخاصة».
+   خصوصية كالتعاميم: لا صلاحية لأدمن النظام ولا للحساب الفردي.
+   المعلم لا يدخل هذه الصفحة؛ يصله موعد زيارته في «لوحتي ← زياراتي».
+   البيانات: classVisits — مستند لكل معلم/فصل دراسي ({sid}_{period}_{teacherId}) ومستند إعدادات (settings_{sid}: أسماء التوقيع).
+   ========================================================================= */
+const firebaseConfig = window.FB_CONFIG;
+let db = null;
+const WEEKDAYS = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+const EXEC = { ok:['في الموعد','#e7f6ee','#197a44'], mod:['تعديل','#fff1e0','#b45309'] };
+const FORM_META = { no:'(٤٩)', name:'خطة الزيارات الصفية لمدير المدرسة', code:'(م.م.ع.ن - ٠٣ - ٠١)' };
+const $ = s=>document.querySelector(s);
+const esc = s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const arN = n=>String(n).replace(/\d/g, d=>'٠١٢٣٤٥٦٧٨٩'[d]);
+const periodLabel = p=> p==='second'?'الفصل الثاني':'الفصل الأول';
+function toast(m){ const t=document.createElement('div'); t.className='toast'; t.textContent=m; document.body.appendChild(t); setTimeout(()=>t.remove(),2200); }
+function fatal(msg){
+  $('#bootView').innerHTML = `<div class="card" style="max-width:460px;text-align:center"><h3>${esc(msg)}</h3>
+    <button class="tb-btn" style="background:var(--brand);color:var(--fg-ffffff,#fff)" onclick="location.href='index.html'">العودة للرئيسية</button></div>`;
+}
+function hijri(dk){
+  if(!dk) return '';
+  try{
+    const parts = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura-nu-arab',{year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date(dk+'T12:00:00'));
+    const g = t=>((parts.find(x=>x.type===t)||{}).value||'').replace(/[^٠-٩\d]/g,'');
+    return g('year')+'/'+g('month')+'/'+g('day')+'هـ';
+  }catch(e){ return dk; }
+}
+const dayName = dk=>{ if(!dk) return ''; const d=new Date(dk+'T12:00:00'); return WEEKDAYS[d.getDay()]||''; };
+
+const VS = { sid:null, period:'first', me:null, canEdit:false, schoolName:'', teachers:[], plans:{}, settings:{ agentName:'', principalName:'' } };
+const col = ()=>db.collection('classVisits');
+const planId = tid=>VS.sid+'_'+VS.period+'_'+tid;
+
+(function start(){
+  let s=null; try{ s = JSON.parse(localStorage.getItem('cls_session')||'null'); }catch(e){}
+  if(!s || !s.userId){ location.replace('index.html'); return; }
+  if(s.role==='soloTeacher' || s.role==='admin'){ fatal('هذه الأداة خاصة بإدارة المدرسة ولا صلاحية لأدمن النظام أو الحساب الفردي عليها.'); return; }
+  if(!s.schoolId){ fatal('لا يمكن تحديد المدرسة.'); return; }
+  VS.sid = s.schoolId; VS.period = s.period || 'first'; VS.session = s;
+  try{ firebase.initializeApp(firebaseConfig); db = firebase.firestore(); }
+  catch(e){ fatal('تعذّر الاتصال بقاعدة البيانات.'); return; }
+  firebase.auth().onAuthStateChanged(async au=>{
+    if(!au){ try{ localStorage.removeItem('cls_session'); }catch(e){} location.replace('index.html'); return; }
+    try{ await boot(au); }catch(e){ console.error(e); fatal('تعذّر التحميل: '+(e.message||e)); }
+  });
+})();
+
+async function boot(au){
+  const us = await db.collection('users').doc(VS.session.userId).get();
+  if(!us.exists || us.data().authUid !== au.uid){ await firebase.auth().signOut(); location.replace('index.html'); return; }
+  const u = us.data();
+  if(u.active===false){ fatal('حسابك موقوف.'); return; }
+  VS.me = { id: us.id, name: u.username||'', role: u.role||'' };
+  if(u.role==='schoolAdmin'){
+    if(!(u.adminSchools||[]).includes(VS.sid)){ fatal('لا يمكن الوصول لهذه المدرسة.'); return; }
+    VS.canEdit = true;
+  } else {
+    const ctx = (u.schools||{})[VS.sid];
+    if(!ctx || ctx.active===false){ fatal('ليست لديك صلاحية الوصول لهذه المدرسة.'); return; }
+    const p = (ctx.permissions||{})['tools.visits']||{};
+    if(ctx.role!=='agent' && !p.access && !p.edit){ fatal('هذه الأداة لمدير المدرسة والوكيل أو من فُوِّض بها.'); return; }
+    VS.canEdit = ctx.role==='agent' || !!p.edit;
+    VS.me.role = ctx.role||'';
+  }
+  $('#tbPeriod').textContent = periodLabel(VS.period);
+  $('#tbBack').onclick = ()=>location.href='index.html';
+  try{ const sd = await db.collection('schoolData').doc(VS.sid).get(); VS.schoolName = sd.exists ? (sd.data().name||VS.sid) : VS.sid; }catch(e){ VS.schoolName = VS.sid; }
+  $('#tbSchool').textContent = VS.schoolName;
+  $('#bootView').classList.add('hidden'); $('#app').classList.remove('hidden');
+  try{ VS.principal = (await FormHdr.resolve({ db, session:VS.session, period:VS.period })).principal || ''; }catch(e){ VS.principal = ''; }
+  await loadAll();
+  render();
+}
+
+// المعلمون: موظفو المدرسة الفعّالون المفعَّلة حساباتهم (دور «معلم» أو لهم حصص في الجدول المنشور)
+async function loadAll(){
+  let byUser = {};
+  try{
+    const ps = await db.collection('timetables').doc(VS.sid).collection('data').doc(VS.period+'_published').get();
+    if(ps.exists){ const d = JSON.parse(ps.data().value||'null'); byUser = (d && d.byUser) || {}; }
+  }catch(e){}
+  const uSnap = await UsersAPI.listSnap(VS.sid);
+  VS.teachers = uSnap.docs.map(d=>({id:d.id,...d.data()}))
+    .filter(x=>!x.migratedTo && x.authUid && x.active!==false && x.schools && x.schools[VS.sid] && x.schools[VS.sid].active!==false)
+    .filter(x=>x.schools[VS.sid].role==='teacher' || (byUser[x.id] && (byUser[x.id].lessons||[]).length))
+    .map(x=>{
+      const lessons = (byUser[x.id] && byUser[x.id].lessons) || [];
+      const cnt = {}; lessons.forEach(l=>{ if(l.s) cnt[l.s]=(cnt[l.s]||0)+(l.n||1); });
+      const spec = Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a])[0] || '';
+      return { id:x.id, name:x.username||'', spec, lessons };
+    })
+    .sort((a,b)=>a.name.localeCompare(b.name,'ar'));
+  VS.plans = {};
+  try{
+    const q = await col().where('schoolId','==',VS.sid).get();
+    q.docs.forEach(d=>{
+      const v = d.data();
+      if(v.kind==='settings') VS.settings = { agentName:v.agentName||'', principalName:v.principalName||'' };
+      else if(v.kind==='plan' && v.period===VS.period) VS.plans[v.teacherId] = {id:d.id,...v};
+    });
+  }catch(e){}
+  // خطط لمعلمين لم يعودوا بالقائمة تبقى ظاهرة (بالاسم المحفوظ)
+  Object.values(VS.plans).forEach(p=>{ if(!VS.teachers.find(t=>t.id===p.teacherId)) VS.teachers.push({ id:p.teacherId, name:p.teacherName||'', spec:p.spec||'', lessons:[] }); });
+}
+
+function visitCells(v){
+  if(!v || !v.date) return '<td>—</td><td></td><td></td><td></td><td></td>';
+  return `<td>${esc(dayName(v.date))}</td><td style="white-space:nowrap">${esc(hijri(v.date))}${v.p!=null&&v.p!==''?`<div class="sub">الحصة ${arN(+v.p+1)}</div>`:''}</td><td>${esc(v.unit||'')}</td><td>${esc(v.activity||'')}</td><td>${esc(v.cls||'')}</td>`;
+}
+function execCell(ex){
+  const one = k=>`<span class="chip" style="background:${ex===k?EXEC[k][1]:'#f7f9f8'};color:${ex===k?EXEC[k][2]:'#a3b1b5'}">${EXEC[k][0]}</span>`;
+  return `<td style="padding:4px"><div style="display:flex;flex-direction:column;gap:3px">${one('ok')}${one('mod')}</div></td>`;
+}
+function render(){
+  const T = VS.teachers;
+  const done = Object.values(VS.plans).filter(p=>p.v1&&p.v1.date).length;
+  const rows = T.map((t,i)=>{
+    const p = VS.plans[t.id] || {};
+    return `<tr data-t="${esc(t.id)}"><td>${arN(i+1)}</td><td class="nm">${esc(t.name)}</td><td>${esc(p.spec||t.spec||'')}</td>${execCell(p.exec||'')}${visitCells(p.v1)}${visitCells(p.v2)}</tr>`;
+  }).join('');
+  $('#main').innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <span style="font-size:13.5px;font-weight:700">خطة الزيارات الصفية</span>
+      <span class="tb-spacer" style="flex:1"></span>
+      ${VS.canEdit?'<button class="btn pri" id="btnNew">+ جدولة زيارة</button>':''}
+      <button class="btn" id="btnPrint">🖨️ طباعة الخطة</button>
+    </div>
+    <div class="card" style="padding:10px">
+      ${T.length?`<div class="tbl-wrap"><table class="v">
+        <thead>
+          <tr><th rowspan="2">م</th><th rowspan="2">اسم المعلم</th><th rowspan="2">التخصص</th><th rowspan="2">التنفيذ</th><th colspan="5">الزيارة الأولى</th><th colspan="5">الزيارة الثانية</th></tr>
+          <tr class="sub"><th>اليوم</th><th>التاريخ</th><th>الوحدة</th><th>النشاط</th><th>الفصل</th><th>اليوم</th><th>التاريخ</th><th>الوحدة</th><th>النشاط</th><th>الفصل</th></tr>
+        </thead><tbody>${rows}</tbody></table></div>`
+        :'<div class="empty">لا يوجد معلمون فعّالون بالمدرسة.</div>'}
+      <div class="sub" style="padding:10px 4px 0;color:var(--ink);line-height:1.9"><b>ملاحظات:</b><br>- يعبأ هذا الجدول بداية كل فصل دراسي.<br>- يفضل أن تكون الزيارة الأولى في الأسبوعين الثالث والرابع، والزيارة الثانية بعد شهر من انتهاء الزيارة الأولى.</div>
+      <div class="sub" style="padding:6px 4px 0">${VS.canEdit?'اضغط صف المعلم لجدولة زيارته أو تعديلها. ':''}يصل المعلم تنبيه في «لوحتي ← زياراتي» بموعد زيارته. · مجدولة لهم زيارة أولى: ${arN(done)} من ${arN(T.length)}</div>
+    </div>
+    <div class="card">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+        <div class="field" style="flex:1 1 220px;margin:0"><label>الوكيل المسند للمتابعة</label><input id="sgAgent" value="${esc(VS.settings.agentName)}" ${VS.canEdit?'':'disabled'} maxlength="80"></div>
+        <div class="field" style="flex:1 1 220px;margin:0"><label>مدير المدرسة (من بيانات المدرسة)</label><input id="sgPrin" value="${esc(VS.principal||'')}" disabled></div>
+        ${VS.canEdit?'<button class="btn" id="sgSave">حفظ الأسماء</button>':''}
+      </div>
+    </div>`;
+  $('#btnPrint').onclick = printForm;
+  if(VS.canEdit){
+    $('#btnNew').onclick = ()=>openPlan(null);
+    $('#sgSave').onclick = saveSettings;
+    document.querySelectorAll('table.v tbody tr').forEach(tr=>tr.onclick=()=>openPlan(tr.dataset.t));
+  }
+}
+
+async function saveSettings(){
+  const agentName = ($('#sgAgent').value||'').trim(), principalName = VS.settings.principalName||'';
+  try{
+    await col().doc('settings_'+VS.sid).set({ kind:'settings', schoolId:VS.sid, agentName, principalName, updatedAt:Date.now(), updatedBy:VS.me.id });
+    VS.settings = { agentName, principalName }; toast('تم الحفظ');
+  }catch(e){ toast('خطأ: '+(e.message||e)); }
+}
+
+/* ---------- نافذة جدولة/تعديل زيارة معلم ---------- */
+let ED = null;
+function closeModal(){ const o=$('#ovl'); if(o) o.remove(); ED=null; }
+function openPlan(tid){
+  const p = tid ? (VS.plans[tid]||{}) : {};
+  ED = { tid: tid||'', which: (p.v1&&p.v1.date)&&!(p.v2&&p.v2.date) ? 'v2' : 'v1',
+    v1: Object.assign({date:'',p:'',cls:'',subj:'',unit:'',activity:''}, p.v1||{}),
+    v2: Object.assign({date:'',p:'',cls:'',subj:'',unit:'',activity:''}, p.v2||{}),
+    exec: p.exec||'', spec: p.spec||'' };
+  const o = document.createElement('div'); o.className='overlay'; o.id='ovl';
+  o.innerHTML = `<div class="modal">
+    <h2>${tid?'زيارة المعلم':'جدولة زيارة'}</h2>
+    <div class="field"><label>المعلم</label><select id="edT" ${tid?'disabled':''}>
+      <option value="">— اختر المعلم —</option>${VS.teachers.map(t=>`<option value="${esc(t.id)}" ${t.id===tid?'selected':''}>${esc(t.name)}${t.spec?' — '+esc(t.spec):''}</option>`).join('')}</select></div>
+    <div class="field"><label>التخصص</label><input id="edSpec" maxlength="60"></div>
+    <div class="seg" id="edSeg"><button type="button" data-w="v1">الزيارة الأولى</button><button type="button" data-w="v2">الزيارة الثانية</button></div>
+    <div id="edVisit"></div>
+    <div class="field"><label>التنفيذ</label><select id="edExec"><option value="">— لم تُنفّذ بعد —</option><option value="ok">في الموعد</option><option value="mod">تعديل</option></select></div>
+    <div id="edAlert"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-start;flex-wrap:wrap;margin-top:6px">
+      <button class="btn pri" id="edSave">حفظ</button><button class="btn ghost" id="edCancel">إلغاء</button>
+    </div></div>`;
+  document.body.appendChild(o);
+  $('#edCancel').onclick = closeModal;
+  $('#edExec').value = ED.exec;
+  const fillSpec = ()=>{ const t=VS.teachers.find(x=>x.id===ED.tid); $('#edSpec').value = ED.spec || (t&&t.spec) || ''; };
+  $('#edT').onchange = ()=>{ ED.tid = $('#edT').value; const pp = VS.plans[ED.tid]||{};
+    ED.v1 = Object.assign({date:'',p:'',cls:'',subj:'',unit:'',activity:''}, pp.v1||{}); ED.v2 = Object.assign({date:'',p:'',cls:'',subj:'',unit:'',activity:''}, pp.v2||{});
+    ED.exec = pp.exec||''; ED.spec = pp.spec||''; $('#edExec').value = ED.exec; fillSpec(); paintVisit(); };
+  fillSpec();
+  $('#edSeg').onclick = e=>{ const b=e.target.closest('button[data-w]'); if(!b) return; readVisit(); ED.which=b.dataset.w; paintVisit(); };
+  $('#edSave').onclick = savePlan;
+  paintVisit();
+}
+function readVisit(){
+  if(!ED || !$('#edDate')) return;
+  const v = ED[ED.which];
+  v.date = $('#edDate').value||''; v.cls = ($('#edCls').value||'').trim(); v.unit = ($('#edUnit').value||'').trim(); v.activity = ($('#edAct').value||'').trim();
+}
+function paintVisit(){
+  document.querySelectorAll('#edSeg button').forEach(b=>b.classList.toggle('on', b.dataset.w===ED.which));
+  const v = ED[ED.which];
+  $('#edVisit').innerHTML = `
+    <div class="field"><label>التاريخ</label><input id="edDate" type="date" value="${esc(v.date)}"><div class="sub" id="edHij">${v.date?esc(dayName(v.date)+' · '+hijri(v.date)):''}</div></div>
+    <div class="field"><label>حصصه في هذا اليوم (من جدوله المنشور)</label><div class="lsn" id="edLsn"></div></div>
+    <div class="field"><label>الفصل</label><input id="edCls" value="${esc(v.cls)}" maxlength="40" placeholder="مثال: ٢/ب"></div>
+    <div class="field"><label>الوحدة</label><input id="edUnit" value="${esc(v.unit)}" maxlength="80"></div>
+    <div class="field"><label>النشاط</label><input id="edAct" value="${esc(v.activity)}" maxlength="80"></div>
+    <button type="button" class="btn ghost sm" id="edClear">مسح هذه الزيارة</button>`;
+  $('#edDate').onchange = ()=>{ v.date = $('#edDate').value||''; v.p=''; $('#edHij').textContent = v.date ? dayName(v.date)+' · '+hijri(v.date) : ''; paintLessons(); };
+  $('#edClear').onclick = ()=>{ ED[ED.which] = {date:'',p:'',cls:'',subj:'',unit:'',activity:''}; paintVisit(); };
+  paintLessons();
+}
+function paintLessons(){
+  const host = $('#edLsn'); if(!host) return;
+  const v = ED[ED.which];
+  const t = VS.teachers.find(x=>x.id===ED.tid);
+  if(!t){ host.innerHTML = '<span class="sub">اختر المعلم أولًا.</span>'; return; }
+  if(!v.date){ host.innerHTML = '<span class="sub">اختر التاريخ لتظهر حصصه.</span>'; return; }
+  const wd = new Date(v.date+'T12:00:00').getDay();
+  const L = (t.lessons||[]).filter(l=>l.d===wd).sort((a,b)=>a.p-b.p);
+  if(!L.length){ host.innerHTML = '<span class="sub">'+((t.lessons||[]).length?'لا حصص له في هذا اليوم.':'لا يوجد له جدول منشور — اكتب الفصل يدويًا.')+'</span>'; return; }
+  host.innerHTML = L.map(l=>`<button type="button" class="btn sm ${String(v.p)===String(l.p)?'pri':''}" data-p="${l.p}">الحصة ${arN(l.p+1)} · ${esc(l.cl||l.c)}${l.s?' · '+esc(l.s):''}</button>`).join('');
+  host.onclick = e=>{ const b=e.target.closest('button[data-p]'); if(!b) return;
+    const l = L.find(x=>String(x.p)===b.dataset.p); readVisit();
+    v.p = l.p; v.cls = l.cl||l.c||''; v.subj = l.s||''; $('#edCls').value = v.cls; paintLessons(); };
+}
+async function savePlan(){
+  readVisit();
+  const err = m=>{ $('#edAlert').innerHTML = '<div class="alert err">'+esc(m)+'</div>'; };
+  if(!ED.tid){ err('اختر المعلم.'); return; }
+  const clean = v=> v.date ? { date:v.date, p: v.p===''||v.p==null ? '' : +v.p, cls:v.cls||'', subj:v.subj||'', unit:v.unit||'', activity:v.activity||'' } : null;
+  const v1 = clean(ED.v1), v2 = clean(ED.v2);
+  if(!v1 && !v2){ err('حدّد تاريخ زيارة واحدة على الأقل.'); return; }
+  if(v1 && v2 && v2.date <= v1.date){ err('تاريخ الزيارة الثانية يجب أن يكون بعد الأولى.'); return; }
+  const t = VS.teachers.find(x=>x.id===ED.tid) || {};
+  const doc = { kind:'plan', schoolId:VS.sid, period:VS.period, teacherId:ED.tid, teacherName:t.name||'',
+    spec: ($('#edSpec').value||'').trim(), exec: $('#edExec').value||'', v1, v2,
+    updatedAt: Date.now(), updatedBy: VS.me.id, updatedByName: VS.me.name };
+  $('#edSave').disabled = true;
+  try{
+    await col().doc(planId(ED.tid)).set(doc);
+    VS.plans[ED.tid] = { id:planId(ED.tid), ...doc };
+    closeModal(); render(); toast('تم الحفظ — يصل المعلم تنبيه في «لوحتي»');
+  }catch(e){ $('#edSave').disabled = false; err(e.message||String(e)); }
+}
+
+/* ---------- طباعة النموذج (٤٩) ---------- */
+async function printForm(){
+  const T = VS.teachers;
+  const cells = v=> v && v.date
+    ? `<td>${esc(dayName(v.date))}</td><td>${esc(hijri(v.date))}</td><td>${esc(v.unit||'')}</td><td>${esc(v.activity||'')}</td><td>${esc(v.cls||'')}</td>`
+    : '<td></td><td>&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;هـ</td><td></td><td></td><td>/</td>';
+  const box = on=>on?'☑':'☐';
+  const rows = T.map((t,i)=>{ const p = VS.plans[t.id]||{};
+    return `<tr><td>${arN(i+1)}</td><td class="nm">${esc(t.name)}</td><td>${esc(p.spec||t.spec||'')}</td><td class="ex">${box(p.exec==='ok')} في الموعد<br>${box(p.exec==='mod')} تعديل</td>${cells(p.v1)}${cells(p.v2)}</tr>`; }).join('');
+  const w = window.open('','_blank'); if(!w){ toast('اسمح بالنوافذ المنبثقة للطباعة'); return; }
+  const ctx = await FormHdr.resolve({ db, session:VS.session, period:VS.period });
+  if(!ctx.school) ctx.school = VS.schoolName;
+  const css = 'table{width:100%;border-collapse:collapse}th,td{border:1px solid #333;padding:6px 4px;text-align:center;font-size:12px}'+
+    'thead th{background:#0d9488;color:#fff}thead tr.s th{background:#2f6fb3}td.nm{text-align:right;font-weight:700}td.ex{font-size:11px;white-space:nowrap}'+
+    'tbody tr:nth-child(even){background:#eee}thead{display:table-header-group}tr{page-break-inside:avoid}'+
+    '.notes{font-size:12px;margin-top:10px;line-height:1.8}.sig{display:flex;justify-content:space-between;margin-top:22px;font-weight:700;font-size:14px}.fmeta{margin-top:14px;font-size:11px;color:#666;display:flex;justify-content:space-between}';
+  const body = ''+
+    '<table><thead><tr><th rowspan="2">م</th><th rowspan="2">اسم المعلم</th><th rowspan="2">التخصص</th><th rowspan="2">التنفيذ</th><th colspan="5">الزيارة الأولى</th><th colspan="5">الزيارة الثانية</th></tr>'+
+    '<tr class="s"><th>اليوم</th><th>التاريخ</th><th>الوحدة</th><th>النشاط</th><th>الفصل</th><th>اليوم</th><th>التاريخ</th><th>الوحدة</th><th>النشاط</th><th>الفصل</th></tr></thead>'+
+    '<tbody>'+(rows||'<tr><td colspan="14">لا يوجد معلمون.</td></tr>')+'</tbody></table>'+
+    '<div class="notes"><b>ملاحظات:</b><br>- يعبأ هذا الجدول بداية كل فصل دراسي.<br>- يفضل أن تكون الزيارة الأولى في الأسبوعين الثالث والرابع، والزيارة الثانية بعد شهر من انتهاء الزيارة الأولى.</div>'+
+    '<div class="sig"><span>الوكيل المسند للمتابعة: '+(esc(VS.settings.agentName)||'..............................')+'</span><span style="text-align:center">مدير المدرسة<br>الاسم: '+(esc(ctx.principal||VS.principal)||'....................')+'</span></div>';
+  w.document.write(FormHdr.doc({ title:'خطة الزيارات الصفية', formTitle:'خطة الزيارات الصفية', ctx, landscape:true, margin:'10mm', extraCss:css, body }));
+  w.document.close();
+}
+</script>
+<script src="sem-guard.js?v=2026-10-14.5"></script>
+<script>try{ SemGuard.start(); }catch(e){}</script>
+</body>
+</html>
