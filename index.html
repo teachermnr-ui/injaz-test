@@ -4529,6 +4529,24 @@ async function trialLoad(){
 }
 function renderSettings(c){
   c.innerHTML=`<div class="panel-head"><h2>إعدادات النظام</h2></div>
+    ${window.FB_ENV==='test' ? `<!-- [TEST-ENV:BEGIN] -->
+    <div class="card" style="border-color:#d5c3ee;background:#f3edfb">
+      <div class="set-block"><h3 style="color:#7a4fb5">منصة الاختبار — مدرسة «نسخة الاختبار»</h3>
+        <p>مدرسة دائمة ببيانات وهمية للتجربة كأنها حقيقية: ٢١ فصلًا ثانويًا و٢١٠ طلاب، و٤٧ معلمًا (٢٦ منهم مسندون بموادهم)، وحسابات دخول تسعة، وبيانات تعبّي الصفحات. الجدول والانتظار فارغان. تظهر هذه البطاقة في منصة الاختبار وحدها.</p></div>
+      <div id="teBox"><div class="empty"><span class="spin"></span></div></div>
+    </div>
+    <div class="card" id="teResetCard" style="border-color:#efc9c9;display:none">
+      <div class="set-block"><h3 style="color:var(--danger-d)">تصفير نسخة الاختبار</h3>
+        <p>لبدء تجربة جديدة: يحذف كل شيء في مدرسة الاختبار — السجلات والتعاميم والأنشطة والجدول وإسناد المواد ومجلس النشاط ولجنة التوجيه والإعدادات والملفات — <b>ما عدا المستخدمين والطلاب وفصولهم</b>.</p></div>
+      <button class="btn secondary sm" id="teCount">عدّ ما سيُحذف (بدون حذف)</button>
+      <div id="teCountBox" style="margin:10px 0"></div>
+      <div id="teConfirm" style="display:none">
+        <div class="field"><label>اكتب العبارة التالية حرفيًا للتأكيد: <b>تصفير نسخة الاختبار</b></label><input id="tePhrase" autocomplete="off"></div>
+        <button class="btn danger sm" id="teReset">تنفيذ التصفير</button>
+      </div>
+      <div id="teResetAlert"></div>
+    </div>
+    <!-- [TEST-ENV:END] -->` : ''}
 
     <div class="card">
       <div class="set-block"><h3>مظهر النظام</h3>
@@ -4601,7 +4619,68 @@ function renderSettings(c){
   $('#wipeBtn').onclick=wipeData;
 
   renderSchoolsList(); calLoad(); trialLoad();
+  if(window.FB_ENV==='test') teLoad();   // [TEST-ENV]
 }
+/* [TEST-ENV:BEGIN] منصة الاختبار: مدرسة «نسخة الاختبار» — إنشاء، دخول بدور بضغطة، تصفير. لا تظهر إلا حين FB_ENV==='test' */
+const teCall = async(data)=>(await firebase.functions().httpsCallable('testEnv',{timeout:150000})(data)).data;
+async function teLoad(){
+  const box=$('#teBox'); if(!box) return;
+  let st;
+  try{ st = await teCall({action:'status'}); }
+  catch(e){ box.innerHTML='<div class="alert err">'+esc(e.message||'تعذّر الاتصال')+'</div>'; return; }
+  if(!st.exists){
+    box.innerHTML='<div style="margin-bottom:10px"><span class="chip">لم تُنشأ بعد</span></div><button class="btn sm" id="teCreate">إنشاء مدرسة «نسخة الاختبار»</button><div id="teAlert"></div>';
+    $('#teCreate').onclick=async()=>{
+      if(!await mnConfirm('ستُنشأ مدرسة «نسخة الاختبار» بفصولها وطلابها ومعلميها وبياناتها الوهمية. قد يستغرق ذلك دقيقة. متابعة؟')) return;
+      $('#teCreate').disabled=true; alertBox('teAlert','ok','جارٍ الإنشاء…');
+      try{
+        const defaults={}; ['counselor','agent','assistant','teacher','teacherAssistant'].forEach(r=>{ defaults[r]=defaultPerms(r); });
+        await teCall({action:'create', defaults});
+        await loadSchools(); renderSettings($('#content'));
+      }catch(e){ $('#teCreate').disabled=false; alertBox('teAlert','err',e.message||'تعذّر الإنشاء'); }
+    };
+    return;
+  }
+  const RL={schoolAdmin:'مدير',counselor:'موجه',agent:'وكيل',assistant:'كادر إداري',teacher:'معلم',teacherAssistant:'مساعد معلم'};
+  box.innerHTML='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px"><span class="chip">موجودة</span><span class="chip">'+ayArDigits(st.totalUsers||st.users.length)+' مستخدمًا</span><span class="chip">'+ayArDigits(st.students)+' طالبًا · '+ayArDigits(st.classes||0)+' فصلًا</span><span class="chip">آخر تصفير: '+(st.lastResetAt?esc(ayDateAr(st.lastResetAt)):'لم تُصفَّر')+'</span></div>'
+    +'<p class="sub-note" style="margin:0 0 8px">اضغط أي دور لتدخل به مباشرة. للعودة اضغط «رجوع لحساب الأدمن» من الشريط البنفسجي أعلى الصفحة.</p>'
+    +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px">'
+    +st.users.map(u=>'<button class="btn secondary" style="text-align:right;display:block;padding:10px" data-te-as="'+esc(u.uid)+'"><b style="display:block">'+esc(u.name)+'</b><span style="font-size:12px;font-weight:400">'+esc(u.label||RL[u.role]||u.role)+'</span></button>').join('')
+    +'</div><div id="teAlert"></div>';
+  box.querySelectorAll('[data-te-as]').forEach(b=>b.onclick=async()=>{
+    box.querySelectorAll('[data-te-as]').forEach(x=>x.disabled=true); alertBox('teAlert','ok','جارٍ الدخول…');
+    try{
+      const r = await teCall({action:'loginAs', uid:b.dataset.teAs});
+      try{ localStorage.removeItem('cls_session'); }catch(e){}
+      await firebase.auth().signInWithCustomToken(r.token);
+      location.href='index.html';
+    }catch(e){ box.querySelectorAll('[data-te-as]').forEach(x=>x.disabled=false); alertBox('teAlert','err',e.message||'تعذّر الدخول'); }
+  });
+  const rc=$('#teResetCard'); if(rc) rc.style.display='';
+  $('#teCount').onclick=async()=>{
+    $('#teCountBox').innerHTML='<span class="spin"></span>';
+    try{
+      const r = await teCall({action:'resetCount'});
+      const rows=Object.entries(r.counts||{}).map(([k,v])=>'<li>'+esc(k)+': '+ayArDigits(v)+'</li>').join('');
+      $('#teCountBox').innerHTML='<div class="alert">سيُحذف (مستندات المستوى الأول مع ما تحتها): <ul style="margin:6px 0">'+(rows||'<li>لا شيء</li>')+'</ul>ويُصفَّر إسناد المواد والفصول للمستخدمين، وتُحذف ملفات المدرسة المرفوعة.</div>';
+      $('#teConfirm').style.display='';
+    }catch(e){ $('#teCountBox').innerHTML=''; alertBox('teResetAlert','err',e.message||'تعذّر العدّ'); }
+  };
+  $('#teReset').onclick=async()=>{
+    const P='تصفير نسخة الاختبار';
+    if(($('#tePhrase').value||'').trim()!==P){ alertBox('teResetAlert','err','العبارة غير مطابقة'); return; }
+    if(!await mnConfirm('تأكيد أخير: يُحذف كل ما في مدرسة الاختبار عدا المستخدمين والطلاب. متابعة؟')) return;
+    $('#teReset').disabled=true;
+    try{
+      let r, n=0;
+      do{ n++; alertBox('teResetAlert','ok','جارٍ التصفير… الدفعة '+ayArDigits(n)); r = await teCall({action:'reset', confirm:P}); }while(r && r.done===false && n<100);
+      alertBox('teResetAlert','ok','اكتمل التصفير.'+(r&&r.storageErr?' تنبيه: تعذّر حذف بعض الملفات.':''));
+      $('#teConfirm').style.display='none'; $('#teCountBox').innerHTML=''; teLoad();
+    }catch(e){ alertBox('teResetAlert','err',(e.message||'انقطع التنفيذ')+' — أعد الضغط للمتابعة.'); }
+    $('#teReset').disabled=false;
+  };
+}
+/* [TEST-ENV:END] */
 /* ---- محرر الصلاحيات الافتراضية للأدوار (لأدمن النظام) ---- */
 let tplRole = 'teacher', tplPerms = {};
 function openRoleTemplates(){

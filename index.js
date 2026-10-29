@@ -2686,3 +2686,548 @@ exports.aiSuggest = onCall({ secrets: [CF_ACCOUNT_ID, CF_API_TOKEN], timeoutSeco
   }
 });
 
+
+/* [TEST-ENV:BEGIN] ============================================================================
+   (2026-10-29) منصة الاختبار — مدرسة «نسخة الاختبار» الدائمة (للمسؤول وحده).
+   تعمل في مشروع الاختبار injaz-test-14849 فقط، وترفض في أي مشروع آخر (المنصة الأساسية) مهما كان المستدعي.
+   action: status | create | loginAs (uid) | resetCount | reset (confirm)
+   المدرسة: ٢١ فصلًا ثانويًا (٧ لكل صف) × ١٠ طلاب، ٤٧ معلمًا (٢٦ مسندون بمادة صفهم في فصوله السبعة، ٢١ بلا إسناد)،
+   وحسابات الدخول التسعة، وبيانات وهمية تعبّي الصفحات. الجدول والانتظار فارغان.
+   ============================================================================================ */
+const TE_PROJECT = "injaz-test-14849";
+const TE_SID = "tst_school";
+const TE_PERIOD = "first";
+const TE_SCHOOL_NAME = "مدرسة نسخة الاختبار";
+const TE_RESET_CONFIRM = "تصفير نسخة الاختبار";
+const TE_GRADES = [
+  { n: 1, name: "أول ثانوي", track: "مشترك", subjects: ["القرآن الكريم وتفسيره", "الرياضيات 1-1", "اللغة الإنجليزية 1", "الكفايات اللغوية 1-1", "الكيمياء 1", "الأحياء 1", "التقنية الرقمية 1", "التفكير الناقد"] },
+  { n: 2, name: "ثاني ثانوي", track: "عام", subjects: ["الرياضيات", "اللغة الإنجليزية", "الكيمياء", "الأحياء", "الفيزياء", "الكفايات اللغوية", "التاريخ", "النشاط"] },
+  { n: 3, name: "ثالث ثانوي", track: "عام", subjects: ["الفيزياء", "المجال الاختياري", "الرياضيات", "اللغة الإنجليزية", "الكيمياء", "علوم الأرض والفضاء", "التربية الصحية والبدنية", "التقنية الرقمية", "البحث ومصادر المعلومات", "النشاط"] },
+];
+const TE_SECTIONS = ["أ", "ب", "ج", "د", "هـ", "و", "ز"];
+const TE_CLASSES = [];
+TE_GRADES.forEach((g) => TE_SECTIONS.forEach((s, i) => {
+  TE_CLASSES.push({ name: g.name + " " + s, code: String(g.n * 100 + i + 1), stage: "ثانوية", loginCode: "H" + (TE_CLASSES.length + 1), track: g.track, grade: g.n });
+}));
+// حسابات الدخول التسعة (أزرار «ادخل بدور»)
+const TE_LOGIN = [
+  { uid: "tst_principal", name: "مدير المدرسة", role: "schoolAdmin" },
+  { uid: "tst_counselor", name: "الموجه الطلابي", role: "counselor", extra: ["tools.counselor"] },
+  { uid: "tst_agent_school", name: "وكيل الشؤون المدرسية", role: "agent", extra: ["tools.agentSchool"] },
+  { uid: "tst_agent_edu", name: "وكيل الشؤون التعليمية", role: "agent", extra: ["tools.agentEdu"] },
+  { uid: "tst_agent_st", name: "وكيل الشؤون الطلابية", role: "agent", extra: ["tools.agentStudents"] },
+  { uid: "tst_admin_staff", name: "الشؤون الإدارية", role: "assistant" },
+  { uid: "tst_teacher", name: "معلم المادة", role: "teacher", label: "معلم · الرياضيات 1-1" },
+  { uid: "tst_teacher_asst", name: "مساعد معلم", role: "teacherAssistant" },
+  { uid: "tst_activity", name: "رائد النشاط", role: "teacher", label: "معلم · مقرر مجلس النشاط" },
+];
+// المعلمون السبعة والأربعون: الأول هو «معلم المادة» (حساب الدخول) وهو معلم «الرياضيات 1-1»
+const TE_TEACHERS = (() => {
+  const first = ["عبدالله", "خالد", "سعد", "فهد", "ناصر", "محمد", "إبراهيم", "سلطان", "ماجد", "عادل", "تركي", "يوسف", "عبدالعزيز", "حمد", "صالح", "منصور", "بندر", "عمر", "علي", "حسن", "سليمان", "راشد", "وليد", "طلال"];
+  const fam = ["الغامدي", "الزهراني", "القحطاني", "العتيبي", "الشهري", "الحربي", "المالكي", "الدوسري", "العنزي", "الشمري", "السبيعي", "المطيري", "الجهني", "البقمي", "الأحمدي", "السلمي", "الثقفي", "اللحياني"];
+  const subs = [];
+  TE_GRADES.forEach((g) => g.subjects.forEach((s) => subs.push({ grade: g.n, subject: s })));
+  // «الرياضيات 1-1» أولًا لمعلم الدخول
+  const mi = subs.findIndex((x) => x.subject === "الرياضيات 1-1");
+  subs.unshift(subs.splice(mi, 1)[0]);
+  const out = [];
+  for (let i = 0; i < 47; i++) {
+    const uid = i === 0 ? "tst_teacher" : "tst_t" + String(i + 1).padStart(2, "0");
+    const name = i === 0 ? "معلم المادة" : first[(i * 5) % first.length] + " " + fam[(i * 7) % fam.length];
+    const a = subs[i] || null;
+    const classes = a ? TE_CLASSES.filter((c) => c.grade === a.grade).map((c) => c.code) : [];
+    out.push({ uid, name, role: "teacher", subject: a ? a.subject : "", grade: a ? a.grade : 0, classes });
+  }
+  return out;
+})();
+const TE_ALL_UIDS = TE_LOGIN.map((u) => u.uid).concat(TE_TEACHERS.map((t) => t.uid)).filter((v, i, a) => a.indexOf(v) === i);
+// مجموعات تبقى عند التصفير (حسابات النظام والمستخدمون والطلاب وإعدادات النظام العامة)
+const TE_KEEP_COLS = ["users", "schoolData", "rosterIndex", "settings", "aiConfig", "aiPrompts", "calendarLog",
+  "studentAccounts", "pushTokens", "pushQueue", "pushState", "secAttempts", "systemCounters", "pairings", "screenClaimAttempts", "aiUsage", "mergeRequests", "deletionRequests"];
+
+function teGuardProject() {
+  if (process.env.GCLOUD_PROJECT !== TE_PROJECT) throw secMsg("permission-denied", "هذه الأداة متاحة في منصة الاختبار فقط.");
+}
+async function teGuard(request) {
+  teGuardProject();
+  const me = await secCaller(request, { needDoc: true, allowClosed: true });
+  if (!secIsAdmin(me.data)) throw secMsg("permission-denied", "مقصور على أدمن النظام.");
+  return me;
+}
+// مولّد أرقام شبه عشوائية ثابت (البيانات نفسها في كل إنشاء)
+function teRng(seed) { let s = seed >>> 0; return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; }
+function teStudents() {
+  const first = ["محمد", "عبدالله", "عبدالرحمن", "فهد", "خالد", "سعود", "تركي", "نواف", "فيصل", "عمر", "يوسف", "إبراهيم", "سلطان", "ماجد", "بندر", "راكان", "زياد", "حمد", "ناصر", "مشاري", "عبدالملك", "ريان", "أنس", "مهند", "هشام", "باسل", "سامي", "وائل", "معاذ", "أسامة"];
+  const father = ["أحمد", "سعد", "علي", "حسن", "صالح", "عبدالعزيز", "سليمان", "منصور", "عادل", "ياسر", "محمد", "خالد", "فهد"];
+  const fam = ["العتيبي", "القحطاني", "الغامدي", "الزهراني", "الحربي", "الشهري", "المالكي", "الدوسري", "الشمري", "العنزي", "السبيعي", "البقمي", "الجهني", "المطيري", "الأحمدي", "السلمي", "الثبيتي", "العمري"];
+  const out = [];
+  TE_CLASSES.forEach((c, ci) => {
+    for (let i = 0; i < 10; i++) {
+      const k = ci * 10 + i, n = k + 1;
+      out.push({ seat: "99" + String(100000000 + n).slice(1), name: first[k % first.length] + " " + father[(k * 3) % father.length] + " " + fam[(k * 7) % fam.length], classCode: c.code });
+    }
+  });
+  return out;
+}
+// آخر أيام دراسة (الأحد–الخميس) قبل اليوم بتوقيت الرياض، الأحدث أولًا
+function tePastSchoolDays(count) {
+  const out = [];
+  const d = new Date(Date.now() + 3 * 3600000);
+  while (out.length < count) {
+    d.setUTCDate(d.getUTCDate() - 1);
+    const wd = d.getUTCDay();
+    if (wd === 5 || wd === 6) continue;
+    out.push(d.toISOString().slice(0, 10));
+  }
+  return out;
+}
+function teTodayKey() { return new Date(Date.now() + 3 * 3600000).toISOString().slice(0, 10); }
+function teAddDays(dk, n) { const d = new Date(dk + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+function teHijri(dk) {
+  try { const o = {}; new Intl.DateTimeFormat("en-u-ca-islamic-umalqura", { year: "numeric", month: "2-digit", day: "2-digit", timeZone: "Asia/Riyadh" }).formatToParts(new Date(dk + "T12:00:00+03:00")).forEach((x) => { o[x.type] = x.value; }); return o.year + "/" + o.month + "/" + o.day; } catch (e) { return ""; }
+}
+function teDayName(dk) { try { return new Date(dk + "T12:00:00+03:00").toLocaleDateString("ar-SA", { weekday: "long", timeZone: "Asia/Riyadh" }); } catch (e) { return ""; } }
+const teEsc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+// صفحة تعميم مرسومة (SVG) — بديل خفيف عن صورة ممسوحة
+function teSvgPage(title, lines) {
+  const body = lines.map((l, i) => '<text x="540" y="' + (330 + i * 64) + '" font-size="34" text-anchor="middle" fill="#1f2e27">' + teEsc(l) + "</text>").join("");
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1527" viewBox="0 0 1080 1527"><rect width="1080" height="1527" fill="#ffffff"/>'
+    + '<rect x="40" y="40" width="1000" height="1447" fill="none" stroke="#3f6659" stroke-width="4"/>'
+    + '<text x="540" y="140" font-size="40" text-anchor="middle" font-weight="700" fill="#3f6659">' + teEsc(TE_SCHOOL_NAME) + "</text>"
+    + '<text x="540" y="230" font-size="48" text-anchor="middle" font-weight="700" fill="#1f2e27">' + teEsc(title) + "</text>"
+    + body + '<text x="540" y="1420" font-size="30" text-anchor="middle" fill="#6b7a73">مدير المدرسة</text></svg>';
+  return "data:image/svg+xml;base64," + Buffer.from(svg).toString("base64");
+}
+function teSvgSign(k) {
+  const y = 40 + (k % 5) * 6;
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="120"><path d="M20 ' + y + " C 70 " + (y + 50) + ", 110 10, 150 " + (y + 20) + " S 230 " + (y + 60) + ', 280 30" fill="none" stroke="#1d3b6b" stroke-width="4" stroke-linecap="round"/></svg>';
+  return "data:image/svg+xml;base64," + Buffer.from(svg).toString("base64");
+}
+async function teCommit(writes) {
+  const db = secDb();
+  for (let i = 0; i < writes.length; i += 400) {
+    const batch = db.batch();
+    writes.slice(i, i + 400).forEach(([ref, data]) => batch.set(ref, data));
+    await batch.commit();
+  }
+}
+
+async function teCreate(me, d) {
+  const db = secDb();
+  const now = Date.now();
+  const schoolRef = db.collection("schoolData").doc(TE_SID);
+  if ((await schoolRef.get()).exists) throw secMsg("already-exists", "مدرسة نسخة الاختبار موجودة بالفعل.");
+  const cal = await secCalendar(true);
+  if (!cal || !Array.isArray(cal.periods) || !cal.periods.length) throw secMsg("failed-precondition", "احفظ العام الدراسي والفصول في إعدادات النظام أولًا.");
+  const defaults = (d && d.defaults) || {};
+  // ١) المدرسة والفصل الدراسي
+  const sems = {};
+  cal.periods.forEach((p) => { sems[p.id] = { licensed: true, active: p.id === TE_PERIOD, locked: false }; });
+  await schoolRef.set({ name: TE_SCHOOL_NAME, code: "T1", eduDept: "إدارة تعليم تجريبية", contactNumber: "", year: String(cal.year || ""),
+    classCount: String(TE_CLASSES.length), active: true, activeFrom: "", activeTo: "", activeFromMs: null, activeToMs: null, attFrom: "06:30", attTo: "13:00",
+    _isSchool: true, isTestSchool: true, semesters: sems, createdAt: now, updatedAt: now });
+  await semSaveDates(me, me.data, { schoolId: TE_SID });
+  // ٢) الطلاب والفصول وفهرسهم + المواد الستة والعشرون ضمن مواد المدرسة
+  const students = teStudents();
+  const classes = TE_CLASSES.map((c) => ({ name: c.name, code: c.code, stage: c.stage, loginCode: c.loginCode, track: c.track }));
+  const customSubjects = [];
+  TE_GRADES.forEach((g) => g.subjects.forEach((s) => { if (customSubjects.indexOf(s) < 0) customSubjects.push(s); }));
+  await db.collection("schoolData").doc("roster_" + TE_SID).set({ value: JSON.stringify({ classes, students, customSubjects, loginCodeCounters: { H: TE_CLASSES.length }, teacherAdd: true }),
+    updatedAt: now, schoolId: TE_SID, base: "roster" });
+  const classBySeat = {}, classMeta = {};
+  students.forEach((s) => { classBySeat[s.seat] = [s.classCode]; });
+  TE_CLASSES.forEach((c) => { classMeta[c.code] = { name: c.name, loginCode: "T1" + c.loginCode }; });
+  await db.collection("rosterIndex").doc(TE_SID).set({ rosterId: TE_SID, kind: "school", ownerCode: "T1", ownerName: TE_SCHOOL_NAME,
+    seatList: students.map((s) => s.seat), classBySeat, classMeta, updatedAt: now });
+  // ٣) المستخدمون: حسابات الدخول التسعة (حسابات دخول بلا بريد ولا كلمة مرور) والمعلمون السبعة والأربعون
+  const tplCache = {};
+  const permsFor = async (role) => {
+    if (!tplCache[role]) {
+      let p = await secTemplatePerms(role);
+      if (!p || !Object.keys(p).length) p = (defaults[role] && typeof defaults[role] === "object") ? defaults[role] : {};
+      tplCache[role] = p;
+    }
+    return JSON.parse(JSON.stringify(tplCache[role]));
+  };
+  for (const u of TE_LOGIN) {
+    try { await admin.auth().getUser(u.uid); } catch (e) { await admin.auth().createUser({ uid: u.uid, displayName: u.name }); }
+  }
+  const userWrites = [];
+  for (const u of TE_LOGIN) {
+    if (u.role === "schoolAdmin") {
+      userWrites.push([db.collection("users").doc(u.uid), { role: "schoolAdmin", authUid: u.uid, username: u.name, active: true, adminSchools: [TE_SID],
+        canManageUserPermsSchools: [TE_SID], loginId: u.uid, isTestAccount: true, createdAt: now, updatedAt: now }]);
+      continue;
+    }
+    if (u.uid === "tst_teacher") continue;   // يُكتب مع المعلمين
+    const perms = await permsFor(u.role);
+    (u.extra || []).forEach((k) => { perms[k] = { access: true, edit: true, del: false }; });
+    userWrites.push([db.collection("users").doc(u.uid), { authUid: u.uid, username: u.name, loginId: u.uid, isTestAccount: true, createdAt: now, updatedAt: now,
+      schools: { [TE_SID]: { role: u.role, permissions: perms, assignedClasses: [], subjectAssignments: [], subjectAssignmentsByPeriod: {}, active: true } } }]);
+  }
+  for (const t of TE_TEACHERS) {
+    const perms = await permsFor("teacher");
+    const asg = t.classes.map((c) => ({ classCode: c, subject: t.subject }));
+    userWrites.push([db.collection("users").doc(t.uid), { authUid: t.uid, username: t.name, loginId: t.uid, isTestAccount: true, createdAt: now, updatedAt: now,
+      schools: { [TE_SID]: { role: "teacher", permissions: perms, assignedClasses: t.classes, subjectAssignments: asg,
+        subjectAssignmentsByPeriod: asg.length ? { [TE_PERIOD]: asg } : {}, active: true } } }]);
+  }
+  await teCommit(userWrites);
+  await teCommit(teSeedRecords(students, cal));
+  return { ok: true, users: TE_ALL_UIDS.length, students: students.length, classes: TE_CLASSES.length };
+}
+
+// السجلات الوهمية الجاهزة (يحذفها التصفير). ترجع قائمة [مرجع، بيانات].
+function teSeedRecords(students, cal) {
+  const db = secDb();
+  const W = [];
+  const put = (ref, data) => W.push([ref, data]);
+  const now = Date.now();
+  const P = TE_PERIOD, sid = TE_SID;
+  const R = teRng(20261029);
+  const pick = (a) => a[Math.floor(R() * a.length)];
+  const nameOf = (uid) => ((TE_LOGIN.find((u) => u.uid === uid) || TE_TEACHERS.find((u) => u.uid === uid) || {}).name) || "";
+  const cls = (code) => (TE_CLASSES.find((c) => c.code === code) || {}).name || code;
+  const S = (i) => students[i];
+  const days = tePastSchoolDays(15);   // الأحدث أولًا
+  const today = teTodayKey();
+  const taught = TE_TEACHERS.filter((t) => t.subject);
+  const tByGrade = (g) => taught.filter((t) => t.grade === g);
+  const who = (uid) => ({ by: uid, byName: nameOf(uid), at: now });
+
+  /* ---------- الغياب والتأخر (السجل المركزي) ---------- */
+  const absKeys = new Set();
+  const absent = (i, dk, status, entry) => {
+    const s = S(i), id = "att_" + sid + "_" + P + "_" + s.seat + "_" + dk;
+    if (absKeys.has(id)) return; absKeys.add(id);
+    const rec = { schoolId: sid, period: P, seat: s.seat, name: s.name, classCode: s.classCode, className: cls(s.classCode), date: dk, status: status || "absent",
+      source: "index", markedBy: "tst_admin_staff", markedByName: nameOf("tst_admin_staff"), ts: now };
+    if (status === "late") rec.entryTime = entry || "07:20";
+    put(db.collection("attendance").doc(id), rec);
+  };
+  // طالب تجاوز ١٠ أيام (قرار للمدير)، وطالب ٦ أيام، وطالبان ٤ أيام
+  days.slice(0, 11).forEach((dk) => absent(0, dk));
+  days.slice(0, 6).forEach((dk) => absent(73, dk));
+  days.slice(2, 6).forEach((dk) => absent(145, dk));
+  days.slice(1, 5).forEach((dk) => absent(12, dk));
+  // غياب وتأخر متفرق يوميًا
+  days.forEach((dk) => {
+    for (let k = 0; k < 5; k++) absent(Math.floor(R() * students.length), dk);
+    for (let k = 0; k < 3; k++) absent(Math.floor(R() * students.length), dk, "late", "07:" + String(15 + Math.floor(R() * 30)).padStart(2, "0"));
+  });
+  // الاستئذان
+  [[30, "مراجعة طبية", "الأب"], [101, "ظرف عائلي", "الأخ"], [188, "مرض", "الأب"]].forEach(([i, reason, rel], k) => {
+    const s = S(i), dk = days[k];
+    put(db.collection("leaves").doc(), { schoolId: sid, period: P, seat: s.seat, name: s.name, classCode: s.classCode, className: cls(s.classCode), date: dk,
+      time: "10:" + String(10 + k * 15).padStart(2, "0"), reason, reasonText: "", receiverName: "ولي أمر الطالب", receiverRel: rel, receiverPhone: "0500000000", note: "",
+      byUserId: "tst_admin_staff", byName: nameOf("tst_admin_staff"), ts: now - k * 86400000 });
+  });
+
+  /* ---------- تحويلات المعلمين إلى وكيل الشؤون الطلابية ---------- */
+  [[7, "tst_teacher", "مشاغبة", "إثارة الفوضى أثناء الشرح وعدم الاستجابة للتنبيه."], [15, "tst_teacher", "عدم أداء الواجب", "لم يحل الواجب ثلاث مرات متتالية."],
+    [80, taught[9].uid, "تأخر عن الحصة", "يتأخر عن بداية الحصة الأولى باستمرار."], [160, taught[18].uid, "ضعف دراسي", "تدنٍ واضح في درجات الاختبار القصير."]].forEach(([i, from, reason, text], k) => {
+    const s = S(i), dk = days[k];
+    const t = TE_TEACHERS.find((x) => x.uid === from);
+    put(db.collection("notes").doc(), { schoolId: sid, period: P, fromUserId: from, fromName: nameOf(from), fromRole: "teacher",
+      recipients: ["tst_agent_st"], recipientsInfo: [{ userId: "tst_agent_st", name: nameOf("tst_agent_st"), role: "agent" }], scope: "student",
+      trType: "st", trSt: "new", trReason: reason, referralReason: reason, subject: (t && t.subject) || "", lessonNo: 1 + (k % 6),
+      dateG: dk, dayName: teDayName(dk), dateH: teHijri(dk), studentSeat: s.seat, studentName: s.name, classCode: s.classCode, className: cls(s.classCode),
+      text, createdAt: now - k * 3600000, replies: [], readAt: {}, closed: false });
+  });
+
+  /* ---------- سجلات المعلمين: الإعداد وسجل الأعمال ونماذج الاختبار والتصحيح الآلي ---------- */
+  const items = (p) => [{ id: p + "_attend", name: "الحضور", max: 10 }, { id: p + "_part", name: "المشاركة والتفاعل والأنشطة", max: 10 }, { id: p + "_hw", name: "الواجبات والتطبيقات الصفية", max: 10 },
+    { id: p + "_proj", name: "المشروعات والبحث", max: 10 }, { id: p + "_app", name: "اختبار الفترة تطبيقي", max: 35 }, { id: p + "_theory", name: "اختبار الفترة نظري", max: 25 }];
+  const groups = (p) => [{ id: p + "_g1", name: "المهام الأدائية والمشاركة والتفاعل", parts: [p + "_attend", p + "_part", p + "_hw", p + "_proj"] },
+    { id: p + "_g2", name: "تقويمات وتحريرية وعملية", parts: [p + "_app", p + "_theory"] }];
+  const ns = (uid) => "_" + sid + "_" + P + "_" + uid;
+  const cloud = (col, base, uid, obj) => put(db.collection(col).doc(base + ns(uid)), { value: JSON.stringify(obj), updatedAt: now, base, schoolId: sid, period: P, userId: uid });
+  taught.forEach((t, ti) => {
+    const workCfg = { periods: [{ name: "الفترة الأولى", items: items("p1"), groups: groups("p1") }, { name: "الفترة الثانية", items: items("p2"), groups: groups("p2") }],
+      header: { edu: "إدارة تعليم تجريبية", school: TE_SCHOOL_NAME, teacher: t.name, year: String((cal && cal.year) || ""), term: "الفصل الدراسي الأول", principal: nameOf("tst_principal") } };
+    cloud("exams", "teacherCfg", t.uid, { workCfg, stickers: [] });
+    const wl = {};
+    t.classes.forEach((code) => {
+      const vk = code + "::" + t.subject;
+      wl[vk] = {};
+      students.filter((s) => s.classCode === code).forEach((s) => {
+        const lvl = 0.55 + R() * 0.45;
+        const sc = (m) => Math.round(m * Math.min(1, lvl + (R() - 0.5) * 0.2));
+        const events = days.slice(0, 6).filter(() => R() < 0.12).map((dk) => ({ date: dk, ts: now, status: R() < 0.6 ? "absent" : "late", note: "" }));
+        wl[vk][s.seat] = { events, exams: {}, bands: {}, scores: { p1_attend: sc(10), p1_part: sc(10), p1_hw: sc(10), p1_proj: sc(10), p1_app: sc(35), p1_theory: sc(25) } };
+      });
+    });
+    cloud("results", "worklog", t.uid, wl);
+    // نموذج اختبار قصير (١٠ أسئلة اختيار من متعدد) ونتائج تصحيحه الآلي لفصل واحد
+    const key = Array.from({ length: 10 }, () => Math.floor(R() * 4));
+    const qData = key.map((k, i) => ({ text: "سؤال " + (i + 1) + " في " + t.subject, options: ["الخيار أ", "الخيار ب", "الخيار ج", "الخيار د"] }));
+    const cfg = { title: "اختبار قصير", sub: "", school: TE_SCHOOL_NAME, subject: t.subject, className: cls(t.classes[0]), period: "", perCol: 20,
+      sections: [{ type: "mcq", count: 10, opts: 4 }], numQ: 10, idEnabled: true, seatDigits: 10, gradeDigits: 2, sheetType: "full", idMode: "bubble", qrMode: false };
+    cloud("exams", "all", t.uid, [{ id: "x" + ti.toString(36) + "seed", name: "اختبار قصير ١ — " + t.subject, cfg, key, qData, savedAt: new Date(now).toLocaleString("ar-SA") }]);
+    const res = students.filter((s) => s.classCode === t.classes[0]).map((s) => {
+      const answers = key.map((k, q) => { const r = R(); const picked = r < 0.72 ? k : (r < 0.92 ? (k + 1) % 4 : -1); return { q: q + 1, picked, key: k, verdict: picked === -1 ? "blank" : (picked === k ? "correct" : "wrong") }; });
+      const correct = answers.filter((a) => a.verdict === "correct").length, blank = answers.filter((a) => a.verdict === "blank").length;
+      return { correct, wrong: 10 - correct - blank, blank, multiple: 0, total: 10, answers, seat: s.seat, grade: "", qrSeat: "", matchedName: s.name, name: s.name, at: new Date(now).toLocaleString("ar-SA") };
+    });
+    cloud("results", "all", t.uid, res);
+  });
+
+  /* ---------- وكيل الشؤون المدرسية: تأخر الموظفين، قرار حسم بانتظار المدير، الصيانة ---------- */
+  taught.slice(0, 8).forEach((t, k) => {
+    put(db.collection("schoolAffairs").doc(sid).collection("late").doc(P + "__" + t.uid), { uid: t.uid, name: t.name, period: P,
+      late: 10 + k * 7, early: k % 3 === 0 ? 15 : 0, pl: k % 2 ? 5 : 0, pt: 0, po: 0, updatedAt: now });
+  });
+  put(db.collection("schoolAffairs").doc(sid).collection("decisions").doc(), { empId: taught[3].uid, empName: taught[3].name, empRole: "معلم", why: "مساءلة تراكم التأخر",
+    days: "", st: "wait", hist: [{ k: "تنبيه شفوي", min: 30, date: teHijri(days[10]) }, { k: "مساءلة", min: 95, date: teHijri(days[2]) }], period: P, createdAt: now, createdBy: "tst_agent_school" });
+  [["معمل الحاسب", "تعطل جهاز العرض", "عاجلة", "run", "wait"], ["الفصل " + cls("203"), "مكيف لا يبرد", "عادية", "new", ""], ["دورات المياه", "تسرب في المغاسل", "عادية", "done", ""]].forEach(([loc, dsc, pri, st, l], k) => {
+    const rec = { loc, d: dsc, pri, st, l, note: st === "done" ? "تم الإصلاح" : "", createdAt: now - k * 86400000, byId: "tst_agent_school", byName: nameOf("tst_agent_school"), period: P };
+    if (st !== "new") rec.runAt = now - k * 80000000;
+    if (l === "wait") rec.lAt = now;
+    if (st === "done") rec.doneAt = now - 3600000;
+    put(db.collection("schoolAffairs").doc(sid).collection("maint").doc(), rec);
+  });
+
+  /* ---------- وكيل الشؤون الطلابية ---------- */
+  const SA = db.collection("studentAffairs").doc(sid);
+  const vio = [[0, 1, "التأخر الصباحي"], [0, 1, "التأخر الصباحي"], [5, 2, "عدم حضور الحصة الدراسية أو الهروب منها"], [34, 3, "الشجار أو الاشتراك في مضاربة جماعية"],
+    [77, 1, "النوم داخل الفصل"], [120, 2, "الدخول أو الخروج من الفصل دون استئذان"], [150, 1, "التأخر في الدخول إلى الحصص"], [199, 3, "التلفظ بكلمات نابية تجاه الطلبة"]];
+  let ded = null;
+  vio.forEach(([i, deg, w], k) => {
+    const s = S(i), dk = days[k + 1], ref = SA.collection("violations").doc();
+    put(ref, { period: P, seat: s.seat, name: s.name, className: cls(s.classCode), stage: "ثانوية", w, k: "mid", d: deg, prov: false, dateG: dk, dateH: teHijri(dk), dayName: teDayName(dk),
+      src: "الوكيل", srcNote: "", toDed: deg === 3 && !ded, cm: false, createdAt: now - k * 3600000, createdBy: "tst_agent_st", createdByName: nameOf("tst_agent_st") });
+    if (deg === 3 && !ded) ded = { ref, s, w };
+  });
+  if (ded) put(SA.collection("deductions").doc(ded.ref.id), { period: P, seat: ded.s.seat, name: ded.s.name, className: cls(ded.s.classCode), vid: ded.ref.id, why: ded.w, pts: 10, st: "sent", comp: 0,
+    sentAt: now, sentBy: "tst_agent_st", sentByName: nameOf("tst_agent_st") });
+  // ملفات الغياب: ١١ يومًا (أُحيل لقرار المدير)، ٦ أيام (تحويل واستدعاء)
+  const act = (k, n) => ({ k, n, at: now, date: days[0], g: false, by: "tst_agent_st", byName: nameOf("tst_agent_st") });
+  put(SA.collection("absence").doc(P + "__" + S(0).seat), { period: P, seat: S(0).seat, name: S(0).name, className: cls(S(0).classCode), excuses: [], actions: [act(0, 3), act(1, 5), act(2, 10)],
+    moved: true, decision: { st: "wait", at: now, date: days[0] }, updatedAt: now });
+  put(SA.collection("absence").doc(P + "__" + S(73).seat), { period: P, seat: S(73).seat, name: S(73).name, className: cls(S(73).classCode),
+    excuses: [{ id: String(now), dates: [days[5]], type: "مراجعة مستشفى", note: "تقرير مراجعة", file: null, at: now, byName: nameOf("tst_agent_st") }],
+    actions: [act(0, 3)], moved: false, updatedAt: now });
+  // لجنة التوجيه والإرشاد وخطاب تشكيلها (بانتظار المدير)
+  const pu = (uid) => ({ id: uid, name: nameOf(uid) });
+  const cm = { pres: pu("tst_agent_st"), edu: pu("tst_agent_edu"), cn: pu("tst_counselor"), t: [pu("tst_teacher"), pu(taught[5].uid), pu(taught[12].uid)] };
+  cm.memberIds = [cm.pres.id, cm.edu.id, cm.cn.id].concat(cm.t.map((x) => x.id));
+  put(SA.collection("committee").doc(P), Object.assign({ period: P, updatedAt: now, updatedBy: "tst_agent_st" }, cm));
+  put(SA.collection("formation").doc(P), Object.assign({ period: P, st: "sent", sentAt: now, sentBy: "tst_agent_st", sentByName: nameOf("tst_agent_st") }, cm));
+  // حالة عالية الخطورة بانتظار المدير
+  { const s = S(52);
+    put(SA.collection("highRisk").doc(), { period: P, st: "pending", createdAt: now, createdBy: "tst_agent_st", createdByName: nameOf("tst_agent_st"), seat: s.seat, name: s.name, className: cls(s.classCode),
+      type: "إيذاء نفسي", desc: "لوحظ انطواء شديد وآثار ضغط نفسي بعد خلاف أسري.", observer: nameOf("tst_teacher"), obsDate: days[1], obsTime: "09:40", checks: [0] }); }
+
+  /* ---------- وكيل الشؤون التعليمية ---------- */
+  const blank = { abs: false, queue: false, prep: false, duty: false, wait: { bad: false, kind: "ترك", note: "" }, cls: { bad: {} }, sup: { bad: {} }, early: { time: "", end: "" }, sentSchool: { early: false, cls: false } };
+  [[taught[2], { queue: true }], [taught[6], { prep: true }], [taught[14], { abs: true }]].forEach(([t, ch]) => {
+    put(db.collection("eduDaily").doc(sid).collection("items").doc(today + "__" + t.uid), Object.assign({ uid: t.uid, name: t.name, date: today, period: P, updatedAt: now, updatedBy: "tst_agent_edu" },
+      JSON.parse(JSON.stringify(blank)), ch));
+  });
+  const EL = db.collection("eduLog").doc(sid).collection("items");
+  [[taught[2], "queue", "لم يحضر الطابور الصباحي"], [taught[10], "cls", "التأخر عن الحصة الثانية"]].forEach(([t, key, detail], k) => {
+    put(EL.doc(), { type: "notice", empId: t.uid, empName: t.name, key, scope: "d", n: 1, dateKey: days[k], dateText: teHijri(days[k]), detail,
+      text: "المكرم الأستاذ / " + t.name + " حفظه الله\nالسلام عليكم ورحمة الله وبركاته\n\nنحيطكم علمًا بـ" + detail + " في يوم " + teHijri(days[k]) + ".\nنأمل الحرص مستقبلًا.\nوكيل الشؤون التعليمية",
+      period: P, createdAt: now - k * 86400000, createdBy: "tst_agent_edu", visibleFrom: now - k * 86400000 });
+  });
+  put(EL.doc(), { type: "acc", empId: taught[2].uid, empName: taught[2].name, key: "queue", scope: "d", dateKey: days[0], dateText: teHijri(days[0]), detail: "تكرار عدم حضور الطابور الصباحي ثلاث مرات",
+    extra: "", status: "wait", sign: "", period: P, createdAt: now, createdBy: "tst_agent_edu" });
+  const FR = db.collection("fileRequests").doc(sid).collection("items");
+  [["plan", "الخطة الفصلية لتوزيع المادة الدراسية", taught[0], "req"], ["worklog", "سجل الأعمال", taught[4], "req"], ["completion", "إكمال المنهج الدراسي", taught[8], "wait"]].forEach(([kind, title, t, status], k) => {
+    put(FR.doc(), { kind, title, period: P, gradesPeriod: "", empId: t.uid, empName: t.name, deadline: now + (7 + k) * 86400000, note: "", status, files: [], createdAt: now - k * 3600000, createdBy: "tst_agent_edu" });
+  });
+
+  /* ---------- الموجه الطلابي ---------- */
+  const C = db.collection("counselor").doc(sid);
+  const cw = who("tst_counselor");
+  [[0, "سلوكية"], [12, "دراسية"], [52, "نفسية وانفعالية"]].forEach(([i, type], k) => {
+    const s = S(i);
+    put(C.collection("cases").doc(), Object.assign({ period: P, seat: s.seat, name: s.name, className: cls(s.classCode), type, st: "open", src: "فتح مباشر", srcKey: "", openedAt: now - k * 86400000, nextFollow: teAddDays(today, 3 + k) }, cw));
+  });
+  [[0, "تنظيم الوقت والانضباط", "مناقشة أسباب الغياب المتكرر ووضع خطة حضور"], [12, "مهارات المذاكرة", "تدريب على تنظيم جدول المذاكرة"]].forEach(([i, topic, proc], k) => {
+    const s = S(i), dk = days[k + 1];
+    put(C.collection("sessions").doc(), Object.assign({ period: P, kind: "indiv", date: dk, time: "09:00", seat: s.seat, name: s.name, className: cls(s.classCode), topic, goal: "تحسين " + topic, proc, result: "تجاوب جيد", recs: "متابعة أسبوعية", next: teAddDays(today, 7) }, cw));
+  });
+  put(C.collection("sessions").doc(), Object.assign({ period: P, kind: "group", date: days[3], time: "10:00", groupName: "طلاب الصف الأول المستجدون", students: [S(1), S(2), S(3)].map((s) => ({ seat: s.seat, name: s.name, className: cls(s.classCode) })),
+    topic: "التكيف مع المرحلة الثانوية", goal: "تعريف الطلاب بالنظام", proc: "عرض ونقاش", result: "استفادة جيدة", recs: "" }, cw));
+  const hRows = [[40, "ربو", "السماح باستخدام البخاخ عند الحاجة وإبلاغ ولي الأمر"], [95, "سكري", "السماح بتناول وجبة خفيفة ومتابعة قياس السكر"], [171, "حساسية من الفول السوداني", "التنبيه على المقصف وتوفير بديل"]];
+  const hIds = [];
+  hRows.forEach(([i, cond, proc]) => {
+    const s = S(i), ref = C.collection("hasr").doc(); hIds.push(ref.id);
+    put(ref, Object.assign({ period: P, kind: "health", seat: s.seat, name: s.name, className: cls(s.classCode), cond, proc, phone: "05000000" + String(10 + i).slice(-2) }, cw));
+    put(db.collection("healthCases").doc(sid).collection("items").doc(ref.id), { period: P, seat: s.seat, name: s.name, className: cls(s.classCode), cond, updatedAt: now, updatedBy: "tst_counselor" });
+  });
+  [[61, "psy", "قلق قبل الاختبارات"], [133, "soc", "ظروف أسرية صعبة"], [190, "orph", "يتيم الأب"]].forEach(([i, kind, detail], k) => {
+    const s = S(i);
+    put(C.collection("hasr").doc(), Object.assign({ period: P, kind, seat: s.seat, name: s.name, className: cls(s.classCode), sym: "", detail, since: days[k + 2], action: "متابعة دورية" }, cw));
+  });
+  [[22, "gift", "متفوق في الرياضيات"], [88, "gift", "موهوب في البرمجة"], [44, "weak", "تدنٍ في الكيمياء"], [140, "weak", "ضعف في القراءة"]].forEach(([i, kind, detail], k) => {
+    const s = S(i);
+    put(C.collection("care").doc(), Object.assign({ period: P, kind, seat: s.seat, name: s.name, className: cls(s.classCode), detail, plan: kind === "gift" ? "إشراكه في المسابقات" : "خطة علاجية أسبوعية", date: days[k], result: "" }, cw));
+  });
+  put(C.collection("plans").doc(), Object.assign({ period: P, kind: "annual", goal: "تعزيز الانضباط المدرسي", act: "حملة المواظبة", target: "جميع الطلاب", month: "ربيع الآخر", week: "الأول", who: "الموجه الطلابي", st: "مخطط" }, cw));
+  put(C.collection("plans").doc(), Object.assign({ period: P, kind: "prog", name: "برنامج مهارات الاستذكار", ptype: "نمائي", target: "الصف الأول الثانوي", goal: "رفع التحصيل", from: days[4], to: teAddDays(today, 20), st: "قيد التنفيذ", result: "" }, cw));
+  [[0, "هاتف", "إبلاغ بتكرار الغياب"], [12, "حضوري", "مناقشة المستوى الدراسي"]].forEach(([i, mean, topic], k) => {
+    const s = S(i);
+    put(C.collection("contacts").doc(), Object.assign({ period: P, kind: "parent", date: days[k], seat: s.seat, name: s.name, className: cls(s.classCode), who: "ولي أمر الطالب", mean, topic, result: "تم التفاهم" }, cw));
+  });
+  put(C.collection("incidents").doc(), Object.assign({ period: P, kind: "day", date: days[0], time: "11:30", place: "الفسحة", seat: S(34).seat, name: S(34).name, className: cls(S(34).classCode),
+    desc: "شجار بسيط بين طالبين", action: "فض الشجار وتهدئة الطرفين", who: "وكيل الشؤون الطلابية" }, cw));
+  // تقرير الحالات الصحية: معتمد وصدر منه تعميم للتوقيع
+  const hrRef = db.collection("healthReports").doc(sid).collection("items").doc();
+
+  /* ---------- التعاميم والتواقيع ---------- */
+  const CR = db.collection("circulars").doc(sid);
+  const staffAll = TE_ALL_UIDS.slice();
+  const circs = [
+    { title: "بدء الدراسة للفصل الدراسي الأول", mandatory: true, lines: ["نحيط منسوبي المدرسة علمًا ببدء الدراسة", "وفق التقويم المعتمد، مع الالتزام بالحضور", "قبل بداية الطابور الصباحي.", "", "شاكرين تعاونكم."], signed: 0.7 },
+    { title: "ضوابط الاختبارات القصيرة", mandatory: true, lines: ["يُراعى توزيع الاختبارات القصيرة", "بحيث لا يزيد على اختبارين في اليوم للفصل", "مع إدخال الدرجات في سجل الأعمال."], signed: 0.35 },
+    { title: "دعوة لحضور اجتماع المعلمين", mandatory: false, lines: ["يسرنا دعوتكم لحضور اجتماع المعلمين", "يوم الأحد القادم بعد الحصة السادسة", "في قاعة المصادر."], signed: 0.2 },
+  ];
+  circs.forEach((c, k) => {
+    const ref = CR.collection("items").doc();
+    put(ref, { number: k + 1, title: c.title, mandatory: c.mandatory, recipients: staffAll, pageCount: 1, createdBy: "tst_principal", createdByName: nameOf("tst_principal"), createdAt: now - (5 - k) * 86400000, period: P });
+    put(ref.collection("pages").doc("0"), { dataUrl: teSvgPage(c.title, c.lines), index: 0 });
+    staffAll.forEach((u, j) => { if (R() < c.signed) put(ref.collection("signatures").doc(u), { signedAt: now - j * 600000, image: teSvgSign(j), manual: false, userName: nameOf(u) }); });
+  });
+  const hCirc = CR.collection("items").doc();
+  const hRowsOut = hRows.map(([i, cond, proc]) => ({ name: S(i).name, cond, proc }));
+  put(hCirc, { number: 4, title: "حصر الحالات الصحية المزمنة للطلاب", mandatory: true, recipients: staffAll, pageCount: 0, type: "healthCases", period: P,
+    health: { school: TE_SCHOOL_NAME, termText: "الفصل الدراسي الأول", rows: hRowsOut }, createdBy: "tst_principal", createdByName: nameOf("tst_principal"), createdAt: now, approvedAt: now, approvedByName: nameOf("tst_principal") });
+  staffAll.forEach((u, j) => { if (R() < 0.25) put(hCirc.collection("signatures").doc(u), { signedAt: now - j * 600000, image: teSvgSign(j + 3), manual: false, userName: nameOf(u) }); });
+  put(CR, { nextNumber: 5 });
+  put(hrRef, { period: P, st: "approved", rows: hRows.map(([i, cond, proc]) => ({ name: S(i).name, id: S(i).seat, cls: cls(S(i).classCode), cond, proc, phone: "05000000" + String(10 + i).slice(-2) })),
+    count: hRows.length, createdAt: now - 86400000, createdBy: "tst_counselor", createdByName: nameOf("tst_counselor"), approvedAt: now, approvedBy: "tst_principal", approvedByName: nameOf("tst_principal"), circId: hCirc.id });
+
+  /* ---------- منصة النشاط المدرسي ---------- */
+  const actBase = (data) => Object.assign({ schoolId: sid, period: P, createdAt: now, updatedAt: now, createdBy: "tst_activity" }, data);
+  put(db.collection("activityCouncil").doc(sid + "_" + P), actBase({ chairId: "tst_principal", chairName: nameOf("tst_principal"), secretaryId: "tst_activity", secretaryName: nameOf("tst_activity"),
+    members: [taught[1], taught[7], taught[20]].map((t) => ({ id: t.uid, uid: t.uid, name: t.name, role: "عضو" })), formedBy: "tst_principal", formedAt: now, createdBy: "tst_principal" }));
+  put(db.collection("activityConfig").doc(sid + "_" + P), actBase({ active: true, generalState: "draft" }));
+  const CLUBS = [["scout", "النادي الكشفي", "النشاط الكشفي", "⚜️", "كشفي"], ["sports", "النادي الرياضي", "الرياضة والصحة", "🏅", "رياضي"], ["social", "النادي الاجتماعي", "المواطنة والحياة", "🤝", "اجتماعي"],
+    ["science", "النادي العلمي", "العلوم والتقنية", "🔬", "علمي"], ["art", "النادي الفني", "الثقافة والفنون", "🎨", "فني"], ["cultural", "النادي الثقافي", "الثقافة والفنون", "📚", "ثقافي"], ["training", "نادي التدريب الطلابي", "المواطنة والحياة", "🎓", "تدريبي"]];
+  const clubIds = [];
+  CLUBS.forEach(([key, name, domain, icon, dom], k) => {
+    const ref = db.collection("activityClubs").doc(); clubIds.push(ref.id);
+    const head = taught[(k * 3 + 1) % taught.length], sup = taught[(k * 3 + 2) % taught.length];
+    const plan = [0, 1].map((j) => ({ id: "p" + k + j + "seed", title: (j ? "مسابقة " : "برنامج ") + name.replace("النادي ", "").replace("نادي ", ""), expectedDate: j ? teAddDays(today, 10 + k) : days[6 - k % 3],
+      responsible: (j ? sup : head).name, responsibleId: (j ? sup : head).uid, status: j ? "planned" : (k < 3 ? "executed" : "planned") }));
+    const respMap = {}; plan.filter((x) => x.status === "planned").forEach((x) => { respMap[x.id] = x.responsibleId; });
+    const members = students.filter((_, i) => i % 7 === k).slice(0, 8).map((s) => ({ seat: s.seat, name: s.name, classCode: s.classCode, className: cls(s.classCode), at: now }));
+    put(ref, actBase({ key, name, domain, icon, dom, isDefault: true, headId: head.uid, headName: head.name, supervisors: [{ id: sup.uid, name: sup.name }], members, plan,
+      respUids: Array.from(new Set(plan.map((x) => x.responsibleId))), respMap, planState: k < 2 ? "submitted" : (k < 4 ? "approved" : "draft"), status: "active", locked: true, order: k,
+      planApprovedBy: k >= 2 && k < 4 ? "tst_principal" : null, planApprovedByName: k >= 2 && k < 4 ? nameOf("tst_principal") : null, planApprovedAt: k >= 2 && k < 4 ? now : null }));
+    // توثيق الفعاليات المنفّذة
+    if (k < 3) {
+      const it = plan[0], id = "cl_" + ref.id + "_" + it.id;
+      put(db.collection("activityEvents").doc(id), actBase({ title: it.title, domain: dom, date: it.expectedDate, location: "ساحة المدرسة", duration: "حصتان",
+        beneficiaries: { type: "طلاب", count: 40 + k * 10 }, participants: members.slice(0, 4).map((m) => ({ uid: m.seat, name: m.name, type: "student" })),
+        executors: [{ uid: head.uid, name: head.name, type: "staff" }], participantCount: 40 + k * 10, objectives: "تنمية مهارات الطلاب", executionSteps: "تنفيذ البرنامج وفق الخطة",
+        evidenceUrl: "", photos: [], executedBy: head.uid, executedByName: head.name, description: "تنفيذ البرنامج وفق الخطة", extExecutor: null,
+        clubId: ref.id, planItemId: it.id, track: "specialized", sourceType: "club", generalEventId: null, assignmentId: null, programIdx: null, openEventId: null,
+        documentedBy: head.uid, documentedByName: head.name, status: "done", viaTeacher: true,
+        approvalStatus: k === 2 ? "pending" : "approved", approvedBy: k === 2 ? null : "tst_activity", approvedByName: k === 2 ? null : nameOf("tst_activity"), approvedAt: k === 2 ? null : now, createdBy: head.uid }), );
+    }
+  });
+  // تكليفات المعلمين (واحد بانتظار المدير وآخر معتمد) ونشاط متاح واجتماع للمجلس
+  [[taught[15], 0, "pending"], [taught[16], 1, "approved"]].forEach(([t, ci, status]) => {
+    put(db.collection("actAssignments").doc(), actBase({ teacherId: t.uid, teacherName: t.name, clubId: clubIds[ci], clubName: CLUBS[ci][1], domain: CLUBS[ci][4],
+      programs: [{ name: "الإشراف على برنامج " + CLUBS[ci][1], target: "طلاب الصف الأول", endDate: teAddDays(today, 21) }], status,
+      approvedBy: status === "approved" ? "tst_principal" : null, approvedByName: status === "approved" ? nameOf("tst_principal") : null, approvedAt: status === "approved" ? now : null,
+      ts: now, createdByName: nameOf("tst_activity") }));
+  });
+  put(db.collection("actOpenEvents").doc(), actBase({ title: "الاحتفاء باليوم الوطني", description: "فعاليات متنوعة بمناسبة اليوم الوطني يوثّقها المعلمون المشاركون", domain: "اجتماعي",
+    deadline: teAddDays(today, 14), deadlineMs: new Date(teAddDays(today, 14) + "T23:59:59+03:00").getTime(), status: "open", generalEventId: null, clubId: null, ts: now, publishDate: days[2], createdByName: nameOf("tst_activity") }));
+  put(db.collection("activityMeetings").doc(), actBase({ title: "الاجتماع الأول لمجلس النشاط", meetingNumber: 1, date: days[8], summary: "اعتماد خطة النشاط وتوزيع الأندية على المعلمين",
+    decisions: ["اعتماد توزيع الأندية", "تفعيل منصة النشاط للفصل الأول"], attendees: ["tst_principal", "tst_activity", taught[1].uid, taught[7].uid], absentees: [taught[20].uid] }));
+
+  /* ---------- شاشة التميز ---------- */
+  const EX = db.collection("excellence").doc(sid);
+  [["public", "معلم الشهر", taught[4].name, "معلم " + taught[4].subject], ["public", "الطلاب المثاليون", S(22).name, cls(S(22).classCode)], ["public", "الطلاب المثاليون", S(88).name, cls(S(88).classCode)],
+    ["public", "الفصل المثالي", cls("204"), "الأكثر انضباطًا"], ["teachers", "معلم مبادر", taught[11].name, "مبادرة القراءة"], ["admins", "إداري متميز", nameOf("tst_admin_staff"), "دقة في العمل"]].forEach(([ch, cat, name, sub], k) => {
+    put(EX.collection("items").doc("seed" + k), { ch, cat, name, sub, note: "", period: "", photo: "", shownIn: [], m: [], createdAt: now + k, uid: "", auto: false, updatedAt: now, updatedBy: "tst_principal" });
+  });
+  [["public", "تهنئة لطلاب المدرسة بالتفوق في مسابقة الرياضيات"], ["public", "يبدأ أسبوع المواظبة يوم الأحد"], ["teachers", "تذكير بإدخال درجات الفترة الأولى"]].forEach(([ch, t], k) => {
+    put(EX.collection("news").doc("seedn" + k), { ch, t, createdAt: now + k, updatedBy: "tst_principal" });
+  });
+  return W;
+}
+
+// كل ما يخص مدرسة الاختبار عدا المستخدمين والطلاب: يُعَدّ أو يُحذف
+async function teResetScan(doDelete, t0) {
+  const db = secDb();
+  const counts = {};
+  const left = () => Date.now() - t0 < 45000;
+  const mine = (v) => typeof v === "string" && TE_ALL_UIDS.indexOf(v) >= 0;
+  const owned = (id, x) => id === TE_SID || id.indexOf(TE_SID + "_") === 0 || id.indexOf("_" + TE_SID + "_") >= 0
+    || (x && (x.schoolId === TE_SID || mine(x.createdBy) || mine(x.teacherUid) || mine(x.fromUserId)));
+  const cols = (await db.listCollections()).filter((c) => TE_KEEP_COLS.indexOf(c.id) < 0);
+  for (const c of cols) {
+    const refs = await c.listDocuments();
+    const hits = [];
+    const named = refs.filter((r) => owned(r.id, null));
+    const rest = refs.filter((r) => !owned(r.id, null));
+    hits.push(...named);
+    for (let i = 0; i < rest.length; i += 200) {
+      const snaps = await db.getAll(...rest.slice(i, i + 200));
+      snaps.forEach((s) => { if (s.exists && owned(s.id, s.data())) hits.push(s.ref); });
+    }
+    if (!hits.length) continue;
+    counts[c.id] = hits.length;
+    if (!doDelete) continue;
+    for (let i = 0; i < hits.length; i += 100) {
+      if (!left()) return { counts, done: false };
+      const bw = db.bulkWriter();
+      await Promise.all(hits.slice(i, i + 100).map((r) => db.recursiveDelete(r, bw)));
+      await bw.close();
+    }
+  }
+  return { counts, done: true };
+}
+
+exports.testEnv = onCall({ timeoutSeconds: 300, memory: "1GiB" }, async (request) => {
+  const me = await teGuard(request);
+  const d = request.data || {};
+  const db = secDb();
+  const action = String(d.action || "");
+  if (action === "status") {
+    const s = await db.collection("schoolData").doc(TE_SID).get();
+    let students = 0;
+    if (s.exists) { try { const r = await db.collection("schoolData").doc("roster_" + TE_SID).get(); students = (JSON.parse(r.data().value || "{}").students || []).length; } catch (e) { /* لا شيء */ } }
+    return { ok: true, exists: s.exists, students, classes: TE_CLASSES.length, teachers: TE_TEACHERS.length, totalUsers: TE_ALL_UIDS.length,
+      users: TE_LOGIN.map((u) => ({ uid: u.uid, name: u.name, role: u.role, label: u.label || "" })), lastResetAt: s.exists ? (s.data().lastResetAt || null) : null };
+  }
+  if (action === "create") return teCreate(me, d);
+  if (action === "loginAs") {
+    const u = TE_LOGIN.find((x) => x.uid === String(d.uid || ""));
+    if (!u) throw secMsg("invalid-argument", "حساب غير معروف.");
+    if (!(await db.collection("users").doc(u.uid).get()).exists) throw secMsg("failed-precondition", "أنشئ مدرسة نسخة الاختبار أولًا.");
+    const token = await admin.auth().createCustomToken(u.uid, { testAccount: true });
+    return { ok: true, token, name: u.name };
+  }
+  if (action === "resetCount") {
+    const r = await teResetScan(false, Date.now());
+    return { ok: true, counts: r.counts };
+  }
+  if (action === "reset") {
+    if (d.confirm !== TE_RESET_CONFIRM) throw secMsg("invalid-argument", "عبارة التأكيد غير صحيحة.");
+    const t0 = Date.now();
+    const r = await teResetScan(true, t0);
+    if (!r.done) return { ok: true, done: false };
+    // إسناد المواد والفصول يُصفَّر، ويبقى المستخدم بدوره وصلاحياته
+    const FP = admin.firestore.FieldPath;
+    for (const uid of TE_ALL_UIDS) {
+      if (uid === "tst_principal") continue;
+      try { await db.collection("users").doc(uid).update(new FP("schools", TE_SID, "subjectAssignments"), [], new FP("schools", TE_SID, "subjectAssignmentsByPeriod"), {},
+        new FP("schools", TE_SID, "assignedClasses"), [], "updatedAt", Date.now()); } catch (e) { /* لا شيء */ }
+    }
+    let storageErr = null;
+    for (const pre of ["activities/" + TE_SID + "/", "fileRequests/" + TE_SID + "/", "studentAffairs/" + TE_SID + "/"]) {
+      try { await admin.storage().bucket().deleteFiles({ prefix: pre, force: true }); } catch (e) { storageErr = String((e && e.message) || e).slice(0, 160); }
+    }
+    await db.collection("schoolData").doc(TE_SID).update({ lastResetAt: Date.now() });
+    return { ok: true, done: true, storageErr };
+  }
+  throw secMsg("invalid-argument", "إجراء غير معروف.");
+});
+/* [TEST-ENV:END] */
