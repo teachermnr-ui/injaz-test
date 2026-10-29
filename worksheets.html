@@ -563,8 +563,8 @@ if(typeof window.mnConfirm!=="function"){ window.mnConfirm=function(m){ return P
         '<div class="ijh-menu" id="wsAccMenu" role="menu" aria-label="قائمة الحساب" hidden>' +
           '<div class="ijh-mhead"><b>' + escapeHtml(uname) + '</b><span>الأنشطة الرقمية</span></div>' +
           '<div class="ijh-mlist">' +
-            '<a class="ijh-mitem" role="menuitem" href="index.html?home=1&pw=1">' + ic('key', 20) + 'تغيير كلمة المرور</a>' +
-            '<a class="ijh-mitem" role="menuitem" href="delete-account.html">' + ic('out', 20) + 'حذف الحساب</a>' +
+            '<a class="ijh-mitem" role="menuitem" data-nodemo href="index.html?home=1&pw=1">' + ic('key', 20) + 'تغيير كلمة المرور</a>' +
+            '<a class="ijh-mitem" role="menuitem" data-nodemo href="delete-account.html">' + ic('out', 20) + 'حذف الحساب</a>' +
           '</div>' +
           '<div class="ijh-mmode"><div class="ijh-mlabel">المظهر</div><div id="wsModeSlot"></div></div>' +
         '</div>';

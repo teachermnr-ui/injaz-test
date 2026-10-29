@@ -6093,8 +6093,8 @@ let CLS_SESSION = null, CLS_NS = '', CLS_CAN_ADD_MANAGE = false, CLS_ALL_PERMS =
         '<div class="ijh-mhead"><b>'+ escapeHtml(uname) +'</b><span>'+ escapeHtml(IJH_ROLE[CLS_SESSION.role]||'') +'</span></div>'+
         '<div class="ijh-mlist">'+
           '<button type="button" class="ijh-mitem" role="menuitem" id="myAccountsBtn">'+ ic('accounts',20) +'حساباتي</button>'+
-          '<a class="ijh-mitem" role="menuitem" id="omrPwLink" href="index.html?home=1&pw=1">'+ ic('key',20) +'تغيير كلمة المرور</a>'+
-          '<a class="ijh-mitem" role="menuitem" href="delete-account.html">'+ ic('out',20) +'حذف الحساب</a>'+
+          '<a class="ijh-mitem" role="menuitem" data-nodemo id="omrPwLink" href="index.html?home=1&pw=1">'+ ic('key',20) +'تغيير كلمة المرور</a>'+
+          '<a class="ijh-mitem" role="menuitem" data-nodemo href="delete-account.html">'+ ic('out',20) +'حذف الحساب</a>'+
         '</div>'+
         '<div class="ijh-mmode"><div class="ijh-mlabel">المظهر</div><div id="omrModeSlot"></div></div>'+
         '<div class="ijh-mfoot"><button type="button" class="ijh-mitem danger" role="menuitem" id="omrLogoutBtn">'+ ic('out',20,2) +'تسجيل الخروج</button></div>'+

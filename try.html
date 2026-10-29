@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<!-- إصدار: 2026-10-30.1 · الاختبار -->
+<html lang="ar" dir="rtl">
+<head>
+<script src="fb-config.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>جرّب المنصة · منجز المدرسي</title>
+<meta name="theme-color" content="#3f6659">
+<link rel="icon" type="image/png" href="icons/favicon-48.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f8f7;--surface:#fff;--brand:#0f766e;--brand-2:#0b5a54;--ink:#15242b;--muted:#5b6f76;--line:#d8e2e0;--gold:#b8893a;--gold-bg:#fbf4e6;--danger:#b5332e}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{font-family:'Tajawal',"Segoe UI",Tahoma,system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
+.wrap{max-width:560px;margin:0 auto;padding:22px 16px 40px}
+.brand{text-align:center;margin:8px 0 18px}
+.brand img{width:64px;height:64px;border-radius:16px}
+.brand h1{font-size:22px;margin:10px 0 0;font-weight:800;color:var(--brand-2)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 1px 2px rgba(16,40,40,.06),0 8px 24px rgba(16,40,40,.06)}
+.hello{font-size:18px;font-weight:800;margin:0 0 6px}
+.meta{font-size:14px;color:var(--muted);line-height:1.8;margin:0}
+.hint{margin:14px 0 6px;background:var(--gold-bg);border:1px solid #ecd9b3;color:#6a4c16;border-radius:12px;padding:10px 12px;font-size:14px;font-weight:600;line-height:1.7}
+.roles{display:grid;gap:10px;margin-top:14px}
+.role{display:flex;flex-direction:column;align-items:flex-start;gap:3px;width:100%;text-align:right;font-family:inherit;background:#eef4f3;border:1px solid var(--line);border-radius:14px;padding:12px 14px;color:var(--ink);cursor:pointer;transition:transform .1s,border-color .15s}
+.role:active{transform:scale(.98)}
+.role:hover{border-color:var(--brand)}
+.role b{font-size:16px;font-weight:800}
+.role span{font-size:13px;color:var(--muted);line-height:1.6}
+.role[disabled]{opacity:.55;cursor:default}
+.msg{text-align:center;padding:26px 14px}
+.msg h2{margin:0 0 10px;font-size:20px;font-weight:800}
+.msg p{margin:0 0 14px;color:var(--muted);line-height:1.9;font-size:15px}
+.contact{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.contact a{display:block;text-decoration:none;font-weight:800;border-radius:12px;padding:12px;font-size:15px}
+.wa{background:#1f9d55;color:#fff}
+.mail{background:#eef4f3;color:var(--brand-2);border:1px solid var(--line)}
+.err{color:var(--danger);font-weight:700;margin-top:12px;text-align:center;font-size:14px;min-height:20px}
+.load{text-align:center;color:var(--muted);padding:30px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><img src="icons/favicon-48.png" alt=""><h1>منجز المدرسي</h1></div>
+  <div id="root"><div class="load">جارٍ التحميل…</div></div>
+</div>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-functions-compat.js"></script>
+<script>
+(function(){
+  var WA = 'https://wa.me/966500924611', MAIL = 'info@awraqai.com';
+  var root = document.getElementById('root');
+  var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
+  var ar = function(s){ return String(s).replace(/\d/g, function(d){ return '٠١٢٣٤٥٦٧٨٩'[d]; }); };
+  var dateAr = function(ms){ try { return ar(new Date(ms).toLocaleDateString('ar-SA-u-nu-latn-ca-gregory', {day:'numeric', month:'long', year:'numeric'})); } catch (e) { return ''; } };
+  var K = '';
+  try { K = new URLSearchParams(location.search).get('k') || ''; } catch (e) {}
+  if (!K) { try { K = localStorage.getItem('demo_k') || ''; } catch (e) {} }
+  K = String(K).trim().toLowerCase();
+
+  function ended(){
+    root.innerHTML = '<div class="card msg"><h2>انتهت مدة هذه النسخة التجريبية</h2>'
+      + '<p>شكرًا لتجربتك منصة منجز المدرسي. للحصول على نسخة جديدة أو للاستفسار عن الاشتراك تواصل معنا:</p>'
+      + '<div class="contact"><a class="wa" href="' + WA + '" target="_blank" rel="noopener">واتساب: ٩٦٦٥٠٠٩٢٤٦١١</a>'
+      + '<a class="mail" href="mailto:' + MAIL + '">' + MAIL + '</a></div></div>';
+    try { localStorage.removeItem('demo_k'); } catch (e) {}
+  }
+  function bad(){
+    root.innerHTML = '<div class="card msg"><h2>الرابط غير صحيح</h2><p>تأكد من نسخ الرابط كاملًا كما وصلك، أو تواصل مع من أرسله إليك.</p></div>';
+  }
+  function fail(e){
+    var d = e && e.details;
+    if ((d && d.ended) || (e && e.code === 'functions/failed-precondition')) return ended();
+    if (e && e.code === 'functions/not-found' || e && e.code === 'functions/invalid-argument') return bad();
+    return null;
+  }
+
+  if (!/^[a-z0-9]{32}$/.test(K)) { bad(); return; }
+  firebase.initializeApp(window.FB_CONFIG);
+  var call = firebase.functions().httpsCallable('demoEnter', {timeout: 60000});
+
+  call({action: 'info', k: K}).then(function(r){
+    var x = r.data;
+    try { localStorage.setItem('demo_k', K); } catch (e) {}
+    var html = '<div class="card"><p class="hello">مرحبًا ' + esc(x.name) + '</p>'
+      + '<p class="meta">هذه نسخة تجريبية خاصة بك، صالحة حتى <b>' + esc(dateAr(x.expiresAt)) + '</b>.</p>'
+      + '<div class="hint">جرّب دورين على الأقل لترى كيف يختلف عمل المنصة من دور إلى آخر. اضغط على أي دور للدخول مباشرة، ويمكنك التبديل بينها في أي وقت.</div>'
+      + '<div class="roles">';
+    x.roles.forEach(function(ro){
+      html += '<button type="button" class="role" data-r="' + esc(ro.key) + '"><b>' + esc(ro.name) + '</b><span>' + esc(ro.desc) + '</span></button>';
+    });
+    html += '</div><div class="err" id="err"></div></div>';
+    root.innerHTML = html;
+    var busy = false;
+    root.querySelectorAll('.role').forEach(function(b){
+      b.onclick = function(){
+        if (busy) return; busy = true;
+        var all = root.querySelectorAll('.role'); all.forEach(function(x){ x.disabled = true; });
+        var err = document.getElementById('err'); err.textContent = 'جارٍ الدخول…'; err.style.color = '#5b6f76';
+        call({action: 'enter', k: K, role: b.getAttribute('data-r')}).then(function(r2){
+          try { localStorage.removeItem('cls_session'); localStorage.setItem('demo_k', K); } catch (e) {}
+          return firebase.auth().signInWithCustomToken(r2.data.token);
+        }).then(function(){ location.href = 'index.html'; }).catch(function(e){
+          if (fail(e) !== null) return;
+          busy = false; all.forEach(function(x){ x.disabled = false; });
+          err.style.color = ''; err.textContent = 'تعذّر الدخول الآن. أعد المحاولة بعد قليل.';
+        });
+      };
+    });
+  }).catch(function(e){
+    if (fail(e) !== null) return;
+    root.innerHTML = '<div class="card msg"><h2>تعذّر التحميل</h2><p>تحقق من اتصالك بالإنترنت ثم أعد فتح الرابط.</p></div>';
+  });
+})();
+</script>
+</body>
+</html>

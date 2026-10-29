@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- إصدار: 2026-10-29.1 · الاختبار -->
+<!-- إصدار: 2026-10-30.1 · الاختبار -->
 <html lang="ar" dir="rtl">
 <head>
 <script src="fb-config.js"></script>
@@ -378,8 +378,8 @@ input,select{font-family:inherit;font-size:15px}
       <div class="ijh-mhead"><b id="tbMenuName"></b><span id="tbMenuSub"></span></div>
       <div class="ijh-mlist">
         <button type="button" class="ijh-mitem" role="menuitem" id="tbMyAcc"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.5-5 6.5-5s5.5 1.5 6.5 5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7"/><path d="M18.5 15c1.6.7 2.6 2.3 3 5"/></svg>حساباتي</button>
-        <button type="button" class="ijh-mitem" role="menuitem" id="tbPw"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3L21 2"/><path d="M17 6l3 3"/><path d="M14.5 8.5l2 2"/></svg>تغيير كلمة المرور</button>
-        <a class="ijh-mitem" role="menuitem" href="delete-account.html"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/></svg>حذف الحساب</a>
+        <button type="button" class="ijh-mitem" role="menuitem" id="tbPw" data-nodemo><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3L21 2"/><path d="M17 6l3 3"/><path d="M14.5 8.5l2 2"/></svg>تغيير كلمة المرور</button>
+        <a class="ijh-mitem" role="menuitem" href="delete-account.html" data-nodemo><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/></svg>حذف الحساب</a>
       </div>
       <div class="ijh-mmode"><div class="ijh-mlabel">المظهر</div><div id="tbModeSlot"></div></div>
       <div class="ijh-mfoot">
@@ -3633,7 +3633,7 @@ async function renderUsers(c){
     <div class="card" style="padding:12px"><div class="field" style="margin:0"><label>بحث برقم الهوية</label><input id="uIdSearch" placeholder="اكتب رقم الهوية…" inputmode="numeric"></div></div>
     <div id="uFilter" class="card" style="padding:12px${isSchoolScoped?';display:none':''}"></div>
     <div id="usersList"><div class="empty"><span class="spin"></span></div></div>`;
-  $('#addUserBtn').onclick=()=>openUserModal(null);
+  $('#addUserBtn').onclick=()=>{ if(window.FB_isDemo&&FB_isDemo()){ mnAlert('إضافة المستخدمين غير متاحة في النسخة التجريبية.'); return; } openUserModal(null); };
   if(isSchoolScoped){
     $('#importUsersBtn').onclick=()=>$('#usersXlsx').click();
     $('#usersXlsx').onchange=(e)=>{ if(e.target.files[0]) handleUsersExcel(e.target.files[0]); e.target.value=''; };
@@ -4546,6 +4546,12 @@ function renderSettings(c){
       </div>
       <div id="teResetAlert"></div>
     </div>
+    <div class="card" style="border-color:#e6d4a8;background:#fbf4e6">
+      <div class="set-block"><h3 style="color:#8a6420">النسخ التجريبية</h3>
+        <p>لكل مجرّب نسخة مستقلة ببيانات وهمية ورابط خاص يدخل منه بدور يختاره، وتُحذف تلقائيًا بعد أسبوع. يمكنك حذفها قبل ذلك فيتعطل الرابط فورًا.</p>
+      <div id="dmBox"><div class="empty"><span class="spin"></span></div></div>
+      </div>
+    </div>
     <!-- [TEST-ENV:END] -->` : ''}
 
     <div class="card">
@@ -4619,7 +4625,7 @@ function renderSettings(c){
   $('#wipeBtn').onclick=wipeData;
 
   renderSchoolsList(); calLoad(); trialLoad();
-  if(window.FB_ENV==='test') teLoad();   // [TEST-ENV]
+  if(window.FB_ENV==='test'){ teLoad(); dmLoad(); }   // [TEST-ENV]
 }
 /* [TEST-ENV:BEGIN] منصة الاختبار: مدرسة «نسخة الاختبار» — إنشاء، دخول بدور بضغطة، تصفير. لا تظهر إلا حين FB_ENV==='test' */
 const teCall = async(data)=>(await firebase.functions().httpsCallable('testEnv',{timeout:150000})(data)).data;
@@ -4679,6 +4685,59 @@ async function teLoad(){
     }catch(e){ alertBox('teResetAlert','err',(e.message||'انقطع التنفيذ')+' — أعد الضغط للمتابعة.'); }
     $('#teReset').disabled=false;
   };
+}
+/* النسخ التجريبية (لوحة الأدمن) */
+const dmCall = async(data)=>(await firebase.functions().httpsCallable('demoEnv',{timeout:290000})(data)).data;
+async function dmLoad(){
+  const box=$('#dmBox'); if(!box) return;
+  let r;
+  try{ r = await dmCall({action:'list'}); }
+  catch(e){ box.innerHTML='<div class="alert err">'+esc(e.message||'تعذّر الاتصال')+'</div>'; return; }
+  const now=Date.now(), DAY=86400000;
+  const act=r.copies.filter(x=>x.status==='active'&&x.expiresAt>now);
+  const gone=r.copies.filter(x=>x.status==='deleted'&&x.deletedAt&&now-x.deletedAt<=30*DAY);
+  const link=t=>FB_SITE+'try.html?k='+t;
+  const rows=r.copies.filter(x=>x.status!=='deleted').map(x=>{
+    const left=Math.max(0,Math.ceil((x.expiresAt-now)/DAY));
+    const st=x.status==='active'?(x.expiresAt>now?'متبقٍ '+ayArDigits(left)+' يوم':'منتهية'):(x.status==='creating'?'قيد الإنشاء':x.status==='deleting'?'قيد الحذف':'فشل');
+    const last=x.lastEntryAt?'آخر دخول: '+esc(ayDateAr(x.lastEntryAt))+' · '+esc(x.lastEntryRole||''):'لم يدخل بعد';
+    const live=x.status==='active'&&x.token;
+    return '<div style="border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px;margin-top:8px"><b>'+esc(x.name)+'</b> <span class="chip">'+st+'</span>'
+      +'<div style="font-size:12px;color:var(--muted);margin:4px 0 8px">'+last+'</div><div style="display:flex;gap:6px;flex-wrap:wrap">'
+      +(live?'<button class="btn secondary sm" data-dm-copy="'+esc(x.token)+'">نسخ الرابط</button><button class="btn secondary sm" data-dm-wa="'+esc(x.token)+'" data-n="'+esc(x.name)+'" data-e="'+x.expiresAt+'">إرسال واتساب</button>':'')
+      +'<button class="btn danger sm" data-dm-del="'+esc(x.id)+'" data-n="'+esc(x.name)+'">حذف الآن</button></div></div>';
+  }).join('');
+  box.innerHTML='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px"><span class="chip">نشطة: '+ayArDigits(act.length)+'</span><span class="chip">منتهية خلال آخر ٣٠ يومًا: '+ayArDigits(gone.length)+'</span></div>'
+    +'<div class="field"><label>اسم المجرّب</label><input id="dmName" maxlength="80" autocomplete="off"></div>'
+    +'<button class="btn sm" id="dmCreate">إنشاء نسخة تجريبية</button><div id="dmAlert"></div>'+rows;
+  $('#dmCreate').onclick=async()=>{
+    const name=($('#dmName').value||'').trim();
+    if(!name){ alertBox('dmAlert','err','اكتب اسم المجرّب'); return; }
+    $('#dmCreate').disabled=true; alertBox('dmAlert','ok','جارٍ الإنشاء… قد يستغرق دقيقة.');
+    try{
+      const defaults={}; ['counselor','agent','assistant','teacher','teacherAssistant'].forEach(x=>{ defaults[x]=defaultPerms(x); });
+      await dmCall({action:'create', name, defaults});
+      dmLoad();
+    }catch(e){ $('#dmCreate').disabled=false; alertBox('dmAlert','err',e.message||'تعذّر الإنشاء'); }
+  };
+  box.querySelectorAll('[data-dm-copy]').forEach(b=>b.onclick=async()=>{
+    const u=link(b.dataset.dmCopy);
+    try{ await navigator.clipboard.writeText(u); alertBox('dmAlert','ok','تم نسخ الرابط.'); }
+    catch(e){ await mnPrompt('انسخ الرابط:',u); }
+  });
+  box.querySelectorAll('[data-dm-wa]').forEach(b=>b.onclick=()=>{
+    const msg='مرحبًا '+b.dataset.n+'،\nهذه نسخة تجريبية خاصة بك من منصة منجز المدرسي، صالحة حتى '+ayDateAr(+b.dataset.e)+':\n'+link(b.dataset.dmWa)+'\nاختر أي دور وادخل مباشرة، وجرّب دورين على الأقل.';
+    window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+  });
+  box.querySelectorAll('[data-dm-del]').forEach(b=>b.onclick=async()=>{
+    if(!await mnConfirm('ستُحذف النسخة التجريبية «'+b.dataset.n+'» بكل بياناتها ويتعطل رابطها فورًا. متابعة؟')) return;
+    box.querySelectorAll('button').forEach(x=>x.disabled=true);
+    try{
+      let x, n=0;
+      do{ n++; alertBox('dmAlert','ok','جارٍ الحذف… الدفعة '+ayArDigits(n)); x=await dmCall({action:'delete', id:b.dataset.dmDel}); }while(x&&x.done===false&&n<100);
+      dmLoad();
+    }catch(e){ alertBox('dmAlert','err',(e.message||'انقطع الحذف')+' — أعد الضغط للمتابعة.'); box.querySelectorAll('button').forEach(x=>x.disabled=false); }
+  });
 }
 /* [TEST-ENV:END] */
 /* ---- محرر الصلاحيات الافتراضية للأدوار (لأدمن النظام) ---- */
